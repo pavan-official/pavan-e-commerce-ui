@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "validate-config": "node ../scripts/validate-config.js",
+    "setup": "cp .env.example .env.local && echo 'Please edit .env.local with your configuration'"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",

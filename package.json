@@ -1,0 +1,48 @@
+{
+  "name": "e-commerce-ui",
+  "version": "1.0.0",
+  "description": "Full-stack e-commerce platform with Next.js",
+  "private": true,
+  "workspaces": [
+    "client",
+    "admin"
+  ],
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter client dev\" \"pnpm --filter admin dev\"",
+    "build": "pnpm --filter client build && pnpm --filter admin build",
+    "start": "concurrently \"pnpm --filter client start\" \"pnpm --filter admin start\"",
+    "lint": "pnpm --filter client lint && pnpm --filter admin lint",
+    "setup": "./setup.sh",
+    "validate-config": "node scripts/validate-config.js",
+    "install-all": "pnpm install && pnpm --filter client install && pnpm --filter admin install",
+    "clean": "pnpm --filter client clean && pnpm --filter admin clean",
+    "type-check": "pnpm --filter client type-check && pnpm --filter admin type-check"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "keywords": [
+    "e-commerce",
+    "nextjs",
+    "typescript",
+    "tailwindcss",
+    "shadcn",
+    "stripe",
+    "postgresql",
+    "redis"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/e-commerce-ui.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/e-commerce-ui/issues"
+  },
+  "homepage": "https://github.com/yourusername/e-commerce-ui#readme"
+}

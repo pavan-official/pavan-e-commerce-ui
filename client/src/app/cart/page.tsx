@@ -1,227 +1,210 @@
-"use client";
+'use client'
 
-import PaymentForm from "@/components/PaymentForm";
-import ShippingForm from "@/components/ShippingForm";
-import useCartStore from "@/stores/cartStore";
-import { CartItemsType, ShippingFormInputs } from "@/types";
-import { ArrowRight, Trash2 } from "lucide-react";
-import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useCartStore } from '@/stores/cartStore'
+import { useSession } from 'next-auth/react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
-const steps = [
-  {
-    id: 1,
-    title: "Shopping Cart",
-  },
-  {
-    id: 2,
-    title: "Shipping Address",
-  },
-  {
-    id: 3,
-    title: "Payment Method",
-  },
-];
+export default function CartPage() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  const { items, summary, isLoading, error, fetchCart, updateQuantity, removeFromCart } = useCartStore()
 
-// TEMPORARY
-// const cartItems: CartItemsType = [
-//   {
-//     id: 1,
-//     name: "Adidas CoreFit T-Shirt",
-//     shortDescription:
-//       "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
-//     description:
-//       "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
-//     price: 39.9,
-//     sizes: ["s", "m", "l", "xl", "xxl"],
-//     colors: ["gray", "purple", "green"],
-//     images: {
-//       gray: "/products/1g.png",
-//       purple: "/products/1p.png",
-//       green: "/products/1gr.png",
-//     },
-//     quantity: 1,
-//     selectedSize: "m",
-//     selectedColor: "gray",
-//   },
-//   {
-//     id: 2,
-//     name: "Puma Ultra Warm Zip",
-//     shortDescription:
-//       "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
-//     description:
-//       "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
-//     price: 59.9,
-//     sizes: ["s", "m", "l", "xl"],
-//     colors: ["gray", "green"],
-//     images: { gray: "/products/2g.png", green: "/products/2gr.png" },
-//     quantity: 1,
-//     selectedSize: "l",
-//     selectedColor: "gray",
-//   },
-//   {
-//     id: 3,
-//     name: "Nike Air Essentials Pullover",
-//     shortDescription:
-//       "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
-//     description:
-//       "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
-//     price: 69.9,
-//     sizes: ["s", "m", "l"],
-//     colors: ["green", "blue", "black"],
-//     images: {
-//       green: "/products/3gr.png",
-//       blue: "/products/3b.png",
-//       black: "/products/3bl.png",
-//     },
-//     quantity: 1,
-//     selectedSize: "l",
-//     selectedColor: "black",
-//   },
-// ];
+  useEffect(() => {
+    if (status === 'loading') return
+    
+    if (!session) {
+      router.push('/auth/signin')
+      return
+    }
 
-const CartPage = () => {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const [shippingForm, setShippingForm] = useState<ShippingFormInputs>();
+    fetchCart()
+  }, [session, status, router, fetchCart])
 
-  const activeStep = parseInt(searchParams.get("step") || "1");
+  const handleQuantityChange = async (itemId: string, newQuantity: number) => {
+    if (newQuantity < 1) return
+    await updateQuantity(itemId, newQuantity)
+  }
 
-  const { cart, removeFromCart } = useCartStore();
-  return (
-    <div className="flex flex-col gap-8 items-center justify-center mt-12">
-      {/* TITLE */}
-      <h1 className="text-2xl font-medium">Your Shopping Cart</h1>
-      {/* STEPS */}
-      <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16">
-        {steps.map((step) => (
-          <div
-            className={`flex items-center gap-2 border-b-2 pb-4 ${
-              step.id === activeStep ? "border-gray-800" : "border-gray-200"
-            }`}
-            key={step.id}
-          >
-            <div
-              className={`w-6 h-6 rounded-full text-white p-4 flex items-center justify-center ${
-                step.id === activeStep ? "bg-gray-800" : "bg-gray-400"
-              }`}
-            >
-              {step.id}
-            </div>
-            <p
-              className={`text-sm font-medium ${
-                step.id === activeStep ? "text-gray-800" : "text-gray-400"
-              }`}
-            >
-              {step.title}
-            </p>
-          </div>
-        ))}
+  const handleRemoveItem = async (itemId: string) => {
+    await removeFromCart(itemId)
+  }
+
+  if (status === 'loading' || isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
-      {/* STEPS & DETAILS */}
-      <div className="w-full flex flex-col lg:flex-row gap-16">
-        {/* STEPS */}
-        <div className="w-full lg:w-7/12 shadow-lg border-1 border-gray-100 p-8 rounded-lg flex flex-col gap-8">
-          {activeStep === 1 ? (
-            cart.map((item) => (
-              // SINGLE CART ITEM
-              <div
-                className="flex items-center justify-between"
-                key={item.id + item.selectedSize + item.selectedColor}
-              >
-                {/* IMAGE AND DETAILS */}
-                <div className="flex gap-8">
-                  {/* IMAGE */}
-                  <div className="relative w-32 h-32 bg-gray-50 rounded-lg overflow-hidden">
-                    <Image
-                      src={item.images[item.selectedColor]}
-                      alt={item.name}
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                  {/* ITEM DETAILS */}
-                  <div className="flex flex-col justify-between">
-                    <div className="flex flex-col gap-1">
-                      <p className="text-sm font-medium">{item.name}</p>
-                      <p className="text-xs text-gray-500">
-                        Quantity: {item.quantity}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Size: {item.selectedSize}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Color: {item.selectedColor}
+    )
+  }
+
+  if (!session) {
+    return null // Will redirect
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-gray-900">Shopping Cart</h1>
+        <p className="mt-2 text-sm text-gray-700">
+          Review your items and proceed to checkout
+        </p>
+      </div>
+
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="text-red-700">{error}</div>
+        </div>
+      )}
+
+      {items.length === 0 ? (
+        <div className="text-center py-12">
+          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
+          </svg>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">Your cart is empty</h3>
+          <p className="mt-1 text-sm text-gray-500">Start adding some items to your cart.</p>
+          <div className="mt-6">
+            <Link
+              href="/"
+              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+            >
+              Continue Shopping
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <div className="lg:grid lg:grid-cols-12 lg:gap-x-12 lg:items-start">
+          {/* Cart Items */}
+          <div className="lg:col-span-7">
+            <div className="space-y-6">
+              {items.map((item) => {
+                const price = item.variant?.price || item.product.price
+                const total = price * item.quantity
+                
+                return (
+                  <div key={item.id} className="flex items-center space-x-4 border border-gray-200 rounded-lg p-4">
+                    {/* Product Image */}
+                    <div className="flex-shrink-0">
+                      {item.product.thumbnail ? (
+                        <Image
+                          src={item.product.thumbnail}
+                          alt={item.product.name}
+                          width={80}
+                          height={80}
+                          className="h-20 w-20 rounded-md object-cover"
+                        />
+                      ) : (
+                        <div className="h-20 w-20 rounded-md bg-gray-200 flex items-center justify-center">
+                          <span className="text-lg font-medium text-gray-500">
+                            {item.product.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Product Details */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-medium text-gray-900">
+                        {item.product.name}
+                      </h3>
+                      {item.variant && (
+                        <p className="text-sm text-gray-500">{item.variant.name}</p>
+                      )}
+                      <p className="text-sm text-gray-500">{item.product.category.name}</p>
+                      <p className="text-lg font-medium text-gray-900">
+                        ${price.toFixed(2)}
                       </p>
                     </div>
-                    <p className="font-medium">${item.price.toFixed(2)}</p>
+
+                    {/* Quantity Controls */}
+                    <div className="flex items-center space-x-3">
+                      <button
+                        onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                        disabled={isLoading}
+                        className="h-8 w-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                        </svg>
+                      </button>
+                      <span className="text-lg font-medium w-8 text-center">{item.quantity}</span>
+                      <button
+                        onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                        disabled={isLoading}
+                        className="h-8 w-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* Total Price */}
+                    <div className="text-right">
+                      <p className="text-lg font-semibold text-gray-900">
+                        ${total.toFixed(2)}
+                      </p>
+                    </div>
+
+                    {/* Remove Button */}
+                    <button
+                      onClick={() => handleRemoveItem(item.id)}
+                      disabled={isLoading}
+                      className="text-red-400 hover:text-red-600 disabled:opacity-50"
+                    >
+                      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
                   </div>
-                </div>
-                {/* DELETE BUTTON */}
-                <button
-                  onClick={() => removeFromCart(item)}
-                  className="w-8 h-8 rounded-full bg-red-100 hover:bg-red-200 transition-all duration-300 text-red-400 flex items-center justify-center cursor-pointer"
-                >
-                  <Trash2 className="w-3 h-3" />
-                </button>
-              </div>
-            ))
-          ) : activeStep === 2 ? (
-            <ShippingForm setShippingForm={setShippingForm} />
-          ) : activeStep === 3 && shippingForm ? (
-            <PaymentForm />
-          ) : (
-            <p className="text-sm text-gray-500">
-              Please fill in the shipping form to continue.
-            </p>
-          )}
-        </div>
-        {/* DETAILS */}
-        <div className="w-full lg:w-5/12 shadow-lg border-1 border-gray-100 p-8 rounded-lg flex flex-col gap-8 h-max">
-          <h2 className="font-semibold">Cart Details</h2>
-          <div className="flex flex-col gap-4">
-            <div className="flex justify-between text-sm">
-              <p className="text-gray-500">Subtotal</p>
-              <p className="font-medium">
-                $
-                {cart
-                  .reduce((acc, item) => acc + item.price * item.quantity, 0)
-                  .toFixed(2)}
-              </p>
-            </div>
-            <div className="flex justify-between text-sm">
-              <p className="text-gray-500">Discount(10%)</p>
-              <p className="font-medium">$ 10</p>
-            </div>
-            <div className="flex justify-between text-sm">
-              <p className="text-gray-500">Shipping Fee</p>
-              <p className="font-medium">$10</p>
-            </div>
-            <hr className="border-gray-200" />
-            <div className="flex justify-between">
-              <p className="text-gray-800 font-semibold">Total</p>
-              <p className="font-medium">
-                $
-                {cart
-                  .reduce((acc, item) => acc + item.price * item.quantity, 0)
-                  .toFixed(2)}
-              </p>
+                )
+              })}
             </div>
           </div>
-          {activeStep === 1 && (
-            <button
-              onClick={() => router.push("/cart?step=2", { scroll: false })}
-              className="w-full bg-gray-800 hover:bg-gray-900 transition-all duration-300 text-white p-2 rounded-lg cursor-pointer flex items-center justify-center gap-2"
-            >
-              Continue
-              <ArrowRight className="w-3 h-3" />
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
 
-export default CartPage;
+          {/* Order Summary */}
+          <div className="mt-10 lg:mt-0 lg:col-span-5">
+            <div className="bg-gray-50 rounded-lg p-6">
+              <h2 className="text-lg font-medium text-gray-900 mb-4">Order Summary</h2>
+              
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Subtotal ({summary.itemCount} items)</span>
+                  <span className="font-medium">${summary.subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Tax</span>
+                  <span className="font-medium">${summary.tax.toFixed(2)}</span>
+                </div>
+                <div className="border-t border-gray-200 pt-3">
+                  <div className="flex justify-between text-lg font-semibold">
+                    <span>Total</span>
+                    <span>${summary.total.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-3">
+                <Link
+                  href="/checkout"
+                  className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  Proceed to Checkout
+                </Link>
+                <Link
+                  href="/"
+                  className="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  Continue Shopping
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
