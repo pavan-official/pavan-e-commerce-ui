@@ -1,0 +1,110 @@
+# ==================================================================================================
+# GRAFANA DATASOURCE CONFIGURATION - PROMETHEUS
+# ==================================================================================================
+#
+# Purpose: Auto-configure Prometheus as a data source
+# Why: Eliminates manual setup and ensures consistency
+#
+# Interview Topics:
+# - Infrastructure as Code for monitoring
+# - Datasource provisioning
+# - Multi-environment configuration
+# - Security and authentication
+#
+# ==================================================================================================
+
+apiVersion: 1
+
+datasources:
+  # ================================================================================================
+  # PROMETHEUS DATASOURCE
+  # ================================================================================================
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    
+    # Authentication (if enabled)
+    # basicAuth: true
+    # basicAuthUser: admin
+    # secureJsonData:
+    #   basicAuthPassword: admin123
+    
+    # Query configuration
+    jsonData:
+      # Query timeout
+      queryTimeout: 60s
+      # HTTP method
+      httpMethod: POST
+      # Time interval
+      timeInterval: 15s
+      # Manage alerts
+      manageAlerts: true
+      # Alert manager
+      alertmanagerUid: alertmanager
+      
+    # Version (for Grafana API)
+    version: 1
+
+  # ================================================================================================
+  # ALERTMANAGER DATASOURCE
+  # ================================================================================================
+  - name: AlertManager
+    type: alertmanager
+    access: proxy
+    url: http://alertmanager:9093
+    editable: true
+    
+    jsonData:
+      # Implementation type
+      implementation: prometheus
+      # Handle Grafana alerts
+      handleGrafanaManagedAlerts: true
+
+  # ================================================================================================
+  # JAEGER DATASOURCE (TRACING)
+  # ================================================================================================
+  - name: Jaeger
+    type: jaeger
+    access: proxy
+    url: http://jaeger:16686
+    editable: true
+    
+    jsonData:
+      # Trace to logs correlation
+      tracesToLogs:
+        datasourceUid: 'loki'
+        tags: ['job', 'instance', 'pod', 'namespace']
+        mappedTags: [{ key: 'service.name', value: 'service' }]
+        mapTagNamesEnabled: false
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
+        filterByTraceID: false
+        filterBySpanID: false
+      
+      # Trace to metrics correlation
+      tracesToMetrics:
+        datasourceUid: 'prometheus'
+        tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
+        queries:
+          - name: 'Sample query'
+            query: 'sum(rate(traces_spanmetrics_latency_bucket{$$__tags}[5m]))'
+
+  # ================================================================================================
+  # LOKI DATASOURCE (LOGS) - Optional
+  # ================================================================================================
+  # - name: Loki
+  #   type: loki
+  #   access: proxy
+  #   url: http://loki:3100
+  #   editable: true
+  #   
+  #   jsonData:
+  #     maxLines: 1000
+  #     derivedFields:
+  #       - datasourceUid: 'jaeger'
+  #         matcherRegex: 'traceID=(\\w+)'
+  #         name: 'TraceID'
+  #         url: '$${__value.raw}'

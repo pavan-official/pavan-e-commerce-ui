@@ -1,0 +1,12 @@
+# 🏢 **E-commerce Namespace Configuration**
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ecommerce-production
+  labels:
+    name: ecommerce-production
+    environment: production
+    team: platform-engineering
+  annotations:
+    description: "Production namespace for e-commerce application"
+    contact: "platform-team@company.com"

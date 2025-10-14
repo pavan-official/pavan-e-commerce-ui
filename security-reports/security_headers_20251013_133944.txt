@@ -1,0 +1,24 @@
+Security Headers Analysis Report
+Generated: Mon Oct 13 13:39:46 CDT 2025
+URL: http://localhost:3000
+==========================================
+
+Security Headers Check:
+
+✅ HSTS (Strict-Transport-Security): Present
+✅ Content Type Protection (X-Content-Type-Options): Present
+✅ Clickjacking Protection (X-Frame-Options): Present
+✅ XSS Protection (X-XSS-Protection): Present
+❌ CSP (Content-Security-Policy): Missing
+✅ Referrer Policy (Referrer-Policy): Present
+❌ Permissions Policy (Permissions-Policy): Missing
+
+All Headers:
+------------
+X-DNS-Prefetch-Control: on
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+x-frame-options: DENY
+x-content-type-options: nosniff
+x-xss-protection: 1; mode=block
+referrer-policy: strict-origin-when-cross-origin
+X-Powered-By: Next.js
