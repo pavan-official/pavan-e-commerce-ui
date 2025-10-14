@@ -34,6 +34,8 @@ export default function AddToCartButton({
     setIsAdding(true)
     try {
       await addToCart(productId, variantId, 1)
+    } catch (error) {
+      console.error('Add to cart error:', error)
     } finally {
       setIsAdding(false)
     }

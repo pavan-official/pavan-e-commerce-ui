@@ -43,17 +43,30 @@ export async function GET(request: NextRequest) {
 
     // Calculate totals
     const subtotal = cartItems.reduce((sum, item) => {
-      const price = item.variant?.price || item.product.price
+      const price = Number(item.variant?.price || item.product.price)
       return sum + (price * item.quantity)
     }, 0)
 
     const tax = subtotal * 0.08 // 8% tax rate
     const total = subtotal + tax
 
+    // Convert Prisma Decimal types to numbers for all prices
+    const serializedItems = cartItems.map(item => ({
+      ...item,
+      product: {
+        ...item.product,
+        price: Number(item.product.price),
+      },
+      variant: item.variant ? {
+        ...item.variant,
+        price: item.variant.price ? Number(item.variant.price) : null,
+      } : null,
+    }))
+
     return NextResponse.json({
       success: true,
       data: {
-        items: cartItems,
+        items: serializedItems,
         summary: {
           subtotal: Number(subtotal.toFixed(2)),
           tax: Number(tax.toFixed(2)),

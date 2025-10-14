@@ -1,3 +1,5 @@
+"use client";
+
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { Heart, Home } from "lucide-react";

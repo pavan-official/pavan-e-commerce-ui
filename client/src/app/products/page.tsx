@@ -39,11 +39,9 @@ export default function ProductsPage() {
       page: Number(searchParams.get('page')) || 1,
     }
 
-    // Only search if we have filters or if it's the initial load
-    if (Object.values(urlFilters).some(value => value !== undefined && value !== '')) {
-      setFilters(urlFilters)
-      search()
-    }
+    // Always search - either with filters or show all products
+    setFilters(urlFilters)
+    search()
   }, [searchParams, setFilters, search])
 
   const handleFiltersChange = (newFilters: any) => {

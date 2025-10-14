@@ -117,14 +117,27 @@ export const useCartStore = create<CartState & CartActions>()(
             // Refresh cart after adding
             await get().fetchCart()
           } else {
+            // Handle specific error cases
+            let errorMessage = 'Failed to add item to cart'
+            
+            if (response.status === 401) {
+              errorMessage = 'Please sign in to add items to cart'
+            } else if (data.error?.code === 'PRODUCT_NOT_FOUND') {
+              errorMessage = 'Product not found'
+            } else if (data.error?.code === 'INSUFFICIENT_STOCK') {
+              errorMessage = data.error.message || 'Insufficient stock'
+            } else if (data.error?.message) {
+              errorMessage = data.error.message
+            }
+            
             set({
-              error: data.error?.message || 'Failed to add item to cart',
+              error: errorMessage,
               isLoading: false,
             })
           }
         } catch (error) {
           set({
-            error: 'An error occurred while adding item to cart',
+            error: 'Network error. Please check your connection and try again.',
             isLoading: false,
           })
         }

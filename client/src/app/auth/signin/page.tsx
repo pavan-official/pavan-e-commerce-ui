@@ -112,7 +112,7 @@ export default function SignInPage() {
           <div className="text-center">
             <p className="text-sm text-gray-600">
               Demo credentials: <br />
-              <strong>admin@example.com</strong> / <strong>password123</strong>
+              <strong>admin@example.com</strong> / <strong>admin123</strong>
             </p>
           </div>
         </form>

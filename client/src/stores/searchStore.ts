@@ -244,7 +244,7 @@ export const useSearchStore = create<SearchState & SearchActions>()(
       applyFilters: () => {
         const { filters, search } = get()
         set({ appliedFilters: { ...filters } })
-        search()
+        search(filters)
       },
 
       clearFilters: () => {

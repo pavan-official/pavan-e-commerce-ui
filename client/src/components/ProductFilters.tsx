@@ -54,6 +54,8 @@ export default function ProductFilters({
     setLocalFilters(newFilters)
     setFilters(newFilters)
     onFiltersChange?.(newFilters)
+    // Apply filters immediately
+    applyFilters()
   }
 
   const handlePriceRangeChange = (type: 'min' | 'max', value: number) => {
@@ -68,6 +70,8 @@ export default function ProductFilters({
     setLocalFilters(newFilters)
     setFilters(newFilters)
     onFiltersChange?.(newFilters)
+    // Apply filters immediately
+    applyFilters()
   }
 
   const handleApplyFilters = () => {

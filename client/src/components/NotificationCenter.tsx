@@ -3,6 +3,7 @@
 import { useNotificationStore } from '@/stores/notificationStore'
 import {
     AlertCircle,
+    Bell,
     Check,
     CheckCheck,
     CreditCard,

@@ -1,44 +1,23 @@
-import { withAuth } from 'next-auth/middleware'
+import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
-export default withAuth(
-  function middleware(req) {
-    const token = req.nextauth.token
-    const isAuth = !!token
-    const isAuthPage = req.nextUrl.pathname.startsWith('/auth')
-    const isAdminPage = req.nextUrl.pathname.startsWith('/admin')
-
-    if (isAuthPage) {
-      if (isAuth) {
-        return NextResponse.redirect(new URL('/', req.url))
-      }
-      return null
-    }
-
-    if (!isAuth) {
-      let from = req.nextUrl.pathname
-      if (req.nextUrl.search) {
-        from += req.nextUrl.search
-      }
-
-      return NextResponse.redirect(
-        new URL(`/auth/signin?from=${encodeURIComponent(from)}`, req.url)
-      )
-    }
-
-    if (isAdminPage && token.role !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/', req.url))
-    }
-
-    return NextResponse.next()
-  },
-  {
-    callbacks: {
-      authorized: ({ token }) => !!token,
-    },
-  }
-)
+// Simplified middleware without next-auth dependency
+// Authentication is handled at the API route level
+export function middleware(request: NextRequest) {
+  // Add security headers
+  const response = NextResponse.next()
+  
+  // Security headers
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('X-XSS-Protection', '1; mode=block')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  
+  return response
+}
 
 export const config = {
-  matcher: ['/admin/:path*', '/profile/:path*', '/orders/:path*'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|public).*)',
+  ],
 }

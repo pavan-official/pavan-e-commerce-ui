@@ -5,19 +5,19 @@ export type ProductType = {
   name: string;
   shortDescription: string;
   description: string;
-  price: number;
+  price: number | string;
   category: string;
-  sizes: string[];
-  colors: string[];
-  images: Record<string, string>;
+  sizes?: string[];
+  colors?: string[];
+  images: Record<string, string> | string[];
 };
 
 export type ProductsType = ProductType[];
 
 export type CartItemType = ProductType & {
   quantity: number;
-  selectedSize: string;
-  selectedColor: string;
+  selectedSize?: string;
+  selectedColor?: string;
 };
 
 export type CartItemsType = CartItemType[];

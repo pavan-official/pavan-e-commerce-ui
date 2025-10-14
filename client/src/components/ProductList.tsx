@@ -2,193 +2,33 @@
 import { ProductsType } from "@/types";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Categories from "./Categories";
 import Filter from "./Filter";
 import ProductCard from "./ProductCard";
 
-// TEMPORARY
-const products: ProductsType = [
-  {
-    id: 1,
-    name: "Adidas CoreFit T-Shirt",
-    shortDescription:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
-    description:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
-    price: 39.9,
-    category: "t-shirts",
-    sizes: ["s", "m", "l", "xl", "xxl"],
-    colors: ["gray", "purple", "green"],
-    images: {
-      gray: "/products/1g.png",
-      purple: "/products/1p.png",
-      green: "/products/1gr.png",
-    },
-  },
-  {
-    id: 2,
-    name: "Puma Ultra Warm Zip",
-    shortDescription:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
-    description:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
-    price: 59.9,
-    category: "jackets",
-    sizes: ["s", "m", "l", "xl"],
-    colors: ["gray", "green"],
-    images: { gray: "/products/2g.png", green: "/products/2gr.png" },
-  },
-  {
-    id: 3,
-    name: "Nike Air Essentials Pullover",
-    shortDescription:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
-    description:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
-    price: 69.9,
-    category: "jackets",
-    sizes: ["s", "m", "l"],
-    colors: ["green", "blue", "black"],
-    images: {
-      green: "/products/3gr.png",
-      blue: "/products/3b.png",
-      black: "/products/3bl.png",
-    },
-  },
-  {
-    id: 4,
-    name: "Nike Dri Flex T-Shirt",
-    shortDescription:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
-    description:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
-    price: 29.9,
-    category: "t-shirts",
-    sizes: ["s", "m", "l"],
-    colors: ["white", "pink"],
-    images: { white: "/products/4w.png", pink: "/products/4p.png" },
-  },
-  {
-    id: 5,
-    name: "Under Armour StormFleece",
-    shortDescription:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
-    description:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
-    price: 49.9,
-    category: "jackets",
-    sizes: ["s", "m", "l"],
-    colors: ["red", "orange", "black"],
-    images: {
-      red: "/products/5r.png",
-      orange: "/products/5o.png",
-      black: "/products/5bl.png",
-    },
-  },
-  {
-    id: 6,
-    name: "Nike Air Max 270",
-    shortDescription:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
-    description:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
-    price: 59.9,
-    category: "shoes",
-    sizes: ["40", "42", "43", "44"],
-    colors: ["gray", "white"],
-    images: { gray: "/products/6g.png", white: "/products/6w.png" },
-  },
-  {
-    id: 7,
-    name: "Nike Ultraboost Pulse ",
-    shortDescription:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
-    description:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
-    price: 69.9,
-    category: "shoes",
-    sizes: ["40", "42", "43"],
-    colors: ["gray", "pink"],
-    images: { gray: "/products/7g.png", pink: "/products/7p.png" },
-  },
-  {
-    id: 8,
-    name: "Levi's Classic Denim",
-    shortDescription:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
-    description:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
-    price: 59.9,
-    category: "t-shirts",
-    sizes: ["s", "m", "l"],
-    colors: ["blue", "green"],
-    images: { blue: "/products/8b.png", green: "/products/8gr.png" },
-  },
-  // Additional products for better filtering demonstration
-  {
-    id: 9,
-    name: "Ray-Ban Classic Sunglasses",
-    shortDescription: "Classic aviator sunglasses with UV protection.",
-    description: "Timeless aviator sunglasses with premium lenses and UV protection. Perfect for any outdoor activity.",
-    price: 149.9,
-    category: "accessories",
-    sizes: ["one-size"],
-    colors: ["black", "brown", "silver"],
-    images: {
-      black: "/products/accessories/sunglasses-black.png",
-      brown: "/products/accessories/sunglasses-brown.png",
-      silver: "/products/accessories/sunglasses-silver.png",
-    },
-  },
-  {
-    id: 10,
-    name: "Leather Crossbody Bag",
-    shortDescription: "Premium leather crossbody bag for everyday use.",
-    description: "Handcrafted leather crossbody bag with multiple compartments and adjustable strap.",
-    price: 89.9,
-    category: "bags",
-    sizes: ["one-size"],
-    colors: ["brown", "black"],
-    images: {
-      brown: "/products/bags/crossbody-brown.png",
-      black: "/products/bags/crossbody-black.png",
-    },
-  },
-  {
-    id: 11,
-    name: "Summer Floral Dress",
-    shortDescription: "Light and breezy summer dress with floral pattern.",
-    description: "Comfortable summer dress made from breathable fabric with beautiful floral design.",
-    price: 79.9,
-    category: "dresses",
-    sizes: ["xs", "s", "m", "l", "xl"],
-    colors: ["blue", "pink", "yellow"],
-    images: {
-      blue: "/products/dresses/floral-blue.png",
-      pink: "/products/dresses/floral-pink.png",
-      yellow: "/products/dresses/floral-yellow.png",
-    },
-  },
-  {
-    id: 12,
-    name: "Winter Gloves",
-    shortDescription: "Warm and comfortable winter gloves.",
-    description: "Insulated winter gloves with touchscreen compatibility and water-resistant material.",
-    price: 29.9,
-    category: "gloves",
-    sizes: ["s", "m", "l"],
-    colors: ["black", "gray", "navy"],
-    images: {
-      black: "/products/gloves/winter-black.png",
-      gray: "/products/gloves/winter-gray.png",
-      navy: "/products/gloves/winter-navy.png",
-    },
-  },
-];
+// API-based product fetching
+interface ApiProduct {
+  id: string;
+  name: string;
+  description: string;
+  shortDescription: string;
+  price: string;
+  category: {
+    name: string;
+  };
+  images: string[];
+  thumbnail: string;
+}
 
-const ProductList = ({ category,params }: { category: string, params:"homepage" | "products" }) => {
+const ProductList = ({ category, params }: { category: string, params: "homepage" | "products" }) => {
   const searchParams = useSearchParams();
+  const [products, setProducts] = useState<ProductsType>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+  
+  // Get URL parameters
   const urlCategory = searchParams.get("category");
   const sort = searchParams.get("sort");
   const search = searchParams.get("search");
@@ -196,13 +36,73 @@ const ProductList = ({ category,params }: { category: string, params:"homepage" 
   // Use URL category if available, otherwise use prop category
   const activeCategory = urlCategory || category;
 
+  // Handle hydration - ensure client-side only
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Fetch products from API
+  useEffect(() => {
+    if (!mounted) return; // Don't fetch until mounted
+
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/products');
+        const data = await response.json();
+        
+        if (data.success) {
+          // Transform API data to match ProductType interface
+          const transformedProducts: ProductsType = data.data.map((product: ApiProduct) => ({
+            id: product.id, // Use string ID from database
+            name: product.name,
+            shortDescription: product.shortDescription,
+            description: product.description,
+            price: parseFloat(product.price), // Convert string to number
+            category: product.category.name.toLowerCase().replace(/\s+/g, '-'), // Convert to slug format
+            sizes: ["s", "m", "l", "xl"], // Default sizes for now
+            colors: ["default"], // Default color for now
+            images: product.images && product.images.length > 0 
+              ? product.images.reduce((acc, img, index) => {
+                  acc[`color${index}`] = img;
+                  return acc;
+                }, {} as Record<string, string>)
+              : { default: product.thumbnail || "/products/placeholder.png" },
+          }));
+          setProducts(transformedProducts);
+        } else {
+          setError('Failed to fetch products');
+        }
+      } catch (err) {
+        setError('Error loading products');
+        console.error('Error fetching products:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [activeCategory, mounted]);
+
   // Filter and sort products
   const filteredProducts = useMemo(() => {
     let filtered = products;
 
-    // Category filtering
+    // Category filtering using shared config
     if (activeCategory && activeCategory !== 'all') {
-      filtered = filtered.filter(product => product.category === activeCategory);
+      // Import the mapping function at the top of the file
+      // For now, use inline mapping to avoid circular dependency
+      const categoryMapping: Record<string, string> = {
+        't-shirts': 'clothing',
+        'shoes': 'shoes',
+        'accessories': 'electronics',
+        'bags': 'home-garden',
+        'dresses': 'clothing',
+        'jackets': 'clothing',
+        'gloves': 'home-garden',
+      };
+      const dbCategory = categoryMapping[activeCategory] || activeCategory;
+      filtered = filtered.filter(product => product.category === dbCategory);
     }
 
     // Search filtering
@@ -223,10 +123,11 @@ const ProductList = ({ category,params }: { category: string, params:"homepage" 
           filtered = [...filtered].sort((a, b) => b.price - a.price);
           break;
         case 'newest':
-          filtered = [...filtered].sort((a, b) => Number(b.id) - Number(a.id));
+          // For string IDs, we'll sort by name for now
+          filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
           break;
         case 'oldest':
-          filtered = [...filtered].sort((a, b) => Number(a.id) - Number(b.id));
+          filtered = [...filtered].sort((a, b) => b.name.localeCompare(a.name));
           break;
         default:
           break;
@@ -234,12 +135,43 @@ const ProductList = ({ category,params }: { category: string, params:"homepage" 
     }
 
     return filtered;
-  }, [activeCategory, search, sort]);
+  }, [products, activeCategory, search, sort]);
+
+  if (loading || !mounted) {
+    return (
+      <div className="w-full">
+        <Categories />
+        {params === "products" && <Filter />}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-12">
+          {/* Loading skeleton */}
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="animate-pulse">
+              <div className="bg-gray-200 aspect-square rounded-lg mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full">
+        <Categories />
+        {params === "products" && <Filter />}
+        <div className="text-center py-12">
+          <p className="text-red-500 text-lg">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
       <Categories />
-      {params === "products" && <Filter/>}
+      {params === "products" && <Filter />}
       
       {/* Results count and active filters */}
       {params === "products" && (

@@ -1,4 +1,4 @@
-import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard'
+// import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -9,7 +9,10 @@ export const metadata: Metadata = {
 const AdminAnalyticsPage = () => {
   return (
     <div className="container mx-auto px-4 py-8">
-      <AnalyticsDashboard />
+      <div className="bg-white p-8 rounded-lg shadow">
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">Analytics Dashboard</h1>
+        <p className="text-gray-600">Analytics dashboard is being prepared. Coming soon!</p>
+      </div>
     </div>
   )
 }

@@ -221,7 +221,7 @@ export default function AdvancedSearchBar({
                           <div className="text-xs text-gray-500">{suggestion.subtitle}</div>
                         </div>
                         <div className="text-sm font-medium text-gray-900">
-                          ${suggestion.price?.toFixed(2)}
+                          ${suggestion.price ? Number(suggestion.price).toFixed(2) : '0.00'}
                         </div>
                       </>
                     )}

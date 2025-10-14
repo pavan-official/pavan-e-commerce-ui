@@ -34,6 +34,15 @@ async function main() {
     }
   })
 
+  const shoes = await prisma.category.create({
+    data: {
+      name: 'Shoes',
+      slug: 'shoes',
+      description: 'Footwear and sneakers',
+      image: '/images/categories/shoes.jpg'
+    }
+  })
+
   console.log('✅ Categories created')
 
   // Create admin user
@@ -81,8 +90,8 @@ async function main() {
       comparePrice: 129.99,
       sku: 'WH-001',
       categoryId: electronics.id,
-      images: ['/images/products/headphones-1.jpg', '/images/products/headphones-2.jpg'],
-      thumbnail: '/images/products/headphones-1.jpg',
+      images: ['/products/1gr.png', '/products/2gr.png'],
+      thumbnail: '/products/1gr.png',
       quantity: 50,
       isFeatured: true,
       weight: 0.5,
@@ -99,8 +108,8 @@ async function main() {
       comparePrice: 399.99,
       sku: 'SW-001',
       categoryId: electronics.id,
-      images: ['/images/products/smartwatch-1.jpg', '/images/products/smartwatch-2.jpg'],
-      thumbnail: '/images/products/smartwatch-1.jpg',
+      images: ['/products/3bl.png', '/products/5bl.png'],
+      thumbnail: '/products/3bl.png',
       quantity: 25,
       isFeatured: true,
       weight: 0.3,
@@ -116,8 +125,8 @@ async function main() {
       price: 19.99,
       sku: 'CT-001',
       categoryId: clothing.id,
-      images: ['/images/products/tshirt-1.jpg', '/images/products/tshirt-2.jpg'],
-      thumbnail: '/images/products/tshirt-1.jpg',
+      images: ['/products/5o.png', '/products/6g.png'],
+      thumbnail: '/products/5o.png',
       quantity: 100,
       weight: 0.2,
       length: 30,
@@ -133,13 +142,49 @@ async function main() {
       comparePrice: 99.99,
       sku: 'GT-001',
       categoryId: home.id,
-      images: ['/images/products/garden-tools-1.jpg', '/images/products/garden-tools-2.jpg'],
-      thumbnail: '/images/products/garden-tools-1.jpg',
+      images: ['/products/2gr.png', '/products/1gr.png'],
+      thumbnail: '/products/2gr.png',
       quantity: 15,
       weight: 2.5,
       length: 50,
       width: 30,
       height: 10
+    },
+    {
+      name: 'Nike Air Max 270',
+      slug: 'nike-air-max-270',
+      description: 'Comfortable running shoes with Air Max technology',
+      shortDescription: 'Premium running shoes',
+      price: 59.99,
+      comparePrice: 79.99,
+      sku: 'NAM-001',
+      categoryId: shoes.id,
+      images: ['/products/6g.png', '/products/6w.png'],
+      thumbnail: '/products/6g.png',
+      quantity: 30,
+      isFeatured: true,
+      weight: 0.8,
+      length: 32,
+      width: 12,
+      height: 10
+    },
+    {
+      name: 'Nike Ultraboost Pulse',
+      slug: 'nike-ultraboost-pulse',
+      description: 'High-performance running shoes with responsive cushioning',
+      shortDescription: 'Performance running shoes',
+      price: 69.99,
+      comparePrice: 89.99,
+      sku: 'NUP-001',
+      categoryId: shoes.id,
+      images: ['/products/7g.png', '/products/7p.png'],
+      thumbnail: '/products/7g.png',
+      quantity: 25,
+      isFeatured: true,
+      weight: 0.7,
+      length: 31,
+      width: 11,
+      height: 9
     }
   ]
 
