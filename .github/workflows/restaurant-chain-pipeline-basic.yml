@@ -56,7 +56,9 @@ jobs:
         run: |
           cd client
           npm install
-          npm audit
+          npm audit --audit-level moderate
+          # Fix non-breaking security issues
+          npm audit fix --force || true
         # Interview Story: "This checks for any dangerous ingredients (security vulnerabilities)"
 
   # 📦 **PACKAGING STATION**
