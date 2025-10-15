@@ -1,8 +1,8 @@
-# 🍽️ **Restaurant Chain CI/CD Pipeline - FIXED VERSION**
+# 🍽️ **Restaurant Chain CI/CD Pipeline**
 # This is your "Central Kitchen" - where all recipes are tested and packaged
 # Interview Story: "This is like our central kitchen that automatically tests every new recipe"
 
-name: 🍽️ Restaurant Chain Pipeline (Fixed)
+name: 🍽️ Restaurant Chain Pipeline
 
 # 🎯 **When does the central kitchen start working?**
 # Interview Story: "Every time a chef adds a new recipe to our recipe book"
@@ -31,37 +31,32 @@ jobs:
               uses: actions/checkout@v4
               # Interview Story: "This gets the latest recipe from our master recipe book (Git)"
 
-            - name: 🍳 Setup Kitchen Tools (Node.js)
+            - name: 🍳 Setup Kitchen Tools
               uses: actions/setup-node@v4
               with:
                   node-version: "20"
-                  # FIXED: Remove cache since we don't have package-lock.json
+                  cache: "npm"
+                  cache-dependency-path: client/package-lock.json
               # Interview Story: "This sets up all the kitchen tools (Node.js, npm) we need"
 
-            - name: 📋 Install Dependencies
+            - name: 📋 Check Recipe Format
               run: |
                   cd client
-                  npm install
-              # Interview Story: "This installs all the ingredients (dependencies) we need"
-
-            - name: 📋 Check Recipe Format (Linting)
-              run: |
-                  cd client
+                  npm ci
                   npm run lint
               # Interview Story: "This checks if the recipe follows proper cooking standards (linting)"
 
-            - name: 🧪 Taste Test Recipe (Unit Tests)
+            - name: 🧪 Taste Test Recipe
               run: |
                   cd client
                   npm run test
               # Interview Story: "This tests if the recipe actually works (unit tests)"
 
-            - name: 🔒 Safety Check (Security Audit)
+            - name: 🔒 Safety Check
               run: |
                   cd client
-                  npm audit --audit-level moderate
+                  npm audit
               # Interview Story: "This checks for any dangerous ingredients (security vulnerabilities)"
-              continue-on-error: true  # Don't fail the pipeline for security warnings
 
     # 📦 **PACKAGING STATION**
     # Interview Story: "This is where we package the recipe in a standard container"
@@ -74,36 +69,30 @@ jobs:
             - name: 📝 Get Recipe from Recipe Book
               uses: actions/checkout@v4
 
-            - name: 🍳 Setup Kitchen Tools (Node.js)
+            - name: 🍳 Setup Kitchen Tools
               uses: actions/setup-node@v4
               with:
                   node-version: "20"
-
-            - name: 📋 Install Dependencies
-              run: |
-                  cd client
-                  npm install
+                  cache: "npm"
+                  cache-dependency-path: client/package-lock.json
 
             - name: 🏗️ Build Recipe
               run: |
                   cd client
+                  npm ci
                   npm run build
               # Interview Story: "This prepares the recipe for packaging (builds the application)"
 
-            - name: 📦 Package in Container (Docker Build)
+            - name: 📦 Package in Container
               run: |
                   cd client
-                  echo "🍽️ Building Docker image for restaurant chain..."
-                  echo "📦 Image will be: ${{ env.IMAGE_NAME }}:${{ github.sha }}"
-                  # FIXED: Just echo for now since Docker build might fail
-                  echo "✅ Recipe packaged successfully!"
+                  docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
               # Interview Story: "This packages the recipe in a standard container (Docker image)"
 
             - name: 🚚 Send to Restaurant Chain
               run: |
-                  echo "🍽️ Recipe packaged and ready for deployment to all restaurants!"
-                  echo "📦 Image: ${{ env.IMAGE_NAME }}:${{ github.sha }}"
-                  echo "🏪 Ready to deploy to namespace: ${{ env.KUBERNETES_NAMESPACE }}"
+                  echo "Recipe packaged and ready for deployment to all restaurants!"
+                  echo "Image: ${{ env.IMAGE_NAME }}:${{ github.sha }}"
               # Interview Story: "This sends the packaged recipe to all our restaurant locations"
 
     # 🏪 **RESTAURANT DEPLOYMENT**
