@@ -81,24 +81,37 @@ const nextConfig: NextConfig = {
   },
   
   // ==================================================================================================
-  // TYPESCRIPT
+  // BUILD CONFIGURATION
   // ==================================================================================================
   
+  // Environment variable handling
+  env: {
+    // Build-time environment variables
+    NEXT_PHASE: process.env.NEXT_PHASE || 'phase-production-build',
+  },
+  
+  // TypeScript configuration
   typescript: {
-    // Temporarily disable for Kubernetes deployment
-    // Why: Allow deployment with existing type issues
+    // Temporarily allow builds with TypeScript errors during development
+    // TODO: Fix all TypeScript errors and re-enable strict checking
     ignoreBuildErrors: true,
   },
   
+  // ESLint configuration
   eslint: {
-    // Temporarily disable for Kubernetes deployment
-    // Why: Allow deployment with existing lint issues
+    // Temporarily allow builds with ESLint errors during development
+    // TODO: Fix all ESLint errors and re-enable strict checking
     ignoreDuringBuilds: true,
   },
   
-  // Disable static optimization for problematic pages
+  // ==================================================================================================
+  // EXPERIMENTAL FEATURES
+  // ==================================================================================================
+  
   experimental: {
-    // Add experimental features here if needed
+    // Enable build-time optimizations
+    optimizeCss: true,
+    optimizePackageImports: ['@prisma/client', 'bcryptjs', 'stripe'],
   },
 };
 

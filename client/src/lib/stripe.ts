@@ -1,10 +1,35 @@
 import Stripe from 'stripe'
 
-// Server-side Stripe instance
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia',
-  typescript: true,
-})
+// Lazy initialization of Stripe instance
+let stripeInstance: Stripe | null = null
+
+// Server-side Stripe instance with lazy initialization
+export const getStripeInstance = (): Stripe => {
+  if (!stripeInstance) {
+    const secretKey = process.env.STRIPE_SECRET_KEY
+    
+    // During build time, return a mock instance
+    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
+      console.warn('⚠️ Using mock Stripe instance during build phase')
+      stripeInstance = new Stripe('sk_test_mock_key_for_build', {
+        apiVersion: '2024-12-18.acacia',
+        typescript: true,
+      })
+    } else if (!secretKey) {
+      throw new Error('STRIPE_SECRET_KEY environment variable is required')
+    } else {
+      stripeInstance = new Stripe(secretKey, {
+        apiVersion: '2024-12-18.acacia',
+        typescript: true,
+      })
+    }
+  }
+  
+  return stripeInstance
+}
+
+// Backward compatibility export
+export const stripe = getStripeInstance()
 
 // Client-side Stripe instance
 export const getStripe = () => {

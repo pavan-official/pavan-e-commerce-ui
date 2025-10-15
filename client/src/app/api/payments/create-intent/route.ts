@@ -1,6 +1,6 @@
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { stripe } from '@/lib/stripe'
+import { getStripeInstance } from '@/lib/stripe'
 import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
@@ -97,6 +97,7 @@ export async function POST(request: NextRequest) {
     let customerId: string | null = null
 
     try {
+      const stripe = getStripeInstance()
       const customers = await stripe.customers.list({
         email: session.user.email!,
         limit: 1,
@@ -120,6 +121,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create payment intent
+    const stripe = getStripeInstance()
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(order.total * 100), // Convert to cents
       currency: 'usd',
