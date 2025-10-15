@@ -41,24 +41,21 @@ jobs:
       - name: 📋 Check Recipe Format
         run: |
           cd client
-          rm -f pnpm-lock.yaml
-          npm install --legacy-peer-deps
+          npm install
           npm run lint
         # Interview Story: "This checks if the recipe follows proper cooking standards (linting)"
 
       - name: 🧪 Taste Test Recipe
         run: |
           cd client
-          rm -f pnpm-lock.yaml
-          npm install --legacy-peer-deps
+          npm install
           npm run test
         # Interview Story: "This tests if the recipe actually works (unit tests)"
 
       - name: 🔒 Safety Check
         run: |
           cd client
-          rm -f pnpm-lock.yaml
-          npm install --legacy-peer-deps
+          npm install
           npm audit
         # Interview Story: "This checks for any dangerous ingredients (security vulnerabilities)"
 
@@ -82,8 +79,7 @@ jobs:
       - name: 🏗️ Build Recipe
         run: |
           cd client
-          rm -f pnpm-lock.yaml
-          npm install --legacy-peer-deps
+          npm install
           npm run build
         # Interview Story: "This prepares the recipe for packaging (builds the application)"
 
