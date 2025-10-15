@@ -38,7 +38,7 @@ jest.mock('@/components/analytics/TopProductsTable', () => {
   }
 })
 
-const mockUseAnalyticsStore = useAnalyticsStore as jest.MockedFunction<typeof useAnalyticsStore>
+const mockUseAnalyticsStore = useAnalyticsStore as jest.MockedGenericFunction<typeof useAnalyticsStore>
 
 describe('AnalyticsDashboard', () => {
   const mockDashboardData = {

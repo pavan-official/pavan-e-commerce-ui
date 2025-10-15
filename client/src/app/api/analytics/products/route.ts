@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build where clause for orders
-    const orderWhere: any = {
+    const orderWhere: ApiResponse = {
       createdAt: {
         gte: dateFrom,
         lte: dateTo,

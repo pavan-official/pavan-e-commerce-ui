@@ -11,10 +11,10 @@ interface AdvancedSearchBarProps {
   showFilters?: boolean
 }
 
-export default function AdvancedSearchBar({ 
+export default function AdvancedSearchBar(_{ 
   placeholder = "Search products...", 
-  className = "",
-  showFilters = true 
+  _className = "",
+  _showFilters = true 
 }: AdvancedSearchBarProps) {
   const router = useRouter()
   const { 
@@ -80,7 +80,7 @@ export default function AdvancedSearchBar({
     }
   }
 
-  const handleSuggestionClick = (suggestion: any) => {
+  const handleSuggestionClick = (suggestion: ApiResponse) => {
     if (suggestion.type === 'product') {
       router.push(suggestion.url)
     } else if (suggestion.type === 'category') {

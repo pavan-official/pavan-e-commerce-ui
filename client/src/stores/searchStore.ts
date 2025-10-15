@@ -42,7 +42,7 @@ interface SearchResult {
     name: string
     slug: string
   }
-  variants: any[]
+  variants: ApiResponse[]
   averageRating: number
   reviewCount: number
   quantity: number
@@ -70,7 +70,7 @@ interface SearchState {
   // UI state
   isLoading: boolean
   error: string | null
-  suggestions: any[]
+  suggestions: ApiResponse[]
   isSuggestionsLoading: boolean
   
   // Search history
@@ -102,7 +102,7 @@ interface SearchActions {
   // Local state management
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
-  setSuggestions: (suggestions: any[]) => void
+  setSuggestions: (suggestions: ApiResponse[]) => void
   setSuggestionsLoading: (loading: boolean) => void
 }
 
@@ -183,7 +183,7 @@ export const useSearchStore = create<SearchState & SearchActions>()(
               isLoading: false,
             })
           }
-        } catch (error) {
+        } catch (_error) {
           set({
             error: 'An error occurred during search',
             isLoading: false,
@@ -218,7 +218,7 @@ export const useSearchStore = create<SearchState & SearchActions>()(
               isSuggestionsLoading: false,
             })
           }
-        } catch (error) {
+        } catch (_error) {
           set({
             suggestions: [],
             isSuggestionsLoading: false,
@@ -304,7 +304,7 @@ export const useSearchStore = create<SearchState & SearchActions>()(
       // Local state setters
       setLoading: (loading: boolean) => set({ isLoading: loading }),
       setError: (error: string | null) => set({ error }),
-      setSuggestions: (suggestions: any[]) => set({ suggestions }),
+      setSuggestions: (suggestions: ApiResponse[]) => set({ suggestions }),
       setSuggestionsLoading: (loading: boolean) => set({ isSuggestionsLoading: loading }),
     }),
     {

@@ -141,7 +141,7 @@ export const useReviewStore = create<ReviewState & ReviewActions>((set, get) => 
           isLoading: false,
         })
       }
-    } catch (error) {
+    } catch (_error) {
       set({
         error: 'An error occurred while fetching reviews',
         isLoading: false,
@@ -167,7 +167,7 @@ export const useReviewStore = create<ReviewState & ReviewActions>((set, get) => 
           isLoading: false,
         })
       }
-    } catch (error) {
+    } catch (_error) {
       set({
         error: 'An error occurred while fetching review',
         isLoading: false,
@@ -199,7 +199,7 @@ export const useReviewStore = create<ReviewState & ReviewActions>((set, get) => 
           isSubmitting: false,
         })
       }
-    } catch (error) {
+    } catch (_error) {
       set({
         error: 'An error occurred while creating review',
         isSubmitting: false,
@@ -231,7 +231,7 @@ export const useReviewStore = create<ReviewState & ReviewActions>((set, get) => 
           isSubmitting: false,
         })
       }
-    } catch (error) {
+    } catch (_error) {
       set({
         error: 'An error occurred while updating review',
         isSubmitting: false,
@@ -264,7 +264,7 @@ export const useReviewStore = create<ReviewState & ReviewActions>((set, get) => 
           isSubmitting: false,
         })
       }
-    } catch (error) {
+    } catch (_error) {
       set({
         error: 'An error occurred while deleting review',
         isSubmitting: false,
@@ -296,7 +296,7 @@ export const useReviewStore = create<ReviewState & ReviewActions>((set, get) => 
       } else {
         set({ error: data.error?.message || 'Failed to vote on review' })
       }
-    } catch (error) {
+    } catch (_error) {
       set({ error: 'An error occurred while voting on review' })
     }
   },
@@ -315,7 +315,7 @@ export const useReviewStore = create<ReviewState & ReviewActions>((set, get) => 
       } else {
         set({ error: data.error?.message || 'Failed to remove vote' })
       }
-    } catch (error) {
+    } catch (_error) {
       set({ error: 'An error occurred while removing vote' })
     }
   },

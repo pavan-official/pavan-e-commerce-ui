@@ -55,7 +55,7 @@ const consoleFormat = winston.format.combine(
 )
 
 // Mask sensitive data in logs
-function maskSensitiveData(data: any): any {
+function maskSensitiveData(data: ApiResponse): ApiResponse {
   if (typeof data !== 'object' || data === null) {
     return data
   }
@@ -159,27 +159,27 @@ class Logger {
   }
 
   // Error logging
-  error(message: string, meta?: any): void {
+  error(message: string, meta?: ApiResponse): void {
     this.logger.error(message, this.enrichMeta(meta))
   }
 
   // Warning logging
-  warn(message: string, meta?: any): void {
+  warn(message: string, meta?: ApiResponse): void {
     this.logger.warn(message, this.enrichMeta(meta))
   }
 
   // Info logging
-  info(message: string, meta?: any): void {
+  info(message: string, meta?: ApiResponse): void {
     this.logger.info(message, this.enrichMeta(meta))
   }
 
   // HTTP logging
-  http(message: string, meta?: any): void {
+  http(message: string, meta?: ApiResponse): void {
     this.logger.http(message, this.enrichMeta(meta))
   }
 
   // Debug logging
-  debug(message: string, meta?: any): void {
+  debug(message: string, meta?: ApiResponse): void {
     this.logger.debug(message, this.enrichMeta(meta))
   }
 
@@ -223,7 +223,7 @@ class Logger {
   }
 
   // Log security event
-  logSecurity(event: string, severity: 'low' | 'medium' | 'high' | 'critical', meta?: any): void {
+  logSecurity(event: string, severity: 'low' | 'medium' | 'high' | 'critical', meta?: ApiResponse): void {
     const level = severity === 'critical' || severity === 'high' ? 'error' : 'warn'
     
     this.logger.log(level, `SECURITY: ${event}`, {
@@ -246,7 +246,7 @@ class Logger {
   }
 
   // Log business event
-  logBusiness(event: string, meta?: any): void {
+  logBusiness(event: string, meta?: ApiResponse): void {
     this.info(`BUSINESS: ${event}`, {
       ...this.enrichMeta(meta),
       businessEvent: true,
@@ -254,7 +254,7 @@ class Logger {
   }
 
   // Enrich metadata with context
-  private enrichMeta(meta?: any): any {
+  private enrichMeta(meta?: ApiResponse): ApiResponse {
     return {
       ...meta,
       environment: process.env.NODE_ENV,
@@ -287,8 +287,8 @@ class Logger {
 export const logger = Logger.getInstance()
 
 // Request logging middleware
-export function withRequestLogging(handler: Function) {
-  return async (request: Request, context: any) => {
+export function withRequestLogging(_handler: GenericFunction) {
+  return async (request: Request, context: ApiResponse) => {
     const startTime = Date.now()
     const url = new URL(request.url)
     
@@ -301,7 +301,7 @@ export function withRequestLogging(handler: Function) {
       logger.logResponse(request, response.status, duration)
       
       return response
-    } catch (error) {
+    } catch (_error) {
       const duration = Date.now() - startTime
       
       logger.error(`✗ ${request.method} ${url.pathname} failed after ${duration}ms`, {
@@ -315,11 +315,11 @@ export function withRequestLogging(handler: Function) {
 }
 
 // Performance logging decorator
-export function logPerformance(threshold: number = 1000) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+export function logPerformance(_threshold: number = 1000) {
+  return function (target: ApiResponse, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (...args: ApiResponse[]) {
       const startTime = Date.now()
       
       try {
@@ -335,7 +335,7 @@ export function logPerformance(threshold: number = 1000) {
         }
         
         return result
-      } catch (error) {
+      } catch (_error) {
         const duration = Date.now() - startTime
         logger.error(`Operation failed: ${propertyKey} after ${duration}ms`, {
           method: propertyKey,

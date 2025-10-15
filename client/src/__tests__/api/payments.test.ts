@@ -38,7 +38,7 @@ jest.mock('next-auth', () => ({
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>
 const mockStripe = stripe as jest.Mocked<typeof stripe>
-const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
+const mockGetServerSession = getServerSession as jest.MockedGenericFunction<typeof getServerSession>
 
 describe('Payments API', () => {
   beforeEach(() => {

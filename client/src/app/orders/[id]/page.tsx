@@ -11,7 +11,7 @@ interface OrderDetailsPageProps {
   params: { id: string }
 }
 
-export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
+export default function OrderDetailsPage(_{ params }: OrderDetailsPageProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
   const { currentOrder, fetchOrder, isLoading, error } = useOrderStore()

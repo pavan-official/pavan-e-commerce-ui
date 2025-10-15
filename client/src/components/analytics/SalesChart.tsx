@@ -238,7 +238,7 @@ const SalesChart = () => {
               <span>Sales Analytics</span>
             </CardTitle>
             <div className="flex items-center space-x-4">
-              <Select value={selectedPeriod} onValueChange={(value: any) => setPeriod(value)}>
+              <Select value={selectedPeriod} onValueChange={(value: ApiResponse) => setPeriod(value)}>
                 <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>
@@ -275,7 +275,7 @@ const SalesChart = () => {
               </div>
 
               {chartType !== 'pie' && (
-                <Select value={dataType} onValueChange={(value: any) => setDataType(value)}>
+                <Select value={dataType} onValueChange={(value: ApiResponse) => setDataType(value)}>
                   <SelectTrigger className="w-24">
                     <SelectValue />
                   </SelectTrigger>

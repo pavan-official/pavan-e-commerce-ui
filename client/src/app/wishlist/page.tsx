@@ -11,23 +11,23 @@ import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
 export default function WishlistPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-  const { items, isLoading, error, fetchWishlist, removeFromWishlist } = useWishlistStore()
+  const { _data: session, status } = useSession()
+  const _router = useRouter()
+  const { items, isLoading, _error, fetchWishlist, removeFromWishlist } = useWishlistStore()
   const { addToCart } = useCartStore()
 
   useEffect(() => {
     if (status === 'loading') return
     
     if (!session) {
-      router.push('/auth/signin')
+      _router.push('/auth/signin')
       return
     }
 
     fetchWishlist()
-  }, [session, status, router, fetchWishlist])
+  }, [session, status, _router, fetchWishlist])
 
-  const handleRemoveFromWishlist = async (itemId: string) => {
+  const _handleRemoveFromWishlist = async (itemId: string) => {
     await removeFromWishlist(itemId)
   }
 
@@ -56,9 +56,9 @@ export default function WishlistPage() {
         </p>
       </div>
 
-      {error && (
+      {_error && (
         <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
-          <div className="text-red-700">{error}</div>
+          <div className="text-red-700">{_error}</div>
         </div>
       )}
 

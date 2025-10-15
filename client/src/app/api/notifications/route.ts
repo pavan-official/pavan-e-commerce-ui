@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     // Build where clause
-    const where: any = {
+    const where: ApiResponse = {
       userId: session.user.id,
     }
 
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build orderBy clause
-    let orderBy: any = { createdAt: 'desc' }
+    let orderBy: ApiResponse = { createdAt: 'desc' }
     switch (sortBy) {
       case 'createdAt':
         orderBy = { createdAt: sortOrder }

@@ -42,7 +42,7 @@ jest.mock('@/lib/auth', () => ({
 }))
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>
-const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
+const mockGetServerSession = getServerSession as jest.MockedGenericFunction<typeof getServerSession>
 
 describe('Analytics API Routes', () => {
   const mockSession = {

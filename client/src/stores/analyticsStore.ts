@@ -218,7 +218,7 @@ interface ProductAnalytics {
   insights: {
     revenueGrowth: number
     salesGrowth: number
-    categoryTrends: any[]
+    categoryTrends: ApiResponse[]
   }
 }
 
@@ -305,7 +305,7 @@ export const useAnalyticsStore = create<AnalyticsState & AnalyticsActions>((set,
           isLoading: false,
         })
       }
-    } catch (error) {
+    } catch (_error) {
       set({
         error: 'An error occurred while fetching dashboard overview',
         isLoading: false,
@@ -345,7 +345,7 @@ export const useAnalyticsStore = create<AnalyticsState & AnalyticsActions>((set,
           isLoading: false,
         })
       }
-    } catch (error) {
+    } catch (_error) {
       set({
         error: 'An error occurred while fetching sales analytics',
         isLoading: false,
@@ -382,7 +382,7 @@ export const useAnalyticsStore = create<AnalyticsState & AnalyticsActions>((set,
           isLoading: false,
         })
       }
-    } catch (error) {
+    } catch (_error) {
       set({
         error: 'An error occurred while fetching user analytics',
         isLoading: false,
@@ -422,7 +422,7 @@ export const useAnalyticsStore = create<AnalyticsState & AnalyticsActions>((set,
           isLoading: false,
         })
       }
-    } catch (error) {
+    } catch (_error) {
       set({
         error: 'An error occurred while fetching product analytics',
         isLoading: false,

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 
 // Simplified middleware without next-auth dependency
 // Authentication is handled at the API route level
-export function middleware(request: NextRequest) {
+export function middleware(_request: NextRequest) {
   // Add security headers
   const response = NextResponse.next()
   

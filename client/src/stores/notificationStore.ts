@@ -7,7 +7,7 @@ interface Notification {
   type: 'ORDER_UPDATE' | 'PAYMENT_UPDATE' | 'REVIEW_MODERATION' | 'REVIEW_DELETED' | 'SYSTEM_ANNOUNCEMENT' | 'PROMOTION'
   title: string
   message: string
-  data?: Record<string, any>
+  data?: Record<string, unknown>
   isRead: boolean
   createdAt: string
   updatedAt: string
@@ -135,7 +135,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
               isLoading: false,
             })
           }
-        } catch (error) {
+        } catch (_error) {
           set({
             error: 'An error occurred while fetching notifications',
             isLoading: false,
@@ -154,7 +154,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
             set({ error: data.error?.message || 'Failed to fetch notification' })
             return null
           }
-        } catch (error) {
+        } catch (_error) {
           set({ error: 'An error occurred while fetching notification' })
           return null
         }
@@ -185,7 +185,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
           } else {
             set({ error: data.error?.message || 'Failed to mark notification as read' })
           }
-        } catch (error) {
+        } catch (_error) {
           set({ error: 'An error occurred while marking notification as read' })
         }
       },
@@ -215,7 +215,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
           } else {
             set({ error: data.error?.message || 'Failed to mark notification as unread' })
           }
-        } catch (error) {
+        } catch (_error) {
           set({ error: 'An error occurred while marking notification as unread' })
         }
       },
@@ -242,7 +242,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
           } else {
             set({ error: data.error?.message || 'Failed to delete notification' })
           }
-        } catch (error) {
+        } catch (_error) {
           set({ error: 'An error occurred while deleting notification' })
         }
       },
@@ -272,7 +272,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
           } else {
             set({ error: data.error?.message || 'Failed to mark all notifications as read' })
           }
-        } catch (error) {
+        } catch (_error) {
           set({ error: 'An error occurred while marking all notifications as read' })
         }
       },
@@ -301,7 +301,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
           } else {
             set({ error: data.error?.message || 'Failed to mark all notifications as unread' })
           }
-        } catch (error) {
+        } catch (_error) {
           set({ error: 'An error occurred while marking all notifications as unread' })
         }
       },
@@ -327,7 +327,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
           } else {
             set({ error: data.error?.message || 'Failed to delete all notifications' })
           }
-        } catch (error) {
+        } catch (_error) {
           set({ error: 'An error occurred while deleting all notifications' })
         }
       },
@@ -352,7 +352,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
           } else {
             set({ error: data.error?.message || 'Failed to delete read notifications' })
           }
-        } catch (error) {
+        } catch (_error) {
           set({ error: 'An error occurred while deleting read notifications' })
         }
       },

@@ -65,7 +65,7 @@ export default function NewProductPage() {
       } else {
         setError(data.error?.message || 'Failed to fetch categories')
       }
-    } catch (error) {
+    } catch (_error) {
       setError('An error occurred while fetching categories')
     }
   }
@@ -90,7 +90,7 @@ export default function NewProductPage() {
       } else {
         setError(data.error?.message || 'Failed to create product')
       }
-    } catch (error) {
+    } catch (_error) {
       setError('An error occurred while creating the product')
     } finally {
       setLoading(false)

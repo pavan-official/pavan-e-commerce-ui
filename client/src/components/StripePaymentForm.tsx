@@ -19,7 +19,7 @@ interface StripePaymentFormProps {
   onError: (error: string) => void
 }
 
-function PaymentForm({ orderId, amount, onSuccess, onError }: StripePaymentFormProps) {
+function PaymentForm(_{ orderId, amount, _onSuccess, _onError }: StripePaymentFormProps) {
   const stripe = useStripe()
   const elements = useElements()
   const { data: session } = useSession()
@@ -167,7 +167,7 @@ function PaymentForm({ orderId, amount, onSuccess, onError }: StripePaymentFormP
   )
 }
 
-export default function StripePaymentForm(props: StripePaymentFormProps) {
+export default function StripePaymentForm(_props: StripePaymentFormProps) {
   return (
     <Elements stripe={stripePromise}>
       <PaymentForm {...props} />

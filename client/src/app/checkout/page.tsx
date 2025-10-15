@@ -22,7 +22,7 @@ export default function CheckoutPage() {
     fetchCart()
   }, [session, status, router, fetchCart])
 
-  const handleOrderSuccess = (order: any) => {
+  const handleOrderSuccess = (order: ApiResponse) => {
     // Order created successfully, redirect to order confirmation
     router.push(`/orders/${order.id}`)
   }

@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 
 // GET /api/analytics/dashboard - Get dashboard overview data
-export async function GET(request: NextRequest) {
+export async function GET(__request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 

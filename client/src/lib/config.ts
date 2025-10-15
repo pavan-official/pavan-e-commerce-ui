@@ -1,3 +1,4 @@
+import { ApiResponse, GenericObject, GenericGenericFunction, ErrorResponse } from '@/types/common';
 /**
  * Environment Configuration System
  * Centralized configuration management with validation
@@ -92,7 +93,7 @@ class ConfigValidator {
 
 class ConfigFactory {
   private static instance: ConfigFactory;
-  private config: any;
+  private config: ApiResponse;
 
   private constructor() {
     this.config = this.buildConfig();

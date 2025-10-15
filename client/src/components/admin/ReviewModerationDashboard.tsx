@@ -40,7 +40,7 @@ interface ReviewModerationDashboardProps {
   className?: string
 }
 
-export default function ReviewModerationDashboard({ 
+export default function ReviewModerationDashboard(_{ 
   className = '' 
 }: ReviewModerationDashboardProps) {
   const { data: session } = useSession()
@@ -76,7 +76,7 @@ export default function ReviewModerationDashboard({
       } else {
         setError(data.error?.message || 'Failed to fetch reviews')
       }
-    } catch (err) {
+    } catch (_err) {
       setError('An error occurred while fetching reviews')
     } finally {
       setIsLoading(false)
@@ -107,7 +107,7 @@ export default function ReviewModerationDashboard({
       } else {
         setError(data.error?.message || 'Failed to moderate review')
       }
-    } catch (err) {
+    } catch (_err) {
       setError('An error occurred while moderating review')
     }
   }
@@ -130,7 +130,7 @@ export default function ReviewModerationDashboard({
       } else {
         setError(data.error?.message || 'Failed to delete review')
       }
-    } catch (err) {
+    } catch (_err) {
       setError('An error occurred while deleting review')
     }
   }

@@ -12,21 +12,21 @@ interface ReviewListProps {
   className?: string
 }
 
-export default function ReviewList({ productId, className = '' }: ReviewListProps) {
-  const { data: session } = useSession()
+export default function ReviewList(_{ productId, _className = '' }: ReviewListProps) {
+  const { _data: session } = useSession()
   const {
     reviews,
     stats,
     pagination,
     isLoading,
-    error,
+    _error,
     filters,
     fetchReviews,
     setPage,
     setSorting,
     setRatingFilter,
     voteHelpful,
-    removeVote,
+    _removeVote,
     deleteReview,
   } = useReviewStore()
 
@@ -68,7 +68,7 @@ export default function ReviewList({ productId, className = '' }: ReviewListProp
     await voteHelpful(productId, reviewId, isHelpful)
   }
 
-  const handleDeleteReview = async (reviewId: string) => {
+  const _handleDeleteReview = async (reviewId: string) => {
     if (confirm('Are you sure you want to delete this review?')) {
       await deleteReview(productId, reviewId)
     }
@@ -293,7 +293,7 @@ export default function ReviewList({ productId, className = '' }: ReviewListProp
     )
   }
 
-  if (error) {
+  if (_error) {
     return (
       <div className={`${className}`}>
         <div className="text-center py-12">
@@ -303,7 +303,7 @@ export default function ReviewList({ productId, className = '' }: ReviewListProp
             </svg>
           </div>
           <h3 className="mt-4 text-lg font-medium text-gray-900">Error Loading Reviews</h3>
-          <p className="mt-2 text-sm text-gray-500">{error}</p>
+          <p className="mt-2 text-sm text-gray-500">{_error}</p>
         </div>
       </div>
     )

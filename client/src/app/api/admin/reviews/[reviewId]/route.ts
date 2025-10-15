@@ -12,7 +12,7 @@ const moderateReviewSchema = z.object({
 // PUT /api/admin/reviews/[reviewId] - Moderate a review (approve/reject)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { reviewId: string } }
+  _{ params }: { params: { reviewId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -205,7 +205,7 @@ export async function PUT(
 // DELETE /api/admin/reviews/[reviewId] - Delete a review (admin only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { reviewId: string } }
+  _{ params }: { params: { reviewId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)

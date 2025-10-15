@@ -43,7 +43,7 @@ interface ProductFormProps {
   loading?: boolean
 }
 
-export default function ProductForm({ product, categories, onSubmit, loading = false }: ProductFormProps) {
+export default function ProductForm(_{ product, categories, _onSubmit, _loading = false }: ProductFormProps) {
   const router = useRouter()
   const [formData, setFormData] = useState<Product>({
     name: '',

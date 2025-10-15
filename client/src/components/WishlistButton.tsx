@@ -11,11 +11,11 @@ interface WishlistButtonProps {
   size?: 'sm' | 'md' | 'lg'
 }
 
-export default function WishlistButton({
+export default function WishlistButton(_{
   productId,
-  className = '',
-  size = 'md',
-}: WishlistButtonProps) {
+  _className = '',
+  _size = 'md',
+_}: WishlistButtonProps) {
   const { data: session } = useSession()
   const router = useRouter()
   const { addToWishlist, removeFromWishlist, isInWishlist, isLoading } = useWishlistStore()

@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 }
 
 // Helper function to send notification to a specific user
-export async function sendNotificationToUser(userId: string, notification: any) {
+export async function sendNotificationToUser(_userId: string, _notification: ApiResponse) {
   if (!global.notificationStreams) {
     return false
   }
@@ -96,7 +96,7 @@ export async function sendNotificationToUser(userId: string, notification: any) 
 }
 
 // Helper function to update notification for a specific user
-export async function updateNotificationForUser(userId: string, notification: any) {
+export async function updateNotificationForUser(_userId: string, _notification: ApiResponse) {
   if (!global.notificationStreams) {
     return false
   }
@@ -124,7 +124,7 @@ export async function updateNotificationForUser(userId: string, notification: an
 }
 
 // Helper function to delete notification for a specific user
-export async function deleteNotificationForUser(userId: string, notificationId: string) {
+export async function deleteNotificationForUser(_userId: string, _notificationId: string) {
   if (!global.notificationStreams) {
     return false
   }

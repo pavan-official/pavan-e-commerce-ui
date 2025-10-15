@@ -342,11 +342,11 @@ export class RBACService {
 }
 
 // RBAC middleware for API routes
-export function requirePermission(permission: Permission) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+export function requirePermission(_permission: Permission) {
+  return function (target: ApiResponse, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (...args: ApiResponse[]) {
       const request = args[0]
       const session = await getServerSession(authOptions)
       
@@ -374,13 +374,13 @@ export function requirePermission(permission: Permission) {
 
 // Resource access middleware
 export function requireResourceAccess(
-  resourceType: string,
-  action: 'read' | 'write' | 'delete'
+  _resourceType: string,
+  _action: 'read' | 'write' | 'delete'
 ) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (target: ApiResponse, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (...args: ApiResponse[]) {
       const request = args[0]
       const session = await getServerSession(authOptions)
       

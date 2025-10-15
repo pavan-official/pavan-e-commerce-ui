@@ -14,7 +14,7 @@ const createReviewSchema = z.object({
 // GET /api/products/[id]/reviews - Get all reviews for a product
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  _{ params }: { params: { id: string } }
 ) {
   try {
     const { searchParams } = new URL(request.url)
@@ -28,7 +28,7 @@ export async function GET(
     const skip = (page - 1) * limit
 
     // Build where clause
-    const where: any = {
+    const where: ApiResponse = {
       productId: params.id,
     }
 
@@ -41,7 +41,7 @@ export async function GET(
     }
 
     // Build orderBy clause
-    let orderBy: any = { createdAt: 'desc' }
+    let orderBy: ApiResponse = { createdAt: 'desc' }
     switch (sortBy) {
       case 'rating':
         orderBy = { rating: sortOrder }
@@ -138,7 +138,7 @@ export async function GET(
 // POST /api/products/[id]/reviews - Create a new review
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  _{ params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)

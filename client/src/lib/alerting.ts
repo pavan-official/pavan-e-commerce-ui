@@ -28,7 +28,7 @@ export interface Alert {
   severity: AlertSeverity
   title: string
   message: string
-  details?: Record<string, any>
+  details?: Record<string, unknown>
   timestamp: number
   resolved?: boolean
   resolvedAt?: number
@@ -39,7 +39,7 @@ export interface AlertRule {
   id: string
   name: string
   type: AlertType
-  condition: (data: any) => boolean
+  condition: (data: ApiResponse) => boolean
   severity: AlertSeverity
   message: string
   cooldown: number // Minimum time between alerts (ms)
@@ -154,7 +154,7 @@ export class AlertingService {
   }
 
   // Check rules and trigger alerts
-  async checkRules(data: Record<string, any>): Promise<Alert[]> {
+  async checkRules(data: Record<string, unknown>): Promise<Alert[]> {
     const triggeredAlerts: Alert[] = []
 
     for (const [ruleId, rule] of this.rules) {
@@ -169,7 +169,7 @@ export class AlertingService {
             triggeredAlerts.push(alert)
           }
         }
-      } catch (error) {
+      } catch (_error) {
         logger.error(`Error checking alert rule: ${rule.name}`, {
           ruleId,
           error: error.message,
@@ -181,7 +181,7 @@ export class AlertingService {
   }
 
   // Trigger an alert
-  private async triggerAlert(rule: AlertRule, data: Record<string, any>): Promise<Alert> {
+  private async triggerAlert(rule: AlertRule, data: Record<string, unknown>): Promise<Alert> {
     const alert: Alert = {
       id: `${rule.id}-${Date.now()}`,
       type: rule.type,
@@ -227,7 +227,7 @@ export class AlertingService {
 
       const timeSinceLastTrigger = Date.now() - lastTriggerTime
       return timeSinceLastTrigger >= cooldown
-    } catch (error) {
+    } catch (_error) {
       logger.error('Error checking alert cooldown', { ruleId, error: error.message })
       return true // Allow trigger if cooldown check fails
     }
@@ -238,7 +238,7 @@ export class AlertingService {
     try {
       const cacheKey = CacheKeys.alertCooldown(ruleId)
       await cacheService.set(cacheKey, Date.now(), Math.floor(CacheTTL.MEDIUM / 1000))
-    } catch (error) {
+    } catch (_error) {
       logger.error('Error updating alert trigger time', { ruleId, error: error.message })
     }
   }
@@ -257,7 +257,7 @@ export class AlertingService {
       }
       
       await cacheService.set(cacheKey, recentAlerts, CacheTTL.MEDIUM)
-    } catch (error) {
+    } catch (_error) {
       logger.error('Error caching alert', { alertId: alert.id, error: error.message })
     }
   }
@@ -286,7 +286,7 @@ export class AlertingService {
       if (process.env.ALERT_EMAIL_TO) {
         await this.sendEmailNotification(alert)
       }
-    } catch (error) {
+    } catch (_error) {
       logger.error('Error sending alert notifications', {
         alertId: alert.id,
         error: error.message,
@@ -343,7 +343,7 @@ export class AlertingService {
       })
 
       logger.info('Slack notification sent', { alertId: alert.id })
-    } catch (error) {
+    } catch (_error) {
       logger.error('Error sending Slack notification', {
         alertId: alert.id,
         error: error.message,
@@ -356,7 +356,7 @@ export class AlertingService {
     try {
       // In a real implementation, you would use an email service like SendGrid
       logger.info('Email notification sent', { alertId: alert.id })
-    } catch (error) {
+    } catch (_error) {
       logger.error('Error sending email notification', {
         alertId: alert.id,
         error: error.message,
@@ -371,7 +371,7 @@ export class AlertingService {
       const recentAlerts = await cacheService.get<Alert[]>(cacheKey) || []
       
       return recentAlerts.slice(0, limit)
-    } catch (error) {
+    } catch (_error) {
       logger.error('Error getting recent alerts', { error: error.message })
       return []
     }
@@ -391,7 +391,7 @@ export class AlertingService {
       logger.info(`Alert resolved`, { alertId })
 
       return true
-    } catch (error) {
+    } catch (_error) {
       logger.error('Error resolving alert', { alertId, error: error.message })
       return false
     }

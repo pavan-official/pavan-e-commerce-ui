@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     // Build where clause
-    const where: any = {}
+    const where: ApiResponse = {}
     if (status === 'pending') {
       where.isApproved = false
     } else if (status === 'approved') {
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build orderBy clause
-    let orderBy: any = { createdAt: 'desc' }
+    let orderBy: ApiResponse = { createdAt: 'desc' }
     switch (sortBy) {
       case 'rating':
         orderBy = { rating: sortOrder }

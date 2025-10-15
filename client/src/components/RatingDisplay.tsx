@@ -12,15 +12,15 @@ interface RatingDisplayProps {
   className?: string
 }
 
-export default function RatingDisplay({
+export default function RatingDisplay(_{
   rating,
-  maxRating = 5,
-  size = 'md',
-  showNumber = false,
-  showCount = false,
-  reviewCount,
-  className = '',
-}: RatingDisplayProps) {
+  _maxRating = 5,
+  _size = 'md',
+  _showNumber = false,
+  _showCount = false,
+  _reviewCount,
+  _className = '',
+_}: RatingDisplayProps) {
   const sizeClasses = {
     sm: 'h-3 w-3',
     md: 'h-4 w-4',

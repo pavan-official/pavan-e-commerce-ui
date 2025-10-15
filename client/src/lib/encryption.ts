@@ -1,3 +1,4 @@
+import { ApiResponse, GenericObject, GenericGenericFunction, ErrorResponse } from '@/types/common';
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 
@@ -145,7 +146,7 @@ export class FieldEncryption {
   private static encryptionService = EncryptionService.getInstance()
 
   // Encrypt sensitive fields before storing
-  static encryptFields<T extends Record<string, any>>(
+  static encryptFields<T extends Record<string, unknown>>(
     data: T,
     fieldsToEncrypt: (keyof T)[]
   ): T {
@@ -161,7 +162,7 @@ export class FieldEncryption {
   }
 
   // Decrypt sensitive fields after retrieving
-  static decryptFields<T extends Record<string, any>>(
+  static decryptFields<T extends Record<string, unknown>>(
     data: T,
     fieldsToDecrypt: (keyof T)[]
   ): T {
@@ -189,7 +190,7 @@ export class SecureStorage {
   // Store sensitive data with encryption
   static async storeSecureData(
     key: string,
-    data: any,
+    data: ApiResponse,
     ttl?: number
   ): Promise<void> {
     try {
@@ -269,7 +270,7 @@ export class DataMasking {
   }
 
   // Mask sensitive fields in objects
-  static maskSensitiveFields<T extends Record<string, any>>(
+  static maskSensitiveFields<T extends Record<string, unknown>>(
     data: T,
     fieldsToMask: (keyof T)[]
   ): T {

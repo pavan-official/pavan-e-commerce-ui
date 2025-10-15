@@ -56,7 +56,7 @@ export default function ProductsPage() {
       } else {
         setError(data.error?.message || 'Failed to fetch products')
       }
-    } catch (error) {
+    } catch (_error) {
       setError('An error occurred while fetching products')
     } finally {
       setLoading(false)
@@ -78,7 +78,7 @@ export default function ProductsPage() {
       } else {
         alert(data.error?.message || 'Failed to delete product')
       }
-    } catch (error) {
+    } catch (_error) {
       alert('An error occurred while deleting the product')
     }
   }
@@ -102,7 +102,7 @@ export default function ProductsPage() {
       } else {
         alert(data.error?.message || 'Failed to update product')
       }
-    } catch (error) {
+    } catch (_error) {
       alert('An error occurred while updating the product')
     }
   }

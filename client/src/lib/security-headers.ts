@@ -105,8 +105,8 @@ export class CSRFService {
 }
 
 // Security middleware
-export function withSecurityHeaders(handler: Function) {
-  return async (request: NextRequest, context: any) => {
+export function withSecurityHeaders(_handler: GenericFunction) {
+  return async (request: NextRequest, context: ApiResponse) => {
     const response = await handler(request, context)
     
     // Add security headers to response
@@ -119,8 +119,8 @@ export function withSecurityHeaders(handler: Function) {
 }
 
 // CSRF protection middleware
-export function withCSRFProtection(handler: Function) {
-  return async (request: NextRequest, context: any) => {
+export function withCSRFProtection(_handler: GenericFunction) {
+  return async (request: NextRequest, context: ApiResponse) => {
     // Skip CSRF check for GET requests and safe methods
     if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
       return handler(request, context)
@@ -170,8 +170,8 @@ export function withCSRFProtection(handler: Function) {
 }
 
 // Request sanitization middleware
-export function withRequestSanitization(handler: Function) {
-  return async (request: NextRequest, context: any) => {
+export function withRequestSanitization(_handler: GenericFunction) {
+  return async (request: NextRequest, context: ApiResponse) => {
     // Sanitize request headers
     const sanitizedHeaders = new Headers()
     for (const [key, value] of request.headers.entries()) {
@@ -199,8 +199,8 @@ export function withRequestSanitization(handler: Function) {
 
 // IP whitelist middleware
 export function withIPWhitelist(allowedIPs: string[]) {
-  return function (handler: Function) {
-    return async (request: NextRequest, context: any) => {
+  return function (handler: GenericFunction) {
+    return async (request: NextRequest, context: ApiResponse) => {
       const clientIP = getClientIP(request)
       
       if (!allowedIPs.includes(clientIP)) {
@@ -216,9 +216,9 @@ export function withIPWhitelist(allowedIPs: string[]) {
 }
 
 // Request size limiting middleware
-export function withSizeLimit(maxSize: number) {
-  return function (handler: Function) {
-    return async (request: NextRequest, context: any) => {
+export function withSizeLimit(_maxSize: number) {
+  return function (handler: GenericFunction) {
+    return async (request: NextRequest, context: ApiResponse) => {
       const contentLength = request.headers.get('content-length')
       
       if (contentLength && parseInt(contentLength) > maxSize) {
@@ -234,8 +234,8 @@ export function withSizeLimit(maxSize: number) {
 }
 
 // Security audit logging
-export function withSecurityAudit(handler: Function) {
-  return async (request: NextRequest, context: any) => {
+export function withSecurityAudit(_handler: GenericFunction) {
+  return async (request: NextRequest, context: ApiResponse) => {
     const startTime = Date.now()
     const clientIP = getClientIP(request)
     const userAgent = request.headers.get('user-agent') || 'Unknown'

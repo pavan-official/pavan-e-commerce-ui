@@ -17,7 +17,7 @@ import {
 import { useEffect, useState } from 'react'
 
 interface NotificationCenterProps {
-  onClose?: () => void
+  _onClose?: () => void
   className?: string
 }
 
@@ -39,13 +39,13 @@ const notificationColors = {
   PROMOTION: 'text-pink-600 bg-pink-100',
 }
 
-export default function NotificationCenter({ onClose, className = '' }: NotificationCenterProps) {
+export default function NotificationCenter(_{ _onClose, _className = '' }: NotificationCenterProps) {
   const {
     notifications,
     pagination,
     unreadCount,
     isLoading,
-    error,
+    _error,
     filters,
     fetchNotifications,
     markAsRead,
@@ -54,14 +54,14 @@ export default function NotificationCenter({ onClose, className = '' }: Notifica
     markAllAsRead,
     deleteAllNotifications,
     deleteReadNotifications,
-    setFilters,
+    _setFilters,
     setPage,
     setTypeFilter,
     setUnreadOnly,
   } = useNotificationStore()
 
   const [showFilters, setShowFilters] = useState(false)
-  const [selectedNotifications, setSelectedNotifications] = useState<Set<string>>(new Set())
+  const [_selectedNotifications, _setSelectedNotifications] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     fetchNotifications()
@@ -83,7 +83,7 @@ export default function NotificationCenter({ onClose, className = '' }: Notifica
     await markAllAsRead()
   }
 
-  const handleDeleteAll = async () => {
+  const _handleDeleteAll = async () => {
     if (confirm('Are you sure you want to delete all notifications?')) {
       await deleteAllNotifications()
     }
@@ -136,12 +136,12 @@ export default function NotificationCenter({ onClose, className = '' }: Notifica
     )
   }
 
-  if (error) {
+  if (_error) {
     return (
       <div className={`p-4 ${className}`}>
         <div className="text-center py-8">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <p className="text-red-600 mb-4">{error}</p>
+          <p className="text-red-600 mb-4">{_error}</p>
           <button
             onClick={() => fetchNotifications()}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"

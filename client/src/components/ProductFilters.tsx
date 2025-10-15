@@ -6,12 +6,12 @@ import { useEffect, useState } from 'react'
 
 interface ProductFiltersProps {
   className?: string
-  onFiltersChange?: (filters: any) => void
+  onFiltersChange?: (filters: ApiResponse) => void
 }
 
-export default function ProductFilters({ 
+export default function ProductFilters(_{ 
   className = "",
-  onFiltersChange 
+  _onFiltersChange 
 }: ProductFiltersProps) {
   const { 
     filters, 
@@ -49,7 +49,7 @@ export default function ProductFilters({
     }
   }, [aggregations])
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (key: string, value: ApiResponse) => {
     const newFilters = { ...localFilters, [key]: value }
     setLocalFilters(newFilters)
     setFilters(newFilters)

@@ -7,10 +7,10 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 interface CheckoutFormProps {
-  onSuccess?: (order: any) => void
+  onSuccess?: (order: ApiResponse) => void
 }
 
-export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
+export default function CheckoutForm(_{ onSuccess }: CheckoutFormProps) {
   const { data: session } = useSession()
   const router = useRouter()
   const { summary, items } = useCartStore()

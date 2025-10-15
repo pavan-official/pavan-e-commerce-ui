@@ -274,8 +274,8 @@ export class MFAService {
 }
 
 // MFA middleware for API routes
-export function requireMFA(handler: Function) {
-  return async (request: Request, context: any) => {
+export function requireMFA(_handler: GenericFunction) {
+  return async (request: Request, context: ApiResponse) => {
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.id) {

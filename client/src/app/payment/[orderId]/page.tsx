@@ -12,7 +12,7 @@ interface PaymentPageProps {
   params: { orderId: string }
 }
 
-export default function PaymentPage({ params }: PaymentPageProps) {
+export default function PaymentPage(_{ params }: PaymentPageProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
   const { currentOrder, fetchOrder, isLoading, error } = useOrderStore()

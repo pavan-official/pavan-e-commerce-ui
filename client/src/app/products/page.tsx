@@ -13,12 +13,12 @@ function ProductsContent() {
     results,
     pagination,
     isLoading,
-    error,
+    _error,
     filters,
-    setFilters,
+    _setFilters,
     search,
-    nextPage,
-    prevPage,
+    _nextPage,
+    _prevPage,
     setPage,
   } = useSearchStore()
 
@@ -40,11 +40,11 @@ function ProductsContent() {
     }
 
     // Always search - either with filters or show all products
-    setFilters(urlFilters)
+    _setFilters(urlFilters)
     search()
-  }, [searchParams, setFilters, search])
+  }, [searchParams, _setFilters, search])
 
-  const handleFiltersChange = (newFilters: any) => {
+  const handleFiltersChange = (newFilters: ApiResponse) => {
     // Update URL with new filters
     const params = new URLSearchParams()
     Object.entries(newFilters).forEach(([key, value]) => {
@@ -187,7 +187,7 @@ function ProductsContent() {
       <div className="mt-6">
         <button
           onClick={() => {
-            setFilters({})
+            _setFilters({})
             search()
           }}
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -207,7 +207,7 @@ function ProductsContent() {
       )
     }
 
-    if (error) {
+    if (_error) {
       return (
         <div className="text-center py-12">
           <div className="mx-auto h-24 w-24 text-red-400">
@@ -216,7 +216,7 @@ function ProductsContent() {
             </svg>
           </div>
           <h3 className="mt-4 text-lg font-medium text-gray-900">Search Error</h3>
-          <p className="mt-2 text-sm text-gray-500">{error}</p>
+          <p className="mt-2 text-sm text-gray-500">{_error}</p>
         </div>
       )
     }

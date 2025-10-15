@@ -296,8 +296,8 @@ declare module '@/lib/redis' {
 export const metricsCollector = MetricsCollector.getInstance()
 
 // Metrics middleware
-export function withMetrics(handler: Function) {
-  return async (request: Request, context: any) => {
+export function withMetrics(_handler: GenericFunction) {
+  return async (request: Request, context: ApiResponse) => {
     const startTime = Date.now()
     const url = new URL(request.url)
 

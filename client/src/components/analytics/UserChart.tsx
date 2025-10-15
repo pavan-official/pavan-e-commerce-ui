@@ -153,7 +153,7 @@ const UserChart = () => {
               <Users className="h-5 w-5" />
               <span>User Registrations</span>
             </CardTitle>
-            <Select value={selectedPeriod} onValueChange={(value: any) => setPeriod(value)}>
+            <Select value={selectedPeriod} onValueChange={(value: ApiResponse) => setPeriod(value)}>
               <SelectTrigger className="w-32">
                 <SelectValue />
               </SelectTrigger>

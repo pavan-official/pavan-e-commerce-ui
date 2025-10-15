@@ -1,3 +1,4 @@
+import { ApiResponse, GenericObject, GenericGenericFunction, ErrorResponse } from '@/types/common';
 // Performance monitoring utilities
 export class PerformanceMonitor {
   private static instance: PerformanceMonitor
@@ -44,7 +45,7 @@ export class PerformanceMonitor {
     // First Input Delay (FID)
     const fidObserver = new PerformanceObserver((list) => {
       const entries = list.getEntries()
-      entries.forEach((entry: any) => {
+      entries.forEach((entry: ApiResponse) => {
         this.metrics.set('fid', entry.processingStart - entry.startTime)
         this.reportMetric('fid', entry.processingStart - entry.startTime)
       })
@@ -56,7 +57,7 @@ export class PerformanceMonitor {
     let clsValue = 0
     const clsObserver = new PerformanceObserver((list) => {
       const entries = list.getEntries()
-      entries.forEach((entry: any) => {
+      entries.forEach((entry: ApiResponse) => {
         if (!entry.hadRecentInput) {
           clsValue += entry.value
         }
@@ -139,7 +140,7 @@ export class PerformanceMonitor {
     return 'other'
   }
 
-  private reportMetric(name: string, value: number, metadata?: any) {
+  private reportMetric(name: string, value: number, metadata?: ApiResponse) {
     // Send to analytics service
     if (typeof window !== 'undefined' && window.gtag) {
       window.gtag('event', 'performance_metric', {
@@ -211,11 +212,11 @@ export function usePerformanceMonitor() {
 }
 
 // Performance decorator for functions
-export function measurePerformance(name: string) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+export function measurePerformance(_name: string) {
+  return function (target: ApiResponse, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (...args: ApiResponse[]) {
       const monitor = PerformanceMonitor.getInstance()
       const endTiming = monitor.startTiming(`${name}.${propertyKey}`)
       

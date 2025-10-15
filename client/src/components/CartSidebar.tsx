@@ -10,7 +10,7 @@ interface CartSidebarProps {
   onClose: () => void
 }
 
-export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
+export default function CartSidebar(_{ isOpen, _onClose }: CartSidebarProps) {
   const { data: session } = useSession()
   const { items, summary, isLoading, error, updateQuantity, removeFromCart } = useCartStore()
 

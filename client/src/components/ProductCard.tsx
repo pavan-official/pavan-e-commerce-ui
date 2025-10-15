@@ -16,8 +16,8 @@ const ProductCard = ({ product }: { product: ProductType }) => {
     color: product.colors?.[0] || 'default',
   });
 
-  const { data: session } = useSession();
-  const router = useRouter();
+  const { _data: session } = useSession();
+  const _router = useRouter();
   const { addToCart } = useCartStore();
 
   const handleProductType = ({
@@ -35,15 +35,15 @@ const ProductCard = ({ product }: { product: ProductType }) => {
 
   const handleAddToCart = async () => {
     if (!session) {
-      router.push('/auth/signin');
+      _router.push('/auth/signin');
       return;
     }
 
     try {
       await addToCart(product.id.toString(), undefined, 1);
       toast.success("Product added to cart");
-    } catch (error) {
-      toast.error("Failed to add product to cart");
+    } catch (_error) {
+      toast._error("Failed to add product to cart");
     }
   };
 

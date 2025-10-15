@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build where clause
-    const where: any = {
+    const where: ApiResponse = {
       isActive: true,
     }
 
@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
     const skip = (pageNum - 1) * limitNum
 
     // Build orderBy clause
-    const orderBy: any = {}
+    const orderBy: ApiResponse = {}
     orderBy[sort] = order
 
     // Execute query

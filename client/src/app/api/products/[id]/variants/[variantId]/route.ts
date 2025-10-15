@@ -14,7 +14,7 @@ const updateVariantSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; variantId: string } }
+  _{ params }: { params: { id: string; variantId: string } }
 ) {
   try {
     const { id, variantId } = params
@@ -79,7 +79,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; variantId: string } }
+  _{ params }: { params: { id: string; variantId: string } }
 ) {
   try {
     const { id, variantId } = params
@@ -193,7 +193,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; variantId: string } }
+  _{ params }: { params: { id: string; variantId: string } }
 ) {
   try {
     const { id, variantId } = params

@@ -35,9 +35,9 @@ export interface GenericObject {
   [key: string]: unknown;
 }
 
-// Function Types
-export type GenericFunction = (...args: unknown[]) => unknown;
-export type AsyncFunction = (...args: unknown[]) => Promise<unknown>;
+// GenericFunction Types
+export type GenericGenericFunction = (...args: unknown[]) => unknown;
+export type AsyncGenericFunction = (...args: unknown[]) => Promise<unknown>;
 
 // Request/Response Types
 export interface RequestData {

@@ -65,7 +65,7 @@ export const useWishlistStore = create<WishlistState & WishlistActions>()(
               isLoading: false,
             })
           }
-        } catch (error) {
+        } catch (_error) {
           set({
             error: 'An error occurred while fetching wishlist',
             isLoading: false,
@@ -96,7 +96,7 @@ export const useWishlistStore = create<WishlistState & WishlistActions>()(
               isLoading: false,
             })
           }
-        } catch (error) {
+        } catch (_error) {
           set({
             error: 'An error occurred while adding item to wishlist',
             isLoading: false,
@@ -123,7 +123,7 @@ export const useWishlistStore = create<WishlistState & WishlistActions>()(
               isLoading: false,
             })
           }
-        } catch (error) {
+        } catch (_error) {
           set({
             error: 'An error occurred while removing item from wishlist',
             isLoading: false,

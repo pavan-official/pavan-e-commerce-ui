@@ -65,7 +65,7 @@ export interface AuditLogEntry {
   resourceId?: string
   severity: AuditSeverity
   message: string
-  details?: Record<string, any>
+  details?: Record<string, unknown>
   ipAddress?: string
   userAgent?: string
   timestamp?: Date
@@ -125,7 +125,7 @@ export class AuditLogger {
     action: AuditAction,
     userId: string | null,
     success: boolean,
-    details: Record<string, any> = {},
+    details: Record<string, unknown> = {},
     request?: Request
   ): Promise<void> {
     const severity = success ? AUDIT_SEVERITY.LOW : AUDIT_SEVERITY.MEDIUM
@@ -147,7 +147,7 @@ export class AuditLogger {
     action: AuditAction,
     severity: AuditSeverity,
     message: string,
-    details: Record<string, any> = {},
+    details: Record<string, unknown> = {},
     request?: Request
   ): Promise<void> {
     await this.log({
@@ -167,7 +167,7 @@ export class AuditLogger {
     userId: string,
     resourceType: string,
     resourceId: string,
-    details: Record<string, any> = {},
+    details: Record<string, unknown> = {},
     request?: Request
   ): Promise<void> {
     await this.log({
@@ -199,7 +199,7 @@ export class AuditLogger {
     total: number
   }> {
     try {
-      const where: any = {}
+      const where: ApiResponse = {}
 
       if (filters.userId) where.userId = filters.userId
       if (filters.action) where.action = filters.action
@@ -364,7 +364,7 @@ export class AuditLogger {
   }
 
   // Mask sensitive data in audit details
-  private maskSensitiveData(details: Record<string, any>): Record<string, any> {
+  private maskSensitiveData(details: Record<string, unknown>): Record<string, unknown> {
     const sensitiveFields = ['password', 'token', 'secret', 'key', 'email', 'phone', 'card']
     
     return DataMasking.maskSensitiveFields(details, sensitiveFields)
@@ -388,13 +388,13 @@ export class AuditLogger {
 
 // Audit logging middleware
 export function withAuditLogging(
-  action: AuditAction,
-  severity: AuditSeverity = AUDIT_SEVERITY.LOW
+  _action: AuditAction,
+  _severity: AuditSeverity = AUDIT_SEVERITY.LOW
 ) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (target: ApiResponse, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (...args: ApiResponse[]) {
       const request = args[0]
       const auditLogger = AuditLogger.getInstance()
       

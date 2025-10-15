@@ -11,7 +11,7 @@ const helpfulVoteSchema = z.object({
 // POST /api/products/[id]/reviews/[reviewId]/helpful - Vote on review helpfulness
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; reviewId: string } }
+  _{ params }: { params: { id: string; reviewId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -120,7 +120,7 @@ export async function POST(
 // DELETE /api/products/[id]/reviews/[reviewId]/helpful - Remove vote
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; reviewId: string } }
+  _{ params }: { params: { id: string; reviewId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)

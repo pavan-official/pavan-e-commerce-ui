@@ -4,7 +4,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 // Mock fetch
 global.fetch = jest.fn()
 
-const mockFetch = fetch as jest.MockedFunction<typeof fetch>
+const mockFetch = fetch as jest.MockedGenericFunction<typeof fetch>
 
 describe('ApiTestPage', () => {
   beforeEach(() => {

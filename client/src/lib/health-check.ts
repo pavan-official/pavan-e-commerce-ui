@@ -21,7 +21,7 @@ export interface ComponentHealth {
   status: 'healthy' | 'degraded' | 'unhealthy'
   responseTime?: number
   message?: string
-  details?: Record<string, any>
+  details?: Record<string, unknown>
 }
 
 export class HealthCheckService {

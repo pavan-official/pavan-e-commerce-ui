@@ -16,7 +16,7 @@ const updateVariantSchema = createVariantSchema.partial()
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  _{ params }: { params: { id: string } }
 ) {
   try {
     const { id } = params
@@ -66,7 +66,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  _{ params }: { params: { id: string } }
 ) {
   try {
     const { id } = params

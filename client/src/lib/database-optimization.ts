@@ -68,13 +68,13 @@ export class DatabaseOptimizer {
       for (const indexQuery of indexes) {
         try {
           await prisma.$executeRawUnsafe(indexQuery)
-        } catch (error) {
+        } catch (_error) {
           console.warn(`Index creation warning: ${error}`)
         }
       }
       
       console.log('✅ Database indexes created successfully')
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Error creating database indexes:', error)
     }
   }
@@ -88,7 +88,7 @@ export class DatabaseOptimizer {
       await prisma.$executeRawUnsafe('ANALYZE')
       
       console.log('✅ Database queries optimized')
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Error optimizing database queries:', error)
     }
   }
@@ -124,7 +124,7 @@ export class DatabaseOptimizer {
       })
       
       console.log(`✅ Cleaned up ${deletedNotifications.count} old notifications and ${deletedSessions.count} old sessions`)
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Error cleaning up old data:', error)
     }
   }
@@ -184,7 +184,7 @@ export class DatabaseOptimizer {
         indexes: indexStats,
         connections: connectionStats,
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Error getting performance metrics:', error)
       return null
     }
@@ -198,7 +198,7 @@ export class DatabaseOptimizer {
       await prisma.$executeRawUnsafe('VACUUM ANALYZE')
       
       console.log('✅ Database maintenance completed')
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Error running database maintenance:', error)
     }
   }
@@ -233,7 +233,7 @@ export class DatabaseOptimizer {
         indexUsage: indexTest,
         timestamp: new Date().toISOString(),
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Database health check failed:', error)
       return {
         healthy: false,

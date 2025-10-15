@@ -41,8 +41,8 @@ interface Order {
   shipping: number
   discount: number
   total: number
-  shippingAddress: any
-  billingAddress: any
+  shippingAddress: ApiResponse
+  billingAddress: ApiResponse
   paymentStatus: string
   paymentMethod: string
   shippingMethod: string
@@ -74,8 +74,8 @@ interface OrderActions {
   // Order operations
   fetchOrders: (filters?: { status?: string; page?: number; limit?: number }) => Promise<void>
   fetchOrder: (orderId: string) => Promise<void>
-  createOrder: (orderData: any) => Promise<Order | null>
-  updateOrder: (orderId: string, updates: any) => Promise<void>
+  createOrder: (orderData: ApiResponse) => Promise<Order | null>
+  updateOrder: (orderId: string, updates: ApiResponse) => Promise<void>
   
   // Local state management
   setLoading: (loading: boolean) => void
@@ -118,7 +118,7 @@ export const useOrderStore = create<OrderState & OrderActions>()(
               isLoading: false,
             })
           }
-        } catch (error) {
+        } catch (_error) {
           set({
             error: 'An error occurred while fetching orders',
             isLoading: false,
@@ -144,7 +144,7 @@ export const useOrderStore = create<OrderState & OrderActions>()(
               isLoading: false,
             })
           }
-        } catch (error) {
+        } catch (_error) {
           set({
             error: 'An error occurred while fetching order',
             isLoading: false,
@@ -152,7 +152,7 @@ export const useOrderStore = create<OrderState & OrderActions>()(
         }
       },
 
-      createOrder: async (orderData: any) => {
+      createOrder: async (orderData: ApiResponse) => {
         set({ isLoading: true, error: null })
         
         try {
@@ -181,7 +181,7 @@ export const useOrderStore = create<OrderState & OrderActions>()(
             })
             return null
           }
-        } catch (error) {
+        } catch (_error) {
           set({
             error: 'An error occurred while creating order',
             isLoading: false,
@@ -190,7 +190,7 @@ export const useOrderStore = create<OrderState & OrderActions>()(
         }
       },
 
-      updateOrder: async (orderId: string, updates: any) => {
+      updateOrder: async (orderId: string, updates: ApiResponse) => {
         set({ isLoading: true, error: null })
         
         try {
@@ -219,7 +219,7 @@ export const useOrderStore = create<OrderState & OrderActions>()(
               isLoading: false,
             })
           }
-        } catch (error) {
+        } catch (_error) {
           set({
             error: 'An error occurred while updating order',
             isLoading: false,

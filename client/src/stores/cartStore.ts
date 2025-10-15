@@ -87,7 +87,7 @@ export const useCartStore = create<CartState & CartActions>()(
               isLoading: false,
             })
           }
-        } catch (error) {
+        } catch (_error) {
           set({
             error: 'An error occurred while fetching cart',
             isLoading: false,
@@ -135,7 +135,7 @@ export const useCartStore = create<CartState & CartActions>()(
               isLoading: false,
             })
           }
-        } catch (error) {
+        } catch (_error) {
           set({
             error: 'Network error. Please check your connection and try again.',
             isLoading: false,
@@ -166,7 +166,7 @@ export const useCartStore = create<CartState & CartActions>()(
               isLoading: false,
             })
           }
-        } catch (error) {
+        } catch (_error) {
           set({
             error: 'An error occurred while updating cart item',
             isLoading: false,
@@ -193,7 +193,7 @@ export const useCartStore = create<CartState & CartActions>()(
               isLoading: false,
             })
           }
-        } catch (error) {
+        } catch (_error) {
           set({
             error: 'An error occurred while removing item from cart',
             isLoading: false,

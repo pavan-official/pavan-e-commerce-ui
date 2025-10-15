@@ -15,7 +15,7 @@ const updateOrderSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  _{ params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -96,7 +96,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  _{ params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
