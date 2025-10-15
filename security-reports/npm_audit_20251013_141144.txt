@@ -1,0 +1,13 @@
+# npm audit report
+
+next  15.0.0-canary.0 - 15.4.6
+Severity: moderate
+Next.js Improper Middleware Redirect Handling Leads to SSRF - https://github.com/advisories/GHSA-4342-x723-ch2f
+fix available via `npm audit fix --force`
+Will install next@15.5.5, which is outside the stated dependency range
+client/node_modules/next
+
+1 moderate severity vulnerability
+
+To address all issues, run:
+  npm audit fix --force

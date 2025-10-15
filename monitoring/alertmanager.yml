@@ -1,0 +1,66 @@
+# ==================================================================================================
+# ALERTMANAGER CONFIGURATION - SIMPLIFIED FOR DEVELOPMENT
+# ==================================================================================================
+
+global:
+  smtp_smarthost: 'localhost:587'
+  smtp_from: 'alerts@ecommerce.local'
+  resolve_timeout: 5m
+
+# Alert routing configuration
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'default-receiver'
+  
+  routes:
+    # Critical alerts
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 5s
+      repeat_interval: 5m
+
+    # High priority alerts
+    - match:
+        severity: high
+      receiver: 'high-priority-alerts'
+      group_wait: 30s
+      repeat_interval: 15m
+
+    # Medium priority alerts
+    - match:
+        severity: medium
+      receiver: 'medium-priority-alerts'
+      group_wait: 2m
+      repeat_interval: 1h
+
+# Alert inhibition rules
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+      alertname: 'ApplicationDown'
+    target_match:
+      severity: 'high'
+      alertname: 'InstanceDown'
+    equal: ['service']
+
+# Receiver configurations
+receivers:
+  - name: 'default-receiver'
+    email_configs:
+      - to: 'admin@ecommerce.local'
+
+  - name: 'critical-alerts'
+    email_configs:
+      - to: 'oncall@ecommerce.local'
+
+  - name: 'high-priority-alerts'
+    email_configs:
+      - to: 'team@ecommerce.local'
+
+  - name: 'medium-priority-alerts'
+    email_configs:
+      - to: 'team@ecommerce.local'

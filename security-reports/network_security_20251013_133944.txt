@@ -1,0 +1,105 @@
+Network Security Analysis Report
+Generated: Mon Oct 13 13:39:57 CDT 2025
+==========================================
+
+Docker Networks:
+---------------
+NETWORK ID     NAME                                              DRIVER    SCOPE
+04dd3a4819bc   bridge                                            bridge    local
+0cb1b90ccf65   devops-app-dev-cursor_backend-net                 bridge    local
+111c8fab3c7d   devops-app-dev-cursor_database-net                bridge    local
+ba0ee8185ba1   devops-app-dev-cursor_default                     bridge    local
+e95eb9083de3   devops-app-dev-cursor_frontend-net                bridge    local
+f7224cea99c5   devops-app-dev-cursor_monitor-net                 bridge    local
+a4a45c7278c8   devops-app-dev-cursor_opssight-existing-network   bridge    local
+bcdc5b14b1cc   e-commerce-ui_backend                             bridge    local
+50e49979847d   host                                              host      local
+f9f62d9c17ae   none                                              null      local
+e5c69d75a664   opssight-network                                  bridge    local
+
+Network Details:
+---------------
+[
+    {
+        "Name": "e-commerce-ui_backend",
+        "Id": "bcdc5b14b1ccd861d2f45ddb389ec20481a1bebb06c6e5d6218bdf1c2b43c7aa",
+        "Created": "2025-10-13T18:35:14.241149007Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.25.0.0/16",
+                    "Gateway": "172.25.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {
+            "04866df6451e29a46ea90a94cc4d2ff94db290e8f7401d6105c712c37e46bc1f": {
+                "Name": "ecommerce-grafana",
+                "EndpointID": "1648d2b9d10b932412e14cb4bf76b28c361cb6fbaf0c8c0be8f7d2664634f54f",
+                "MacAddress": "c2:9b:2d:53:2b:e4",
+                "IPv4Address": "172.25.0.4/16",
+                "IPv6Address": ""
+            },
+            "1673a4036cfdca52e94b38012c99e920d0e23a1ed094ef916af8022897e38677": {
+                "Name": "ecommerce-prometheus",
+                "EndpointID": "7476542261d091749990f147dd35fdcb4b641ec8a1d1c5f50af909bc54af6445",
+                "MacAddress": "ba:f3:d6:0f:4c:62",
+                "IPv4Address": "172.25.0.2/16",
+                "IPv6Address": ""
+            },
+            "6ba092e3df32f29dfeae45396165ead84fb7f8062ef036c8433799bcc622a7fd": {
+                "Name": "ecommerce-alertmanager",
+                "EndpointID": "93102ac0c32628c5c93a5add258273afdd96257b1dfc91836dce770625c3e2c0",
+                "MacAddress": "ea:2c:d2:27:c2:f9",
+                "IPv4Address": "172.25.0.5/16",
+                "IPv6Address": ""
+            },
+            "a94788ff083b6168785c963b0e66f45e35d657bf69c2822ec6e75530ae503704": {
+                "Name": "ecommerce-jaeger",
+                "EndpointID": "d67a27de374eb925ad5e6c65bdcadad2472a2341ca58ac73225bea220ad55758",
+                "MacAddress": "f2:a5:94:8b:e6:d4",
+                "IPv4Address": "172.25.0.3/16",
+                "IPv6Address": ""
+            }
+        },
+        "Options": {
+            "com.docker.network.enable_ipv4": "true",
+            "com.docker.network.enable_ipv6": "false"
+        },
+        "Labels": {
+            "com.docker.compose.config-hash": "84c01088ce131acbc05ce0cff49c418be133cd8cdb0433880b1517aa1497bf3d",
+            "com.docker.compose.network": "backend",
+            "com.docker.compose.project": "e-commerce-ui",
+            "com.docker.compose.version": "2.37.0"
+        }
+    }
+]
+Networks not found
+
+Container Network Configuration:
+-------------------------------
+NAMES                    PORTS                                                                                              NETWORKS
+ecommerce-grafana        0.0.0.0:3001->3000/tcp, [::]:3001->3000/tcp                                                        e-commerce-ui_backend
+ecommerce-prometheus     0.0.0.0:9090->9090/tcp, [::]:9090->9090/tcp                                                        e-commerce-ui_backend
+ecommerce-jaeger         0.0.0.0:14268->14268/tcp, [::]:14268->14268/tcp, 0.0.0.0:16686->16686/tcp, [::]:16686->16686/tcp   e-commerce-ui_backend
+ecommerce-alertmanager   0.0.0.0:9093->9093/tcp, [::]:9093->9093/tcp                                                        e-commerce-ui_backend
+
+Exposed Ports Check:
+-------------------
+ecommerce-grafana	0.0.0.0:3001->3000/tcp, [::]:3001->3000/tcp
+ecommerce-prometheus	0.0.0.0:9090->9090/tcp, [::]:9090->9090/tcp
+ecommerce-jaeger	0.0.0.0:14268->14268/tcp, [::]:14268->14268/tcp, 0.0.0.0:16686->16686/tcp, [::]:16686->16686/tcp
+ecommerce-alertmanager	0.0.0.0:9093->9093/tcp, [::]:9093->9093/tcp

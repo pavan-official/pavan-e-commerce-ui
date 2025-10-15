@@ -1,0 +1,155 @@
+# ==================================================================================================
+# PROMETHEUS CONFIGURATION - PRODUCTION-READY MONITORING
+# ==================================================================================================
+#
+# Purpose: Comprehensive metrics collection for e-commerce application
+# Why: Essential for production monitoring, alerting, and performance optimization
+#
+# Interview Topics:
+# - Metrics collection strategies
+# - Alerting rules and thresholds
+# - Service discovery and scraping
+# - Retention policies and storage
+# - Security and access control
+#
+# ==================================================================================================
+
+global:
+  # Global scrape interval
+  scrape_interval: 15s
+  
+  # Evaluation interval for rules
+  evaluation_interval: 15s
+  
+  # External labels for federation
+  external_labels:
+    cluster: 'ecommerce-local'
+    environment: 'development'
+
+# Alerting configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# Load rules once and periodically evaluate them
+rule_files:
+  - "alert_rules.yml"
+
+# Scrape configurations
+scrape_configs:
+  # ================================================================================================
+  # PROMETHEUS SELF-MONITORING
+  # ================================================================================================
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 5s
+    metrics_path: /metrics
+
+  # ================================================================================================
+  # NEXT.JS APPLICATION MONITORING
+  # ================================================================================================
+  - job_name: 'nextjs-app'
+    static_configs:
+      - targets: ['client:3000']
+    metrics_path: /api/metrics
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    
+    # Custom labels
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: client:3000
+
+  # ================================================================================================
+  # POSTGRESQL DATABASE MONITORING
+  # ================================================================================================
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+    scrape_interval: 30s
+    
+    # PostgreSQL Exporter configuration
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: postgres-exporter:9187
+
+  # ================================================================================================
+  # REDIS CACHE MONITORING
+  # ================================================================================================
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 15s
+    
+    # Redis Exporter configuration
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: redis-exporter:9121
+
+  # ================================================================================================
+  # DOCKER CONTAINER MONITORING
+  # ================================================================================================
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['docker-exporter:9323']
+    scrape_interval: 30s
+
+  # ================================================================================================
+  # NODE EXPORTER (SYSTEM METRICS)
+  # ================================================================================================
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s
+
+  # ================================================================================================
+  # JAEGER TRACING METRICS
+  # ================================================================================================
+  - job_name: 'jaeger'
+    static_configs:
+      - targets: ['jaeger:14269']
+    metrics_path: /metrics
+    scrape_interval: 30s
+
+  # ================================================================================================
+  # ALERTMANAGER MONITORING
+  # ================================================================================================
+  - job_name: 'alertmanager'
+    static_configs:
+      - targets: ['alertmanager:9093']
+    scrape_interval: 30s
+
+# ==================================================================================================
+# STORAGE CONFIGURATION (via command line flags)
+# ==================================================================================================
+# Note: Storage configuration is handled via command line flags in docker-compose.yml
+# --storage.tsdb.retention.time=200h
+# --storage.tsdb.retention.size=1GB
+
+# ==================================================================================================
+# SECURITY CONFIGURATION (via command line flags)
+# ==================================================================================================
+# Note: Web configuration is handled via command line flags in docker-compose.yml
+# CORS and authentication can be configured via --web.enable-lifecycle
+
+# Remote write configuration (for long-term storage)
+# remote_write:
+#   - url: http://thanos-receive:19291/api/v1/receive
+#     queue_config:
+#       max_samples_per_send: 1000
+#       batch_send_deadline: 5s

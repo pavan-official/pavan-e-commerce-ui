@@ -1,0 +1,21 @@
+Security Compliance Report
+Generated: Mon Oct 13 13:39:57 CDT 2025
+==========================================
+
+Docker Security Best Practices:
+------------------------------
+Docker daemon info:
+ Storage Driver: overlay2
+ Logging Driver: json-file
+ Security Options:
+
+Privileged containers check:
+✅ No privileged containers
+
+Root containers check:
+ecommerce-grafana	"/run.sh"
+ecommerce-prometheus	"/bin/prometheus --c…"
+ecommerce-jaeger	"/go/bin/all-in-one-…"
+ecommerce-alertmanager	"/bin/alertmanager -…"
+⚠️ Some containers may be running as root
+
