@@ -1,5 +1,5 @@
 import DOMPurify from 'isomorphic-dompurify'
-import validator from 'validator'
+import { isValidPhone } from './secure-validator'
 import { z } from 'zod'
 
 // Custom validation schemas
@@ -24,7 +24,7 @@ export const validationSchemas = {
     
     phone: z.string()
       .optional()
-      .refine(phone => !phone || validator.isMobilePhone(phone), 
+      .refine(phone => !phone || isValidPhone(phone), 
         'Invalid phone number format'),
   },
 

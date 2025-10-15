@@ -17,7 +17,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "lint:fix": "node scripts/fix-eslint-issues.js && npm run lint"
+    "lint:fix": "node scripts/fix-eslint-issues.js && npm run lint",
+    "security:fix": "node scripts/fix-security-issues.js && npm audit --audit-level high"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
@@ -34,7 +35,7 @@
     "lucide-react": "^0.535.0",
     "multer": "^2.0.2",
     "nanoid": "^3.3.11",
-    "next": "15.4.5",
+    "next": "^15.5.5",
     "next-auth": "^4.24.11",
     "otplib": "^12.0.1",
     "picocolors": "^1.1.1",
@@ -48,7 +49,6 @@
     "sharp": "^0.34.4",
     "source-map-js": "^1.2.1",
     "stripe": "^19.1.0",
-    "validator": "^13.15.15",
     "winston": "^3.18.3",
     "winston-daily-rotate-file": "^5.0.0",
     "zod": "^4.0.14",
@@ -68,8 +68,6 @@
     "@next/eslint-plugin-next": "15.4.5",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.5.2",
     "ts-jest": "^29.1.1",
     "tailwindcss": "^4",
