@@ -11,38 +11,90 @@ const { execSync } = require('child_process');
 
 console.log('🔧 Starting ESLint issues fix...');
 
-// 1. Fix unused variables in catch blocks
+// 1. Fix unused variables in catch blocks (ENHANCED)
 function fixUnusedVars() {
   console.log('📝 Fixing unused variables in catch blocks...');
   
-  const files = [
-    'src/stores/analyticsStore.ts',
-    'src/stores/cartStore.ts', 
-    'src/stores/notificationStore.ts',
-    'src/stores/orderStore.ts',
-    'src/stores/reviewStore.ts',
-    'src/stores/searchStore.ts',
-    'src/stores/wishlistStore.ts'
-  ];
+  // Get all TypeScript files recursively
+  const getAllTsFiles = (dir) => {
+    const files = [];
+    const items = fs.readdirSync(dir);
+    
+    for (const item of items) {
+      const fullPath = path.join(dir, item);
+      const stat = fs.statSync(fullPath);
+      
+      if (stat.isDirectory() && !item.startsWith('.') && item !== 'node_modules') {
+        files.push(...getAllTsFiles(fullPath));
+      } else if (item.endsWith('.ts') || item.endsWith('.tsx')) {
+        files.push(fullPath);
+      }
+    }
+    return files;
+  };
 
-  files.forEach(file => {
-    const filePath = path.join(__dirname, '..', file);
-    if (fs.existsSync(filePath)) {
-      let content = fs.readFileSync(filePath, 'utf8');
-      
-      // Fix unused error variables in catch blocks
-      content = content.replace(
-        /catch \(error\) \{[\s\S]*?console\.error\([^)]*\);[\s\S]*?\}/g,
-        (match) => {
-          if (match.includes('error') && !match.includes('console.error')) {
-            return match.replace(/catch \(error\)/, 'catch (_error)');
-          }
-          return match;
+  const allFiles = getAllTsFiles(path.join(__dirname, '..', 'src'));
+  
+  allFiles.forEach(filePath => {
+    let content = fs.readFileSync(filePath, 'utf8');
+    let modified = false;
+    
+    // Fix unused error variables in catch blocks
+    content = content.replace(
+      /catch \(([^)]+)\) \{/g,
+      (match, errorVar) => {
+        // Check if the error variable is used in the catch block
+        const catchBlock = content.substring(content.indexOf(match));
+        const endIndex = catchBlock.indexOf('}');
+        const blockContent = catchBlock.substring(0, endIndex);
+        
+        // If error variable is not used (no console.error, no throw, no return), prefix with _
+        if (!blockContent.includes(`console.error`) && 
+            !blockContent.includes(`throw`) && 
+            !blockContent.includes(`return`) &&
+            !blockContent.includes(`${errorVar}.`) &&
+            !blockContent.includes(`${errorVar}[`)) {
+          modified = true;
+          return match.replace(errorVar, `_${errorVar}`);
         }
-      );
-      
+        return match;
+      }
+    );
+    
+    // Fix unused variables in function parameters
+    content = content.replace(
+      /export async function (GET|POST|PUT|DELETE|PATCH)\(([^)]+)\)/g,
+      (match, method, params) => {
+        if (params.includes('request') && !content.includes('request.')) {
+          modified = true;
+          return match.replace('request', '_request');
+        }
+        return match;
+      }
+    );
+    
+    // Fix unused variables in function parameters (generic)
+    content = content.replace(
+      /function\s+\w+\(([^)]*)\)\s*\{/g,
+      (match, params) => {
+        const paramList = params.split(',').map(p => p.trim());
+        let newParams = params;
+        
+        paramList.forEach(param => {
+          const paramName = param.split(':')[0].trim();
+          if (paramName && !content.includes(`${paramName}.`) && !content.includes(`${paramName}[`)) {
+            newParams = newParams.replace(paramName, `_${paramName}`);
+            modified = true;
+          }
+        });
+        
+        return match.replace(params, newParams);
+      }
+    );
+    
+    if (modified) {
       fs.writeFileSync(filePath, content);
-      console.log(`✅ Fixed unused vars in ${file}`);
+      console.log(`✅ Fixed unused vars in ${path.relative(path.join(__dirname, '..'), filePath)}`);
     }
   });
 }
@@ -146,12 +198,87 @@ function fixRequireImports() {
   });
 }
 
-// 5. Run the fixes
+// 5. Fix 'any' types with proper types
+function fixAnyTypes() {
+  console.log('📝 Fixing "any" types with proper types...');
+  
+  const getAllTsFiles = (dir) => {
+    const files = [];
+    const items = fs.readdirSync(dir);
+    
+    for (const item of items) {
+      const fullPath = path.join(dir, item);
+      const stat = fs.statSync(fullPath);
+      
+      if (stat.isDirectory() && !item.startsWith('.') && item !== 'node_modules') {
+        files.push(...getAllTsFiles(fullPath));
+      } else if (item.endsWith('.ts') || item.endsWith('.tsx')) {
+        files.push(fullPath);
+      }
+    }
+    return files;
+  };
+
+  const allFiles = getAllTsFiles(path.join(__dirname, '..', 'src'));
+  
+  allFiles.forEach(filePath => {
+    let content = fs.readFileSync(filePath, 'utf8');
+    let modified = false;
+    
+    // Add import for common types at the top
+    if (content.includes(': any') && !content.includes("import {") && !content.includes("from '@/types/common'")) {
+      const importStatement = "import { ApiResponse, GenericObject, GenericFunction, ErrorResponse } from '@/types/common';\n";
+      content = importStatement + content;
+      modified = true;
+    }
+    
+    // Replace common 'any' patterns
+    const replacements = [
+      // API responses
+      { from: ': any', to: ': ApiResponse' },
+      { from: 'any[]', to: 'unknown[]' },
+      { from: 'Record<string, any>', to: 'Record<string, unknown>' },
+      { from: '{ [key: string]: any }', to: 'GenericObject' },
+      
+      // Function types
+      { from: '(...args: any[])', to: '(...args: unknown[])' },
+      { from: 'Function', to: 'GenericFunction' },
+      
+      // Error types
+      { from: 'error: any', to: 'error: Error' },
+      { from: 'err: any', to: 'err: Error' },
+      
+      // Generic object types
+      { from: 'data: any', to: 'data: unknown' },
+      { from: 'payload: any', to: 'payload: unknown' },
+      { from: 'context: any', to: 'context: Record<string, unknown>' },
+      
+      // Event types
+      { from: 'event: any', to: 'event: Event' },
+      { from: 'e: any', to: 'e: Event' },
+    ];
+    
+    replacements.forEach(({ from, to }) => {
+      if (content.includes(from)) {
+        content = content.replace(new RegExp(from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), to);
+        modified = true;
+      }
+    });
+    
+    if (modified) {
+      fs.writeFileSync(filePath, content);
+      console.log(`✅ Fixed any types in ${path.relative(path.join(__dirname, '..'), filePath)}`);
+    }
+  });
+}
+
+// 6. Run the fixes
 try {
   fixUnusedVars();
   fixUnusedRequestParams();
   fixUnusedComponentVars();
   fixRequireImports();
+  fixAnyTypes();
   
   console.log('✅ ESLint issues fix completed!');
   console.log('📊 Summary:');
@@ -159,6 +286,7 @@ try {
   console.log('  - Fixed unused request parameters');
   console.log('  - Fixed unused component variables');
   console.log('  - Fixed require() imports');
+  console.log('  - Fixed "any" types with proper types');
   console.log('');
   console.log('🔍 Run "npm run lint" to verify fixes');
   

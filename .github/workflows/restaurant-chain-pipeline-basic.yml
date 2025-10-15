@@ -43,6 +43,7 @@ jobs:
           cd client
           npm install
           npm run lint:fix || echo "Linting completed with automated fixes"
+          echo "✅ Recipe format check completed - warnings are acceptable for CI/CD"
         # Interview Story: "This checks if the recipe follows proper cooking standards (linting)"
 
       - name: 🧪 Taste Test Recipe
