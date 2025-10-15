@@ -13,6 +13,13 @@ const ENCRYPTION_CONFIG = {
 // Get encryption key from environment
 function getEncryptionKey(): Buffer {
   const key = process.env.ENCRYPTION_KEY
+  
+  // During build time, use a dummy key to prevent build failures
+  if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
+    console.warn('⚠️ Using dummy encryption key during build phase')
+    return crypto.scryptSync('dummy-key-for-build', 'salt', ENCRYPTION_CONFIG.keyLength)
+  }
+  
   if (!key) {
     throw new Error('ENCRYPTION_KEY environment variable is required')
   }
