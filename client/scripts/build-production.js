@@ -26,6 +26,18 @@ try {
     env: buildEnv
   });
 
+  console.log('🗄️ Generating Prisma client...');
+  try {
+    execSync('npx prisma generate', { 
+      stdio: 'inherit',
+      env: buildEnv
+    });
+    console.log('✅ Prisma client generated successfully');
+  } catch (prismaError) {
+    console.log('⚠️ Prisma generation failed, but continuing build...');
+    console.log('💡 This may cause runtime issues if Prisma is used');
+  }
+
   console.log('🔍 Running ESLint check (warnings allowed)...');
   try {
     execSync('npm run lint', { 
@@ -36,6 +48,7 @@ try {
   } catch (lintError) {
     console.log('⚠️ ESLint found warnings (acceptable for production build)');
     console.log('📝 Warnings will be addressed in future iterations');
+    console.log('💡 ESLint errors are non-blocking for production builds');
   }
 
   console.log('🏗️ Building Next.js application...');
@@ -59,6 +72,12 @@ try {
   if (error.message.includes('TypeScript')) {
     console.log('💡 Tip: TypeScript errors must be fixed before production build');
     console.log('💡 Consider running: npx tsc --noEmit to check types');
+  }
+  
+  if (error.message.includes('@prisma/client')) {
+    console.log('💡 Tip: Prisma client must be generated before build');
+    console.log('💡 Consider running: npx prisma generate');
+    console.log('💡 Make sure Prisma schema is properly configured');
   }
   
   process.exit(1);
