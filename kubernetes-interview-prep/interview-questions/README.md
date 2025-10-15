@@ -27,7 +27,7 @@
 - [Multi-Environment Setup](./multi-environment.md)
 
 ### **🔄 DevOps Integration (10% of interviews)**
-- [CI/CD Pipelines](./cicd-integration.md)
+- [CI/CD Pipelines](./cicd-integration.md) ✅ **NEW: Real-world scenarios documented**
 - [Monitoring and Logging](./monitoring-logging.md)
 - [Backup and Recovery](./backup-recovery.md)
 - [Disaster Recovery](./disaster-recovery.md)

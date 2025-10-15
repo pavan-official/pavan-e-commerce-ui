@@ -268,6 +268,60 @@ kubectl exec -it <pod-name> -- curl localhost:3000/api/health
 
 ---
 
+---
+
+## 🔄 **Scene 6: CI/CD Pipeline Troubleshooting (10 minutes)**
+
+### **Interviewer**: "Your CI/CD pipeline is failing with build errors. The build works locally but fails in GitHub Actions. How do you approach this?"
+
+**Your Response Framework:**
+```bash
+# Environment analysis (2 minutes)
+"First, I'd analyze the differences between local and CI environments..."
+
+# Systematic investigation (3-4 minutes)
+"Then I'd investigate the specific failure points..."
+
+# Solution implementation (3-4 minutes)
+"Based on my analysis, I'd implement these fixes..."
+```
+
+### **Real-World Scenarios to Discuss:**
+
+#### **Scenario A: Prisma Client Initialization**
+- **Problem**: `@prisma/client did not initialize yet`
+- **Root Cause**: Missing Prisma client generation in CI
+- **Solution**: Add `npx prisma generate` to build pipeline
+- **Prevention**: Environment consistency checks
+
+#### **Scenario B: npm Workspace Compatibility**
+- **Problem**: `npm ci` fails with workspaces
+- **Root Cause**: Built-in cache incompatible with monorepos
+- **Solution**: Manual caching with actions/cache@v4
+- **Performance**: 60-80% speed improvements maintained
+
+#### **Scenario C: TypeScript Syntax Error Cascade**
+- **Problem**: 20+ files with invalid syntax from automated fixes
+- **Root Cause**: ESLint fix script introduced systematic errors
+- **Solution**: Automated fix script + manual verification
+- **Prevention**: Enhanced ESLint configuration
+
+### **Key Discussion Points:**
+1. **Environment Consistency**: Local vs CI/CD differences
+2. **Dependency Management**: Prisma, npm, ESLint integration
+3. **Caching Strategies**: Multi-layer performance optimization
+4. **Error Handling**: Graceful degradation vs blocking failures
+5. **Automation**: Scripts for pattern-based fixes
+
+### **Expected Technical Depth:**
+- Multi-dimensional problem analysis
+- Root cause identification over symptom fixing
+- Systematic resolution approaches
+- Performance optimization techniques
+- Tool selection and compatibility
+
+---
+
 **Remember**: The goal isn't to know everything, but to demonstrate systematic thinking, real-world experience, and continuous learning. Focus on understanding the "why" behind each concept and building practical experience through hands-on practice.
 
 **Good luck with your Kubernetes interview preparation!** 🚀
