@@ -41,7 +41,7 @@ jobs:
       - name: 📋 Check Recipe Format
         run: |
           cd client
-          npm ci
+          npm install
           npm run lint
         # Interview Story: "This checks if the recipe follows proper cooking standards (linting)"
 
@@ -77,7 +77,7 @@ jobs:
       - name: 🏗️ Build Recipe
         run: |
           cd client
-          npm ci
+          npm install
           npm run build
         # Interview Story: "This prepares the recipe for packaging (builds the application)"
 
