@@ -69,7 +69,7 @@ jobs:
 
       - name: 📋 Check Recipe Format
         run: |
-          npm ci --prefer-offline --no-audit
+          npm install --prefer-offline --no-audit
           npm run lint:fix --workspace=client || echo "Linting completed with automated fixes"
           echo "✅ Recipe format check completed - warnings are acceptable for CI/CD"
         # Interview Story: "This checks if the recipe follows proper cooking standards (linting)"
@@ -145,7 +145,7 @@ jobs:
           SKIP_ENV_VALIDATION: true
         run: |
           echo "🔨 Installing dependencies with npm (using cache)..."
-          npm ci --prefer-offline --no-audit
+          npm install --prefer-offline --no-audit
           echo "🔨 Building with industry-standard production process..."
           npm run build:production --workspace=client
           echo "✅ Recipe build completed successfully"
