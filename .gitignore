@@ -159,8 +159,8 @@ tmp/
 temp/
 
 # Docker
-.dockerignore
-Dockerfile*
+# .dockerignore  # Commented out to allow client .dockerignore for CI/CD
+# Dockerfile*  # Commented out to allow client Dockerfile for CI/CD
 docker-compose*.yml
 
 # Testing
