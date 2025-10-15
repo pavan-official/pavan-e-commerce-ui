@@ -53,9 +53,7 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-          cache-dependency-path: |
-            package-lock.json
-            admin/package-lock.json
+          cache-dependency-path: "package-lock.json"
           # FIXED: Using npm as the primary package manager with caching
         # Interview Story: "This sets up all the kitchen tools (Node.js, npm) we need with smart caching"
 
@@ -106,9 +104,7 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-          cache-dependency-path: |
-            package-lock.json
-            admin/package-lock.json
+          cache-dependency-path: "package-lock.json"
           # FIXED: Using npm as the primary package manager with caching
 
       - name: 🗂️ Restore Build Cache
