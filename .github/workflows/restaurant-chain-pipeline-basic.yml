@@ -35,12 +35,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          # FIXED: Removed cache since we use pnpm, not npm
+          # FIXED: Using npm as the primary package manager
         # Interview Story: "This sets up all the kitchen tools (Node.js, npm) we need"
 
       - name: 📋 Check Recipe Format
         run: |
           cd client
+          rm -f pnpm-lock.yaml
           npm install
           npm run lint
         # Interview Story: "This checks if the recipe follows proper cooking standards (linting)"
@@ -48,12 +49,16 @@ jobs:
       - name: 🧪 Taste Test Recipe
         run: |
           cd client
+          rm -f pnpm-lock.yaml
+          npm install
           npm run test
         # Interview Story: "This tests if the recipe actually works (unit tests)"
 
       - name: 🔒 Safety Check
         run: |
           cd client
+          rm -f pnpm-lock.yaml
+          npm install
           npm audit
         # Interview Story: "This checks for any dangerous ingredients (security vulnerabilities)"
 
@@ -72,11 +77,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          # FIXED: Removed cache since we use pnpm, not npm
+          # FIXED: Using npm as the primary package manager
 
       - name: 🏗️ Build Recipe
         run: |
           cd client
+          rm -f pnpm-lock.yaml
           npm install
           npm run build
         # Interview Story: "This prepares the recipe for packaging (builds the application)"
