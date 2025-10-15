@@ -69,6 +69,9 @@ jobs:
 
       - name: 📋 Check Recipe Format
         run: |
+          echo "🔧 Generating root package-lock.json for npm ci compatibility..."
+          npm install --package-lock-only
+          echo "📦 Installing dependencies with npm ci (industry standard)..."
           npm ci --workspace=client --workspace=admin
           echo "🗄️ Generating Prisma client for validation..."
           cd client && npx prisma generate && cd ..
@@ -146,6 +149,8 @@ jobs:
           # Skip validation during build (industry standard)
           SKIP_ENV_VALIDATION: true
         run: |
+          echo "🔧 Generating root package-lock.json for npm ci compatibility..."
+          npm install --package-lock-only
           echo "🔨 Installing dependencies with npm ci (industry standard)..."
           npm ci --workspace=client --workspace=admin
           echo "🗄️ Generating Prisma client for CI/CD..."

@@ -20,6 +20,12 @@ const buildEnv = {
 };
 
 try {
+  console.log('🔧 Generating root package-lock.json for npm ci compatibility...');
+  execSync('npm install --package-lock-only', { 
+    stdio: 'inherit',
+    env: buildEnv
+  });
+  
   console.log('📦 Installing dependencies with npm ci (industry standard)...');
   execSync('npm ci --workspace=client --workspace=admin', { 
     stdio: 'inherit',
