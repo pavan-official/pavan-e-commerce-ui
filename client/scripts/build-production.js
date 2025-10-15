@@ -20,8 +20,8 @@ const buildEnv = {
 };
 
 try {
-  console.log('📦 Installing dependencies...');
-  execSync('npm install', { 
+  console.log('📦 Installing dependencies with npm ci (industry standard)...');
+  execSync('npm ci --workspace=client --workspace=admin', { 
     stdio: 'inherit',
     env: buildEnv
   });

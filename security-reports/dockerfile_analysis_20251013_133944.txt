@@ -1,0 +1,23 @@
+Dockerfile Security Analysis Report
+Generated: Mon Oct 13 13:39:44 CDT 2025
+==========================================
+
+✅ Security Checks:
+
+✅ Non-root user configured
+✅ Multi-stage build detected
+✅ .dockerignore file present
+✅ Using COPY appropriately
+✅ Using specific Alpine version
+
+🔍 Detailed Analysis:
+
+Base Image:
+FROM node:20-alpine AS deps
+
+User Configuration:
+USER nextjs
+
+Exposed Ports:
+EXPOSE 3000
+
