@@ -8,15 +8,15 @@
     "admin"
   ],
   "scripts": {
-    "dev": "concurrently \"pnpm --filter client dev\" \"pnpm --filter admin dev\"",
-    "build": "pnpm --filter client build && pnpm --filter admin build",
-    "start": "concurrently \"pnpm --filter client start\" \"pnpm --filter admin start\"",
-    "lint": "pnpm --filter client lint && pnpm --filter admin lint",
+    "dev": "concurrently \"npm run dev --workspace=client\" \"npm run dev --workspace=admin\"",
+    "build": "npm run build --workspace=client && npm run build --workspace=admin",
+    "start": "concurrently \"npm run start --workspace=client\" \"npm run start --workspace=admin\"",
+    "lint": "npm run lint --workspace=client && npm run lint --workspace=admin",
     "setup": "./setup.sh",
     "validate-config": "node scripts/validate-config.js",
-    "install-all": "pnpm install && pnpm --filter client install && pnpm --filter admin install",
-    "clean": "pnpm --filter client clean && pnpm --filter admin clean",
-    "type-check": "pnpm --filter client type-check && pnpm --filter admin type-check"
+    "install-all": "npm install && npm install --workspace=client && npm install --workspace=admin",
+    "clean": "npm run clean --workspace=client && npm run clean --workspace=admin",
+    "type-check": "npm run type-check --workspace=client && npm run type-check --workspace=admin"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
