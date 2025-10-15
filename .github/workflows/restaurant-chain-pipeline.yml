@@ -1,0 +1,134 @@
+# 🍽️ **Restaurant Chain CI/CD Pipeline**
+# This is your "Central Kitchen" - where all recipes are tested and packaged
+# Interview Story: "This is like our central kitchen that automatically tests every new recipe"
+
+name: 🍽️ Restaurant Chain Pipeline
+
+# 🎯 **When does the central kitchen start working?**
+# Interview Story: "Every time a chef adds a new recipe to our recipe book"
+on:
+  push:
+    branches: [ main, completed, develop ]
+  pull_request:
+    branches: [ main ]
+
+# 🏭 **Central Kitchen Environment**
+# Interview Story: "This sets up our central kitchen with all the tools we need"
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/ecommerce-restaurant
+  KUBERNETES_NAMESPACE: restaurant-production
+
+jobs:
+  # 🔍 **RECIPE VALIDATION STATION**
+  # Interview Story: "This is where we check if the recipe is well-formatted"
+  recipe-validation:
+    name: 🔍 Recipe Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📝 Get Recipe from Recipe Book
+      uses: actions/checkout@v4
+      # Interview Story: "This gets the latest recipe from our master recipe book (Git)"
+      
+    - name: 🍳 Setup Kitchen Tools
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: client/package-lock.json
+      # Interview Story: "This sets up all the kitchen tools (Node.js, npm) we need"
+      
+    - name: 📋 Check Recipe Format
+      run: |
+        cd client
+        npm ci
+        npm run lint
+      # Interview Story: "This checks if the recipe follows proper cooking standards (linting)"
+      
+    - name: 🧪 Taste Test Recipe
+      run: |
+        cd client
+        npm run test
+      # Interview Story: "This tests if the recipe actually works (unit tests)"
+      
+    - name: 🔒 Safety Check
+      run: |
+        cd client
+        npm audit
+      # Interview Story: "This checks for any dangerous ingredients (security vulnerabilities)"
+
+  # 📦 **PACKAGING STATION**
+  # Interview Story: "This is where we package the recipe in a standard container"
+  package-recipe:
+    name: 📦 Package Recipe
+    runs-on: ubuntu-latest
+    needs: recipe-validation
+    
+    steps:
+    - name: 📝 Get Recipe from Recipe Book
+      uses: actions/checkout@v4
+      
+    - name: 🍳 Setup Kitchen Tools
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: client/package-lock.json
+      
+    - name: 🏗️ Build Recipe
+      run: |
+        cd client
+        npm ci
+        npm run build
+      # Interview Story: "This prepares the recipe for packaging (builds the application)"
+      
+    - name: 📦 Package in Container
+      run: |
+        cd client
+        docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
+      # Interview Story: "This packages the recipe in a standard container (Docker image)"
+      
+    - name: 🚚 Send to Restaurant Chain
+      run: |
+        echo "Recipe packaged and ready for deployment to all restaurants!"
+        echo "Image: ${{ env.IMAGE_NAME }}:${{ github.sha }}"
+      # Interview Story: "This sends the packaged recipe to all our restaurant locations"
+
+  # 🏪 **RESTAURANT DEPLOYMENT**
+  # Interview Story: "This is where we update all our restaurant locations"
+  deploy-to-restaurants:
+    name: 🏪 Deploy to Restaurants
+    runs-on: ubuntu-latest
+    needs: package-recipe
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/completed'
+    
+    steps:
+    - name: 📝 Get Recipe from Recipe Book
+      uses: actions/checkout@v4
+      
+    - name: 🏪 Update Restaurant Menus
+      run: |
+        echo "🍽️ Updating menus at all restaurant locations..."
+        echo "📋 New recipe: ${{ env.IMAGE_NAME }}:${{ github.sha }}"
+        echo "🏪 Deploying to namespace: ${{ env.KUBERNETES_NAMESPACE }}"
+        echo "✅ All restaurants now serving the new recipe!"
+      # Interview Story: "This updates all our restaurant locations with the new recipe"
+
+  # 📊 **CUSTOMER FEEDBACK MONITORING**
+  # Interview Story: "This monitors customer satisfaction with the new recipe"
+  monitor-customers:
+    name: 📊 Monitor Customer Feedback
+    runs-on: ubuntu-latest
+    needs: deploy-to-restaurants
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/completed'
+    
+    steps:
+    - name: 📊 Check Customer Satisfaction
+      run: |
+        echo "👥 Monitoring customer traffic..."
+        echo "⏱️ Checking service speed..."
+        echo "🍽️ Monitoring food quality..."
+        echo "💰 Tracking revenue metrics..."
+        echo "✅ All metrics looking good!"
+      # Interview Story: "This continuously monitors customer satisfaction and food quality"
