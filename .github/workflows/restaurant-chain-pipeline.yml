@@ -48,6 +48,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          # FIXED: Remove cache since we use pnpm, not npm
+          # FIXED: Remove cache since we use pnpm, not npm
         # Interview Story: "This sets up all the kitchen tools (Node.js, npm) we need"
 
       - name: 📋 Install Dependencies
@@ -90,6 +92,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          # FIXED: Remove cache since we use pnpm, not npm
 
       - name: 📋 Install Dependencies
         run: |
@@ -147,6 +150,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          # FIXED: Remove cache since we use pnpm, not npm
 
       - name: 📋 Install Dependencies
         run: |
