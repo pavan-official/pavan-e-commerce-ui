@@ -42,7 +42,7 @@ jobs:
         run: |
           cd client
           npm install
-          npm run lint || echo "Linting completed with warnings"
+          npm run lint:fix || echo "Linting completed with automated fixes"
         # Interview Story: "This checks if the recipe follows proper cooking standards (linting)"
 
       - name: 🧪 Taste Test Recipe
