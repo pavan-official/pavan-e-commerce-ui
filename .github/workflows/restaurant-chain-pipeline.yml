@@ -14,7 +14,7 @@ on:
   # 🏷️ **Automated Versioning Trigger**
   # Interview Story: "When we tag a recipe with a version number, it triggers a special production deployment"
   tags:
-    - "v*.*.*"  # Triggers on version tags like v1.0.0, v1.2.3
+    - "v*.*.*" # Triggers on version tags like v1.0.0, v1.2.3
 
 # 🏭 **Central Kitchen Environment**
 # Interview Story: "This sets up our central kitchen with all the tools we need"
@@ -25,10 +25,10 @@ env:
   IMAGE_TAG: ${{ github.sha }}
   IMAGE_TAG_LATEST: latest
   IMAGE_TAG_VERSION: ${{ github.ref_name }}
-  
+
   # Security Configuration
   TRIVY_CACHE_DIR: .trivycache
-  
+
   # Kubernetes Configuration
   KUBERNETES_NAMESPACE: restaurant-production
 
@@ -176,7 +176,7 @@ jobs:
           echo "🍽️ Building Docker image for restaurant chain..."
           docker build -t ${{ env.DOCKER_HUB_REPOSITORY }}:${{ env.IMAGE_TAG }} .
           docker build -t ${{ env.DOCKER_HUB_REPOSITORY }}:${{ env.IMAGE_TAG_LATEST }} .
-          
+
           # 🏷️ **Version Tagging for Production**
           # Interview Story: "If this is a versioned release, we tag it with the version number"
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
@@ -190,13 +190,13 @@ jobs:
           echo "🚚 Pushing recipe to central warehouse..."
           docker push ${{ env.DOCKER_HUB_REPOSITORY }}:${{ env.IMAGE_TAG }}
           docker push ${{ env.DOCKER_HUB_REPOSITORY }}:${{ env.IMAGE_TAG_LATEST }}
-          
+
           # 🏷️ **Push Version Tag for Production**
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             docker push ${{ env.DOCKER_HUB_REPOSITORY }}:${{ env.IMAGE_TAG_VERSION }}
             echo "🏷️ Pushed version tag: ${{ env.IMAGE_TAG_VERSION }}"
           fi
-          
+
           echo "✅ Recipe stored in central warehouse!"
           echo "📦 Image: ${{ env.DOCKER_HUB_REPOSITORY }}:${{ env.IMAGE_TAG }}"
           echo "📦 Latest: ${{ env.DOCKER_HUB_REPOSITORY }}:${{ env.IMAGE_TAG_LATEST }}"
@@ -220,7 +220,7 @@ jobs:
           echo "📋 New recipe: ${{ env.DOCKER_HUB_REPOSITORY }}:${{ env.IMAGE_TAG }}"
           echo "🏪 Deploying to namespace: ${{ env.KUBERNETES_NAMESPACE }}"
           echo "🔄 Pulling recipe from central warehouse..."
-          
+
           # 🏷️ **Version-specific deployment**
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             echo "🏷️ Production deployment with version: ${{ env.IMAGE_TAG_VERSION }}"
@@ -229,7 +229,7 @@ jobs:
             echo "🧪 Development deployment with latest changes"
             echo "📦 Development image: ${{ env.DOCKER_HUB_REPOSITORY }}:${{ env.IMAGE_TAG }}"
           fi
-          
+
           echo "✅ All restaurants now serving the new recipe!"
         # Interview Story: "This updates all our restaurant locations with the new recipe from the central warehouse"
 
@@ -249,13 +249,13 @@ jobs:
           echo "🍽️ Monitoring food quality..."
           echo "💰 Tracking revenue metrics..."
           echo "📦 Current recipe version: ${{ env.DOCKER_HUB_REPOSITORY }}:${{ env.IMAGE_TAG }}"
-          
+
           # 🏷️ **Version-specific monitoring**
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             echo "🏷️ Production monitoring for version: ${{ env.IMAGE_TAG_VERSION }}"
             echo "📊 Enhanced monitoring for production deployment"
           fi
-          
+
           echo "✅ All metrics looking good!"
         # Interview Story: "This continuously monitors customer satisfaction and food quality"
 
@@ -271,7 +271,7 @@ jobs:
       - name: 🚨 Send Deployment Notification
         run: |
           echo "🚨 Sending notification to restaurant managers..."
-          
+
           if [[ "${{ needs.deploy-to-restaurants.result }}" == "success" ]]; then
             echo "✅ Deployment successful!"
             echo "📋 Recipe: ${{ env.DOCKER_HUB_REPOSITORY }}:${{ env.IMAGE_TAG }}"
@@ -280,7 +280,7 @@ jobs:
             echo "❌ Deployment failed!"
             echo "🚨 Alert: Restaurant managers notified of deployment failure"
           fi
-          
+
           # 🏷️ **Version-specific notifications**
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             echo "🏷️ Production deployment notification for version: ${{ env.IMAGE_TAG_VERSION }}"
