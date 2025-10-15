@@ -42,7 +42,7 @@ jobs:
         run: |
           cd client
           rm -f pnpm-lock.yaml
-          npm install
+          npm install --legacy-peer-deps
           npm run lint
         # Interview Story: "This checks if the recipe follows proper cooking standards (linting)"
 
@@ -50,7 +50,7 @@ jobs:
         run: |
           cd client
           rm -f pnpm-lock.yaml
-          npm install
+          npm install --legacy-peer-deps
           npm run test
         # Interview Story: "This tests if the recipe actually works (unit tests)"
 
@@ -58,7 +58,7 @@ jobs:
         run: |
           cd client
           rm -f pnpm-lock.yaml
-          npm install
+          npm install --legacy-peer-deps
           npm audit
         # Interview Story: "This checks for any dangerous ingredients (security vulnerabilities)"
 
@@ -83,7 +83,7 @@ jobs:
         run: |
           cd client
           rm -f pnpm-lock.yaml
-          npm install
+          npm install --legacy-peer-deps
           npm run build
         # Interview Story: "This prepares the recipe for packaging (builds the application)"
 
