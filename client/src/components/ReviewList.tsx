@@ -12,7 +12,7 @@ interface ReviewListProps {
   className?: string
 }
 
-export default function ReviewList(_{ productId, _className = '' }: ReviewListProps) {
+export default function ReviewList({ productId, className = '' }: ReviewListProps) {
   const { _data: session } = useSession()
   const {
     reviews,

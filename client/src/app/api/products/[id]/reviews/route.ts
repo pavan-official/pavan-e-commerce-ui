@@ -14,7 +14,7 @@ const createReviewSchema = z.object({
 // GET /api/products/[id]/reviews - Get all reviews for a product
 export async function GET(
   request: NextRequest,
-  _{ params }: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     const { searchParams } = new URL(request.url)
@@ -138,7 +138,7 @@ export async function GET(
 // POST /api/products/[id]/reviews - Create a new review
 export async function POST(
   request: NextRequest,
-  _{ params }: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)

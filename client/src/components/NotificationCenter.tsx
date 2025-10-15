@@ -39,7 +39,7 @@ const notificationColors = {
   PROMOTION: 'text-pink-600 bg-pink-100',
 }
 
-export default function NotificationCenter(_{ _onClose, _className = '' }: NotificationCenterProps) {
+export default function NotificationCenter({ onClose, className = '' }: NotificationCenterProps) {
   const {
     notifications,
     pagination,

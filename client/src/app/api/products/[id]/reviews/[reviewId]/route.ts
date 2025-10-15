@@ -13,7 +13,7 @@ const updateReviewSchema = z.object({
 // GET /api/products/[id]/reviews/[reviewId] - Get a specific review
 export async function GET(
   request: NextRequest,
-  _{ params }: { params: { id: string; reviewId: string } }
+  { params }: { params: { id: string; reviewId: string } }
 ) {
   try {
     const review = await prisma.review.findUnique({
@@ -73,7 +73,7 @@ export async function GET(
 // PUT /api/products/[id]/reviews/[reviewId] - Update a review
 export async function PUT(
   request: NextRequest,
-  _{ params }: { params: { id: string; reviewId: string } }
+  { params }: { params: { id: string; reviewId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -171,7 +171,7 @@ export async function PUT(
 // DELETE /api/products/[id]/reviews/[reviewId] - Delete a review
 export async function DELETE(
   request: NextRequest,
-  _{ params }: { params: { id: string; reviewId: string } }
+  { params }: { params: { id: string; reviewId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)

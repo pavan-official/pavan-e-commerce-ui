@@ -11,10 +11,10 @@ interface AdvancedSearchBarProps {
   showFilters?: boolean
 }
 
-export default function AdvancedSearchBar(_{ 
+export default function AdvancedSearchBar({ 
   placeholder = "Search products...", 
-  _className = "",
-  _showFilters = true 
+  className = "",
+  showFilters = true 
 }: AdvancedSearchBarProps) {
   const router = useRouter()
   const { 

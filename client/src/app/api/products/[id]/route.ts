@@ -30,7 +30,7 @@ const updateProductSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  _{ params }: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     const { id } = params
@@ -89,7 +89,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  _{ params }: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     const { id } = params
@@ -238,7 +238,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  _{ params }: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     const { id } = params

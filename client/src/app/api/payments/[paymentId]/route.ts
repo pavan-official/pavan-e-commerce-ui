@@ -4,8 +4,8 @@ import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(
-  __request: NextRequest,
-  _{ params }: { params: { paymentId: string } }
+  request: NextRequest,
+  { params }: { params: { paymentId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)

@@ -13,13 +13,13 @@ interface AddToCartButtonProps {
   disabled?: boolean
 }
 
-export default function AddToCartButton(_{
+export default function AddToCartButton({
   productId,
-  _variantId,
-  _className = '',
-  _children,
-  _disabled = false,
-_}: AddToCartButtonProps) {
+  variantId,
+  className = '',
+  children,
+  disabled = false,
+}: AddToCartButtonProps) {
   const { data: session } = useSession()
   const router = useRouter()
   const { addToCart, isLoading } = useCartStore()

@@ -10,7 +10,7 @@ const updateCartItemSchema = z.object({
 
 export async function PUT(
   request: NextRequest,
-  _{ params }: { params: { itemId: string } }
+  { params }: { params: { itemId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -126,7 +126,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  _{ params }: { params: { itemId: string } }
+  { params }: { params: { itemId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)

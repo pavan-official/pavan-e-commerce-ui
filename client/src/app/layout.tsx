@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   description: "Trendlama is the best place to find the best clothes",
 };
 
-export default function RootLayout(_{
+export default function RootLayout({
   children,
 _}: Readonly<{
   children: React.ReactNode;

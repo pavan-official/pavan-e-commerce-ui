@@ -11,7 +11,7 @@ const updateNotificationSchema = z.object({
 // GET /api/notifications/[id] - Get a specific notification
 export async function GET(
   request: NextRequest,
-  _{ params }: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -71,7 +71,7 @@ export async function GET(
 // PUT /api/notifications/[id] - Update a notification
 export async function PUT(
   request: NextRequest,
-  _{ params }: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -156,7 +156,7 @@ export async function PUT(
 // DELETE /api/notifications/[id] - Delete a notification
 export async function DELETE(
   request: NextRequest,
-  _{ params }: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)

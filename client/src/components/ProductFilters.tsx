@@ -9,9 +9,9 @@ interface ProductFiltersProps {
   onFiltersChange?: (filters: ApiResponse) => void
 }
 
-export default function ProductFilters(_{ 
+export default function ProductFilters({ 
   className = "",
-  _onFiltersChange 
+  onFiltersChange 
 }: ProductFiltersProps) {
   const { 
     filters, 

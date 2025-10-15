@@ -13,13 +13,13 @@ interface ReviewFormProps {
   className?: string
 }
 
-export default function ReviewForm(_{
+export default function ReviewForm({
   productId,
-  _orderId,
-  _onSuccess,
-  _onCancel,
-  _className = '',
-_}: ReviewFormProps) {
+  orderId,
+  onSuccess,
+  onCancel,
+  className = '',
+}: ReviewFormProps) {
   const { data: session } = useSession()
   const { createReview, isSubmitting, error } = useReviewStore()
   

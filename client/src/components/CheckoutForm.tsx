@@ -10,7 +10,7 @@ interface CheckoutFormProps {
   onSuccess?: (order: ApiResponse) => void
 }
 
-export default function CheckoutForm(_{ onSuccess }: CheckoutFormProps) {
+export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
   const { data: session } = useSession()
   const router = useRouter()
   const { summary, items } = useCartStore()

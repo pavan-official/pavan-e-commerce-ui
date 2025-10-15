@@ -10,7 +10,7 @@ interface NotificationBellProps {
   className?: string
 }
 
-export default function NotificationBell(_{ className = '' }: NotificationBellProps) {
+export default function NotificationBell({ className = '' }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false)
   const { unreadCount, isConnected } = useNotifications()
   const { fetchNotifications } = useNotificationStore()

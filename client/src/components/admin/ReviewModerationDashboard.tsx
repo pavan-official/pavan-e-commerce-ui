@@ -40,7 +40,7 @@ interface ReviewModerationDashboardProps {
   className?: string
 }
 
-export default function ReviewModerationDashboard(_{ 
+export default function ReviewModerationDashboard({ 
   className = '' 
 }: ReviewModerationDashboardProps) {
   const { data: session } = useSession()

@@ -19,7 +19,7 @@ interface StripePaymentFormProps {
   onError: (error: string) => void
 }
 
-function PaymentForm(_{ orderId, amount, _onSuccess, _onError }: StripePaymentFormProps) {
+function PaymentForm({ orderId, amount, _onSuccess, _onError }: StripePaymentFormProps) {
   const stripe = useStripe()
   const elements = useElements()
   const { data: session } = useSession()

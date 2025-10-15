@@ -27,7 +27,7 @@ interface Payment {
   }
 }
 
-export default function PaymentStatus(_{ paymentId, _onStatusChange }: PaymentStatusProps) {
+export default function PaymentStatus({ paymentId, _onStatusChange }: PaymentStatusProps) {
   const { data: session } = useSession()
   const [payment, setPayment] = useState<Payment | null>(null)
   const [isLoading, setIsLoading] = useState(true)
