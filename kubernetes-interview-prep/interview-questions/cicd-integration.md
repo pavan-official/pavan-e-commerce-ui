@@ -97,6 +97,51 @@ This document contains real-world CI/CD interview scenarios encountered during t
 
 ---
 
+### **Question 7: Industry Standards vs Workspace Compatibility**
+
+**Interviewer**: "How do you maintain industry standards while solving npm workspace compatibility issues?"
+
+**Your Response**:
+*"As an Architect Agent, I maintain industry standards while solving compatibility issues. When `npm ci` failed with workspaces, I didn't abandon the industry standard - I identified that the issue was missing workspace flags. The solution was to use `npm ci --workspace=client --workspace=admin` which maintains all the benefits of npm ci (2-10x faster installs, reproducible builds, security, reliability) while being compatible with npm workspaces. The key principle is to solve the configuration issue rather than abandoning proven industry standards. This approach ensures we get the best of both worlds: workspace compatibility and industry-standard performance and security."*
+
+**Key Points**:
+- Maintain industry standards while solving compatibility
+- Solve configuration issues, don't abandon standards
+- npm ci benefits: 2-10x faster, reproducible builds, security
+- Best of both worlds approach
+
+---
+
+### **Question 8: npm ci with Monorepo Workspaces**
+
+**Interviewer**: "How do you handle npm ci with workspaces in a monorepo?"
+
+**Your Response**:
+*"As an Architect Agent, I solve the root cause rather than workarounds. When `npm ci` failed with 'no package-lock.json', I identified that monorepos need a root package-lock.json to define workspace relationships. The solution is a two-step process: first, generate the root package-lock.json with `npm install --package-lock-only`, then use `npm ci --workspace=client --workspace=admin`. This maintains all industry standard benefits of npm ci (2-10x faster, reproducible builds, security, reliability) while being compatible with npm workspaces. The key insight is that npm ci requires a complete dependency tree definition, which in monorepos includes the workspace relationships defined in the root package-lock.json."*
+
+**Key Points**:
+- Root cause analysis over workarounds
+- Two-step process: generate root package-lock.json, then npm ci
+- Complete dependency tree definition required
+- Workspace relationships in root package-lock.json
+
+---
+
+### **Question 9: Build Script Execution Context**
+
+**Interviewer**: "How do you handle npm workspaces in CI/CD with build scripts?"
+
+**Your Response**:
+*"As an Architect Agent, I ensure proper execution context for workspace commands. When `npm ci --workspace=client --workspace=admin` failed with 'No workspaces found', I identified that the build script was running from the client directory, but workspace commands require the root directory context where the workspace configuration exists. The solution is to use `cwd: path.join(__dirname, '..', '..')` in execSync calls to ensure npm commands run from the root directory. This maintains all industry standard benefits of npm ci while properly supporting npm workspaces. The key insight is that workspace commands are context-sensitive and must run from the directory containing the workspace configuration."*
+
+**Key Points**:
+- Proper execution context for workspace commands
+- Build scripts must run from root directory
+- Use cwd parameter in execSync calls
+- Context-sensitive workspace commands
+
+---
+
 ## 🚨 **Real-World Scenarios**
 
 ### **Scenario 1: Prisma Client Initialization Failure**
@@ -141,6 +186,51 @@ This document contains real-world CI/CD interview scenarios encountered during t
 
 **Interview Response**:
 *"When the built-in GitHub Actions npm cache failed with workspaces, I didn't just disable caching. I implemented a manual caching strategy using actions/cache@v4 that explicitly caches the npm cache directory and node_modules. This maintains the performance benefits while being compatible with npm workspaces. The key is understanding the limitations of built-in tools and implementing custom solutions when needed."*
+
+---
+
+### **Scenario 4: Industry Standards vs Workspace Compatibility**
+
+**Problem**: npm ci failed with workspaces, but industry standards require npm ci
+
+**Solution Approach**:
+1. **Analysis**: npm ci is industry standard but needs workspace flags
+2. **Implementation**: Use `npm ci --workspace=client --workspace=admin`
+3. **Benefits**: Maintains 2-10x faster installs, reproducible builds, security
+4. **Principle**: Solve configuration issues, don't abandon standards
+
+**Interview Response**:
+*"When npm ci failed with workspaces, I didn't abandon the industry standard. I identified that the issue was missing workspace flags. The solution was to use `npm ci --workspace=client --workspace=admin` which maintains all the benefits of npm ci while being compatible with npm workspaces. This ensures we get the best of both worlds: workspace compatibility and industry-standard performance and security."*
+
+---
+
+### **Scenario 5: Missing Root Package Lock in Monorepo**
+
+**Problem**: `npm ci` failed with 'no package-lock.json' in monorepo
+
+**Solution Approach**:
+1. **Root Cause**: Monorepos need root package-lock.json for workspace relationships
+2. **Two-Step Process**: Generate root package-lock.json, then npm ci
+3. **Implementation**: `npm install --package-lock-only` then `npm ci --workspace=client --workspace=admin`
+4. **Result**: Complete dependency tree definition with workspace relationships
+
+**Interview Response**:
+*"When npm ci failed with 'no package-lock.json' in the monorepo, I identified that monorepos need a root package-lock.json to define workspace relationships. The solution is a two-step process: first, generate the root package-lock.json with `npm install --package-lock-only`, then use `npm ci --workspace=client --workspace=admin`. This maintains all industry standard benefits while being compatible with npm workspaces."*
+
+---
+
+### **Scenario 6: Build Script Execution Context Issues**
+
+**Problem**: `npm ci --workspace=client --workspace=admin` failed with 'No workspaces found'
+
+**Solution Approach**:
+1. **Analysis**: Build script running from client directory, but workspace commands need root context
+2. **Implementation**: Use `cwd: path.join(__dirname, '..', '..')` in execSync calls
+3. **Result**: Workspace commands run from root directory where configuration exists
+4. **Benefit**: Maintains industry standard npm ci with proper workspace support
+
+**Interview Response**:
+*"When npm ci --workspace=client --workspace=admin failed with 'No workspaces found', I identified that the build script was running from the client directory, but workspace commands require the root directory context. The solution is to use `cwd: path.join(__dirname, '..', '..')` in execSync calls to ensure npm commands run from the root directory. This maintains all industry standard benefits while properly supporting npm workspaces."*
 
 ---
 
