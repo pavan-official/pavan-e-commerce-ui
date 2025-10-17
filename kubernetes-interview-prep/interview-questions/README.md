@@ -28,6 +28,7 @@
 
 ### **🔄 DevOps Integration (10% of interviews)**
 - [CI/CD Pipelines](./cicd-integration.md) ✅ **NEW: Real-world scenarios documented**
+- [Rollback Strategies](./rollback-strategies/) ✅ **NEW: Complete rollback learning materials**
 - [Monitoring and Logging](./monitoring-logging.md)
 - [Backup and Recovery](./backup-recovery.md)
 - [Disaster Recovery](./disaster-recovery.md)

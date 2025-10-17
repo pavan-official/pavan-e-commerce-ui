@@ -20,7 +20,7 @@
 - [Rolling Update Failures](./rolling-update-failures.md)
 - [Blue-Green Deployment Issues](./blue-green-issues.md)
 - [Canary Deployment Problems](./canary-issues.md)
-- [Rollback Scenarios](./rollback-scenarios.md)
+- [Rollback Scenarios](./rollback-scenarios/) ✅ **NEW: Complete rollback scenarios and practice**
 - [Configuration Management](./config-management.md)
 
 ### **🛡️ Security & Compliance**

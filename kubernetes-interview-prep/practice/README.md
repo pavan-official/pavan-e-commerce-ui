@@ -16,6 +16,9 @@
 - [Network Problems](./troubleshooting-network.md)
 - [Security Issues](./troubleshooting-security.md)
 
+### **🔄 Rollback Practice**
+- [Rollback Practice](./rollback-practice/) ✅ **NEW: Complete rollback practice materials**
+
 ### **🏗️ Architecture Challenges**
 - [High Availability Setup](./ha-challenge.md)
 - [Microservices Architecture](./microservices-challenge.md)
