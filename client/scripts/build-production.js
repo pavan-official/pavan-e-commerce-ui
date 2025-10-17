@@ -23,13 +23,15 @@ try {
   console.log('🔧 Generating root package-lock.json for npm ci compatibility...');
   execSync('npm install --package-lock-only', { 
     stdio: 'inherit',
-    env: buildEnv
+    env: buildEnv,
+    cwd: path.join(__dirname, '..', '..') // Run from root directory
   });
   
   console.log('📦 Installing dependencies with npm ci (industry standard)...');
   execSync('npm ci --workspace=client --workspace=admin', { 
     stdio: 'inherit',
-    env: buildEnv
+    env: buildEnv,
+    cwd: path.join(__dirname, '..', '..') // Run from root directory
   });
 
   console.log('🗄️ Generating Prisma client...');
