@@ -1,0 +1,116 @@
+name: 🚀 SRE Monitoring Stack Deployment
+
+on:
+  push:
+    branches: [main, completed]
+    paths:
+      - 'sre-interview-prep/**'
+      - '.github/workflows/sre-monitoring-deployment.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  KUBERNETES_NAMESPACE_MONITORING: monitoring
+  KUBERNETES_NAMESPACE_LOGGING: logging
+  DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+
+jobs:
+  deploy-monitoring:
+    name: 📊 Deploy Monitoring Stack
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: 📝 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: ☸️ Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: "latest"
+
+      - name: 🔐 Configure kubectl
+        run: |
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+
+      - name: 📁 Create Namespaces
+        run: |
+          export KUBECONFIG=kubeconfig
+          kubectl create namespace ${{ env.KUBERNETES_NAMESPACE_MONITORING }} --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create namespace ${{ env.KUBERNETES_NAMESPACE_LOGGING }} --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: 🐕 Deploy DataDog Agent
+        run: |
+          export KUBECONFIG=kubeconfig
+          # Create DataDog secret with API key
+          kubectl create secret generic datadog-secret \
+            --from-literal=api-key="${{ env.DATADOG_API_KEY }}" \
+            -n ${{ env.KUBERNETES_NAMESPACE_MONITORING }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          # Deploy DataDog agent
+          kubectl apply -f sre-interview-prep/datadog/
+
+      - name: 📊 Deploy ELK Stack
+        run: |
+          export KUBECONFIG=kubeconfig
+          kubectl apply -f sre-interview-prep/elk/
+
+      - name: ☕ Deploy Java Monitoring
+        run: |
+          export KUBECONFIG=kubeconfig
+          kubectl apply -f sre-interview-prep/java-monitoring/
+
+      - name: ⏳ Wait for Deployments
+        run: |
+          export KUBECONFIG=kubeconfig
+          kubectl wait --for=condition=available --timeout=300s deployment/logstash -n ${{ env.KUBERNETES_NAMESPACE_LOGGING }}
+          kubectl wait --for=condition=available --timeout=300s deployment/kibana -n ${{ env.KUBERNETES_NAMESPACE_LOGGING }}
+
+      - name: 🧪 Health Check
+        run: |
+          export KUBECONFIG=kubeconfig
+          echo "🔍 Checking monitoring stack health..."
+          kubectl get pods -n ${{ env.KUBERNETES_NAMESPACE_MONITORING }}
+          kubectl get pods -n ${{ env.KUBERNETES_NAMESPACE_LOGGING }}
+          
+          echo "📊 Checking DataDog agent status..."
+          kubectl logs -l app=datadog-agent -n ${{ env.KUBERNETES_NAMESPACE_MONITORING }} --tail=10
+          
+          echo "📈 Checking ELK stack status..."
+          kubectl logs -l app=elasticsearch -n ${{ env.KUBERNETES_NAMESPACE_LOGGING }} --tail=5
+          kubectl logs -l app=logstash -n ${{ env.KUBERNETES_NAMESPACE_LOGGING }} --tail=5
+          kubectl logs -l app=kibana -n ${{ env.KUBERNETES_NAMESPACE_LOGGING }} --tail=5
+
+      - name: 📋 Deployment Summary
+        run: |
+          echo "✅ SRE Monitoring Stack Deployed Successfully!"
+          echo "=============================================="
+          echo ""
+          echo "🐕 DataDog Agent:"
+          echo "- APM monitoring enabled"
+          echo "- Infrastructure monitoring active"
+          echo "- Log aggregation configured"
+          echo ""
+          echo "📊 ELK Stack:"
+          echo "- Elasticsearch: 3-node cluster"
+          echo "- Logstash: 2 replicas for log processing"
+          echo "- Kibana: Dashboard and visualization"
+          echo ""
+          echo "☕ Java Monitoring:"
+          echo "- JVM metrics collection"
+          echo "- GC monitoring"
+          echo "- Thread pool analysis"
+          echo "- Application-specific metrics"
+          echo ""
+          echo "🔍 Access Points:"
+          echo "- Kibana: kubectl port-forward svc/kibana 5601:5601 -n logging"
+          echo "- Elasticsearch: kubectl port-forward svc/elasticsearch 9200:9200 -n logging"
+          echo "- DataDog: Check your DataDog dashboard"
+          echo ""
+          echo "📚 Interview Preparation Ready:"
+          echo "- Incident response scenarios documented"
+          echo "- Troubleshooting methodology prepared"
+          echo "- Java monitoring best practices included"
+          echo "- SRE interview questions covered"

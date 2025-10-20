@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: datadog-config
+  namespace: monitoring
+data:
+  # Java application monitoring
+  jmx.yaml: |
+    init_config:
+    instances:
+      - host: localhost
+        port: 9999
+        name: ecommerce-app
+        tags:
+          - env:production
+          - service:ecommerce
+        conf:
+          - include:
+              domain: java.lang
+              type: Memory
+              attribute:
+                - HeapMemoryUsage
+                - NonHeapMemoryUsage
+          - include:
+              domain: java.lang
+              type: GarbageCollector
+              attribute:
+                - CollectionCount
+                - CollectionTime
+          - include:
+              domain: java.lang
+              type: Threading
+              attribute:
+                - ThreadCount
+                - DaemonThreadCount
+                - PeakThreadCount
+          - include:
+              domain: java.lang
+              type: OperatingSystem
+              attribute:
+                - ProcessCpuLoad
+                - SystemCpuLoad
+                - FreePhysicalMemorySize
+                - TotalPhysicalMemorySize
+
+  # Custom metrics for e-commerce
+  custom_metrics.yaml: |
+    init_config:
+    instances:
+      - name: ecommerce_metrics
+        tags:
+          - env:production
+          - service:ecommerce
+        custom_metrics:
+          - name: orders_per_minute
+            type: gauge
+          - name: cart_abandonment_rate
+            type: gauge
+          - name: api_response_time
+            type: histogram
+          - name: database_connection_pool
+            type: gauge
