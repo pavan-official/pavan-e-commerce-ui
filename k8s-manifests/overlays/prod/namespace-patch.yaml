@@ -1,0 +1,17 @@
+# 🏷️ **Production Namespace Patch**
+# Production-specific namespace configuration
+# Interview Story: "This creates our main restaurant workspace"
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ecommerce-production
+  labels:
+    environment: production
+    purpose: production
+    team: ecommerce
+  annotations:
+    description: "Production environment for e-commerce application"
+    contact: "ops-team@company.com"
+    monitoring: "enabled"
+    backup: "enabled"

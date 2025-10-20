@@ -1,0 +1,15 @@
+# 🎭 **Staging Environment**
+# Staging namespace configuration
+# Interview Story: "This is our staging kitchen where we test recipes before serving to customers"
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ecommerce-staging
+  labels:
+    environment: staging
+    purpose: testing
+    team: ecommerce
+  annotations:
+    description: "Staging environment for e-commerce application"
+    contact: "qa-team@company.com"

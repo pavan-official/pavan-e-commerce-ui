@@ -1,0 +1,29 @@
+# 🚀 **Development Deployment Patch**
+# Development-specific deployment overrides
+# Interview Story: "This overrides the base deployment with development-specific settings"
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ecommerce-frontend
+  namespace: ecommerce-dev
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+      - name: ecommerce-app
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1Gi
+          requests:
+            cpu: 250m
+            memory: 512Mi
+        env:
+        - name: NODE_ENV
+          value: "development"
+        - name: DEBUG
+          value: "true"
+        - name: LOG_LEVEL
+          value: "debug"

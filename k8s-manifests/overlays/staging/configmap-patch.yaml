@@ -1,0 +1,28 @@
+# ⚙️ **Staging ConfigMap Patch**
+# Staging-specific configuration overrides
+# Interview Story: "This overrides the base recipe with staging-specific ingredients"
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ecommerce-config
+  namespace: ecommerce-staging
+data:
+  # Staging-specific overrides
+  NODE_ENV: "production"
+  NEXT_PUBLIC_APP_URL: "https://staging.ecommerce.example.com"
+  NEXT_PUBLIC_API_URL: "https://staging.ecommerce.example.com/api"
+  
+  # Staging database
+  POSTGRES_HOST: "postgres-staging-service"
+  
+  # Staging Redis
+  REDIS_HOST: "redis-staging-service"
+  
+  # Staging logging
+  LOG_LEVEL: "info"
+  
+  # Staging performance
+  CACHE_TTL: "1800"
+  SESSION_TIMEOUT: "7200"
+  MAX_CONNECTIONS: "75"

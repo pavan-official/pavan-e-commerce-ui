@@ -1,0 +1,208 @@
+# 🗄️ **Production PostgreSQL Database**
+# Production-ready PostgreSQL with high availability
+# Interview Story: "This is our main storage room where we keep all the customer data"
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: ecommerce-production
+  labels:
+    app: postgres
+    component: database
+    environment: production
+spec:
+  serviceName: postgres-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+        component: database
+        environment: production
+    spec:
+      serviceAccountName: postgres
+      securityContext:
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        runAsNonRoot: true
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: "ecommerce_db"
+        - name: POSTGRES_USER
+          value: "ecommerce"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: password
+        - name: PGDATA
+          value: "/var/lib/postgresql/data/pgdata"
+        resources:
+          limits:
+            cpu: 2000m
+            memory: 4Gi
+          requests:
+            cpu: 1000m
+            memory: 2Gi
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - ecommerce
+            - -d
+            - ecommerce_db
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - ecommerce
+            - -d
+            - ecommerce_db
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+        - name: postgres-config
+          mountPath: /etc/postgresql
+        - name: postgres-backup
+          mountPath: /backup
+      volumes:
+      - name: postgres-config
+        configMap:
+          name: postgres-config
+      - name: postgres-backup
+        persistentVolumeClaim:
+          claimName: postgres-backup-pvc
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-data
+      labels:
+        app: postgres
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 100Gi
+      storageClassName: "fast-ssd"
+
+---
+# 🔐 **PostgreSQL Secrets**
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secrets
+  namespace: ecommerce-production
+type: Opaque
+data:
+  password: cGFzc3dvcmQ= # base64 encoded password
+
+---
+# ⚙️ **PostgreSQL Configuration**
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+  namespace: ecommerce-production
+data:
+  postgresql.conf: |
+    # Connection Settings
+    listen_addresses = '*'
+    port = 5432
+    max_connections = 200
+    
+    # Memory Settings
+    shared_buffers = 1GB
+    effective_cache_size = 3GB
+    work_mem = 16MB
+    maintenance_work_mem = 256MB
+    
+    # Write-Ahead Logging
+    wal_level = replica
+    max_wal_size = 1GB
+    min_wal_size = 80MB
+    checkpoint_completion_target = 0.9
+    
+    # Query Tuning
+    random_page_cost = 1.1
+    effective_io_concurrency = 200
+    
+    # Logging
+    log_destination = 'stderr'
+    logging_collector = on
+    log_directory = '/var/log/postgresql'
+    log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
+    log_rotation_age = 1d
+    log_rotation_size = 100MB
+    log_min_duration_statement = 1000
+    log_line_prefix = '%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '
+    log_checkpoints = on
+    log_connections = on
+    log_disconnections = on
+    log_lock_waits = on
+    log_temp_files = 0
+    
+    # Autovacuum
+    autovacuum = on
+    autovacuum_max_workers = 3
+    autovacuum_naptime = 1min
+    autovacuum_vacuum_threshold = 50
+    autovacuum_analyze_threshold = 50
+    autovacuum_vacuum_scale_factor = 0.1
+    autovacuum_analyze_scale_factor = 0.05
+    autovacuum_freeze_max_age = 200000000
+    autovacuum_multixact_freeze_max_age = 400000000
+    autovacuum_vacuum_cost_delay = 20ms
+    autovacuum_vacuum_cost_limit = 200
+
+---
+# 🗄️ **PostgreSQL Service**
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: ecommerce-production
+  labels:
+    app: postgres
+    component: database
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5432
+    targetPort: 5432
+    protocol: TCP
+  selector:
+    app: postgres
+
+---
+# 💾 **PostgreSQL Backup PVC**
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-backup-pvc
+  namespace: ecommerce-production
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: "standard"

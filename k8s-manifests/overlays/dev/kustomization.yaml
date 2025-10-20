@@ -1,0 +1,37 @@
+# 🧪 **Development Environment Kustomization**
+# Development-specific configuration
+# Interview Story: "This is our development kitchen where we experiment with new recipes"
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Base configuration
+bases:
+  - ../../base
+
+# Development-specific patches
+patchesStrategicMerge:
+  - configmap-patch.yaml
+  - deployment-patch.yaml
+
+# Development-specific resources
+resources:
+  - namespace-patch.yaml
+
+# Development-specific labels
+commonLabels:
+  environment: development
+  purpose: development
+
+# Development-specific annotations
+commonAnnotations:
+  environment: development
+  purpose: development
+
+# Development-specific namespace
+namespace: ecommerce-dev
+
+# Development-specific image tags
+images:
+  - name: pavandoc1990/ecommerce-production-client
+    newTag: dev-latest

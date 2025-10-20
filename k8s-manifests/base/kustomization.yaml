@@ -1,0 +1,34 @@
+# 🎯 **Base Kustomization**
+# Base configuration for all environments
+# Interview Story: "This is our base recipe that all environments build upon"
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Resources to include
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secrets.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+
+# Common labels for all resources
+commonLabels:
+  app: ecommerce
+  version: v1.0.0
+  managed-by: kustomize
+
+# Common annotations for all resources
+commonAnnotations:
+  description: "E-commerce application"
+  contact: "devops@company.com"
+
+# Image transformations
+images:
+  - name: pavandoc1990/ecommerce-production-client
+    newTag: latest
+
+# Namespace for all resources
+namespace: ecommerce

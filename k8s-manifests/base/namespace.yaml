@@ -1,0 +1,15 @@
+# 🏷️ **Base Namespace**
+# Common namespace configuration for all environments
+# Interview Story: "This is our base workspace that all environments inherit from"
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ecommerce
+  labels:
+    app: ecommerce
+    version: v1.0.0
+    managed-by: kustomize
+  annotations:
+    description: "E-commerce application namespace"
+    contact: "devops@company.com"

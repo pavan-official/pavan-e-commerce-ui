@@ -1,0 +1,15 @@
+# 🧪 **Development Environment**
+# Development namespace configuration
+# Interview Story: "This is our development kitchen where we experiment with new recipes"
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ecommerce-dev
+  labels:
+    environment: development
+    purpose: development
+    team: ecommerce
+  annotations:
+    description: "Development environment for e-commerce application"
+    contact: "dev-team@company.com"
