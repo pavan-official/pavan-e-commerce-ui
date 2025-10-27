@@ -2,9 +2,9 @@ name: Complete Kubernetes CI/CD Pipeline
 
 on:
     push:
-        branches: [starter, develop]
+        branches: [main, develop]
     pull_request:
-        branches: [starter]
+        branches: [main]
     workflow_dispatch:
 
 env:
@@ -89,7 +89,7 @@ jobs:
     deploy-to-kubernetes:
         needs: build-and-test
         runs-on: ubuntu-latest
-        if: github.ref == 'refs/heads/starter'
+        if: github.ref == 'refs/heads/main'
 
         steps:
             - name: Checkout code
@@ -197,7 +197,7 @@ jobs:
     performance-test:
         needs: deploy-to-kubernetes
         runs-on: ubuntu-latest
-        if: github.ref == 'refs/heads/starter'
+        if: github.ref == 'refs/heads/main'
 
         steps:
             - name: Checkout code
