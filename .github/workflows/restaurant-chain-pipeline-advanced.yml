@@ -9,12 +9,9 @@ name: 🍽️ Restaurant Chain Pipeline (Advanced)
 on:
     push:
         branches: [main, completed, develop]
+        tags: ["v*.*.*"]
     pull_request:
         branches: [main]
-    # 🏷️ **Automated Versioning Trigger**
-    # Interview Story: "When we tag a recipe with a version number, it triggers a special production deployment"
-    tags:
-        - "v*.*.*" # Triggers on version tags like v1.0.0, v1.2.3
 
 # 🏭 **Central Kitchen Environment**
 # Interview Story: "This sets up our central kitchen with all the tools we need"
