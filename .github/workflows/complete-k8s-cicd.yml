@@ -12,6 +12,11 @@ env:
     IMAGE_NAME: ${{ github.repository }}
     KUBERNETES_NAMESPACE: ecommerce-production
     DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+    NEXT_PUBLIC_DATADOG_APPLICATION_ID: "your-app-id"
+    NEXT_PUBLIC_DATADOG_CLIENT_TOKEN: "your-client-token"
+    NEXT_PUBLIC_DATADOG_SITE: "datadoghq.com"
+    NEXT_PUBLIC_DATADOG_SERVICE: "ecommerce-frontend"
+    NEXT_PUBLIC_DATADOG_ENV: "production"
 
 jobs:
     # Build and Test Application
