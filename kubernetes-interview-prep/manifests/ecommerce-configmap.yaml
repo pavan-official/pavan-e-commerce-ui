@@ -1,0 +1,36 @@
+# ⚙️ **E-commerce Configuration**
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ecommerce-config
+  namespace: ecommerce-production
+  labels:
+    app: ecommerce
+    component: config
+data:
+  # Application Configuration
+  NODE_ENV: "production"
+  PORT: "3000"
+  LOG_LEVEL: "info"
+  
+  # Database Configuration
+  DATABASE_URL: "postgresql://ecommerce:password@postgres-service:5432/ecommerce_db"
+  
+  # Cache Configuration
+  REDIS_URL: "redis://redis-service:6379"
+  
+  # Feature Flags
+  FEATURE_FLAGS: "payment_v2,analytics_v3,notifications_v1"
+  
+  # Performance Settings
+  CACHE_TTL: "3600"
+  RATE_LIMIT: "1000"
+  SESSION_TIMEOUT: "86400"
+  
+  # Monitoring
+  METRICS_ENABLED: "true"
+  HEALTH_CHECK_INTERVAL: "30"
+  
+  # Next.js Configuration
+  NEXT_PUBLIC_APP_URL: "https://ecommerce.company.com"
+  NEXT_PUBLIC_API_URL: "https://api.ecommerce.company.com"

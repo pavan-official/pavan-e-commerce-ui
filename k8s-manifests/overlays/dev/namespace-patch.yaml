@@ -1,0 +1,15 @@
+# 🏷️ **Development Namespace Patch**
+# Development-specific namespace configuration
+# Interview Story: "This creates our development workspace"
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ecommerce-dev
+  labels:
+    environment: development
+    purpose: development
+    team: ecommerce
+  annotations:
+    description: "Development environment for e-commerce application"
+    contact: "dev-team@company.com"

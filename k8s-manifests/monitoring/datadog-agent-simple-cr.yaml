@@ -1,0 +1,16 @@
+# DataDog Agent Configuration using Custom Resource
+# Based on: https://docs.datadoghq.com/containers/kubernetes/?tab=datadogoperator
+
+apiVersion: datadoghq.com/v2alpha1
+kind: DatadogAgent
+metadata:
+  name: datadog
+  namespace: monitoring
+spec:
+  global:
+    clusterName: ecommerce-k8s
+    site: us5.datadoghq.com
+    credentials:
+      apiSecret:
+        secretName: datadog-secret
+        keyName: api-key

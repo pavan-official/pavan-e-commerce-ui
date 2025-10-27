@@ -1,0 +1,26 @@
+# 🏭 **Production Environment Namespace**
+# Learning: Production is your live environment serving real users
+# This is where everything must be perfect and highly available
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ecommerce-prod
+  labels:
+    environment: production
+    purpose: live-service
+    team: platform-engineering
+    criticality: high
+  annotations:
+    description: "Production environment - live e-commerce platform"
+    contact: "platform-team@company.com"
+    # 🎯 **Learning**: Production has the highest security and monitoring
+    security-level: "maximum"
+    monitoring-level: "comprehensive"
+    backup-schedule: "daily"
+---
+# 🎯 **Learning Points**:
+# 1. **High Availability**: Must be always available
+# 2. **Security**: Maximum security measures
+# 3. **Monitoring**: Comprehensive monitoring and alerting
+# 4. **Backup**: Regular backups and disaster recovery

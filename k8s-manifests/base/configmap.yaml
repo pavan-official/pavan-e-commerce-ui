@@ -1,0 +1,40 @@
+# ⚙️ **Base ConfigMap**
+# Common configuration for all environments
+# Interview Story: "This contains the base recipe ingredients that all environments use"
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ecommerce-config
+  namespace: ecommerce-production
+  labels:
+    app: ecommerce
+    component: config
+    managed-by: kustomize
+data:
+  # Application Configuration
+  NODE_ENV: "production"
+  NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+  NEXT_PUBLIC_API_URL: "http://localhost:3000/api"
+  NEXTAUTH_URL: "http://localhost:3000"
+  
+  # Database Configuration
+  DATABASE_URL: "postgresql://ecommerce:${DATABASE_PASSWORD}@postgres-service:5432/ecommerce_db"
+  POSTGRES_DB: "ecommerce_db"
+  POSTGRES_USER: "ecommerce"
+  POSTGRES_HOST: "postgres-service"
+  POSTGRES_PORT: "5432"
+  
+  # Redis Configuration
+  REDIS_URL: "redis://redis-service:6379"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  
+  # Logging Configuration
+  LOG_LEVEL: "info"
+  LOG_FORMAT: "json"
+  
+  # Performance Configuration
+  CACHE_TTL: "3600"
+  SESSION_TIMEOUT: "86400"
+  MAX_CONNECTIONS: "100"

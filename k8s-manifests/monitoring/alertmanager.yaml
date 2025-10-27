@@ -1,0 +1,231 @@
+# ==================================================================================================
+# ALERTMANAGER DEPLOYMENT - KUBERNETES MANIFEST
+# ==================================================================================================
+#
+# Purpose: Deploy AlertManager for comprehensive alert routing and notification
+# Why: Essential for proactive incident response and team notifications
+#
+# Interview Topics:
+# - Alert routing and grouping
+# - Notification channels (email, Slack, PagerDuty)
+# - Alert inhibition and silencing
+# - Escalation policies
+# - Integration with monitoring stack
+#
+# ==================================================================================================
+
+---
+# ⚙️ **AlertManager ConfigMap**
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: monitoring
+  labels:
+    app: alertmanager
+data:
+  alertmanager.yml: |
+    global:
+      smtp_smarthost: 'localhost:587'
+      smtp_from: 'alerts@ecommerce.local'
+      resolve_timeout: 5m
+
+    # Alert routing configuration
+    route:
+      group_by: ['alertname', 'cluster', 'service']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 1h
+      receiver: 'default-receiver'
+      
+      routes:
+        # Critical alerts - immediate notification
+        - match:
+            severity: critical
+          receiver: 'critical-alerts'
+          group_wait: 5s
+          repeat_interval: 5m
+          continue: true
+
+        # High priority alerts
+        - match:
+            severity: high
+          receiver: 'high-priority-alerts'
+          group_wait: 30s
+          repeat_interval: 15m
+          continue: true
+
+        # Medium priority alerts
+        - match:
+            severity: medium
+          receiver: 'medium-priority-alerts'
+          group_wait: 2m
+          repeat_interval: 1h
+          continue: true
+
+        # Low priority alerts
+        - match:
+            severity: low
+          receiver: 'low-priority-alerts'
+          group_wait: 5m
+          repeat_interval: 4h
+
+    # Alert inhibition rules
+    inhibit_rules:
+      - source_match:
+          severity: 'critical'
+          alertname: 'ApplicationDown'
+        target_match:
+          severity: 'high'
+          alertname: 'InstanceDown'
+        equal: ['service', 'environment']
+
+      - source_match:
+          severity: 'critical'
+          alertname: 'DatabaseDown'
+        target_match:
+          severity: 'high'
+          alertname: 'DatabaseSlow'
+        equal: ['service', 'environment']
+
+    # Receiver configurations
+    receivers:
+      - name: 'default-receiver'
+        email_configs:
+          - to: 'admin@ecommerce.local'
+
+      - name: 'critical-alerts'
+        email_configs:
+          - to: 'oncall@ecommerce.local'
+
+      - name: 'high-priority-alerts'
+        email_configs:
+          - to: 'team@ecommerce.local'
+
+      - name: 'medium-priority-alerts'
+        email_configs:
+          - to: 'team@ecommerce.local'
+
+      - name: 'low-priority-alerts'
+        email_configs:
+          - to: 'team@ecommerce.local'
+
+---
+# 📊 **AlertManager Deployment**
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager
+  namespace: monitoring
+  labels:
+    app: alertmanager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alertmanager
+  template:
+    metadata:
+      labels:
+        app: alertmanager
+    spec:
+      containers:
+      - name: alertmanager
+        image: prom/alertmanager:v0.25.0
+        args:
+          - '--config.file=/etc/alertmanager/alertmanager.yml'
+          - '--storage.path=/alertmanager'
+          - '--web.external-url=http://alertmanager.local'
+          - '--web.route-prefix=/'
+        ports:
+        - containerPort: 9093
+          name: web
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        volumeMounts:
+        - name: alertmanager-config-volume
+          mountPath: /etc/alertmanager
+        - name: alertmanager-storage-volume
+          mountPath: /alertmanager
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: 9093
+          initialDelaySeconds: 30
+          timeoutSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 9093
+          initialDelaySeconds: 30
+          timeoutSeconds: 30
+      volumes:
+      - name: alertmanager-config-volume
+        configMap:
+          defaultMode: 420
+          name: alertmanager-config
+      - name: alertmanager-storage-volume
+        persistentVolumeClaim:
+          claimName: alertmanager-pvc
+
+---
+# 💾 **AlertManager PersistentVolumeClaim**
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: alertmanager-pvc
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: standard
+
+---
+# 🌐 **AlertManager Service**
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+  namespace: monitoring
+  labels:
+    app: alertmanager
+spec:
+  selector:
+    app: alertmanager
+  ports:
+  - port: 9093
+    targetPort: 9093
+    protocol: TCP
+    name: web
+  type: ClusterIP
+
+---
+# 🔗 **AlertManager Ingress**
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: alertmanager-ingress
+  namespace: monitoring
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+  - host: alertmanager.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: alertmanager
+            port:
+              number: 9093

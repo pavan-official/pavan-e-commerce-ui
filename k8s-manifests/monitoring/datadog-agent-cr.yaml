@@ -1,0 +1,96 @@
+# DataDog Agent Configuration using Custom Resource
+# Based on: https://docs.datadoghq.com/containers/kubernetes/?tab=datadogoperator
+
+apiVersion: datadoghq.com/v2alpha1
+kind: DatadogAgent
+metadata:
+  name: datadog
+  namespace: monitoring
+spec:
+  global:
+    clusterName: ecommerce-k8s
+    site: us5.datadoghq.com
+    credentials:
+      apiSecret:
+        secretName: datadog-secret
+        keyName: api-key
+  agent:
+    config:
+      securityContext:
+        runAsUser: 100
+        supplementalGroups:
+          - 100
+      env:
+        - name: DD_LOGS_ENABLED
+          value: "true"
+        - name: DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL
+          value: "true"
+        - name: DD_APM_ENABLED
+          value: "true"
+        - name: DD_APM_NON_LOCAL_TRAFFIC
+          value: "true"
+        - name: DD_PROCESS_AGENT_ENABLED
+          value: "false"
+        - name: DD_PROCESS_CONFIG_ENABLED
+          value: "false"
+        - name: DD_SYSTEM_PROBE_ENABLED
+          value: "true"
+        - name: DD_RUNTIME_METRICS_ENABLED
+          value: "true"
+        - name: DD_COLLECT_KUBERNETES_EVENTS
+          value: "true"
+        - name: DD_COLLECT_KUBERNETES_METRICS
+          value: "true"
+        - name: DD_KUBERNETES_COLLECT_METADATA_TAGS
+          value: "true"
+        - name: DD_KUBERNETES_METADATA_TAG_UPDATE_FREQ
+          value: "60"
+        - name: DD_KUBERNETES_CADVISOR_METRICS_ENABLED
+          value: "true"
+        - name: DD_KUBERNETES_CADVISOR_METRICS_PORT
+          value: "4194"
+        - name: DD_ORCHESTRATOR_EXPLORER_ENABLED
+          value: "true"
+        - name: DD_ORCHESTRATOR_CLUSTER_NAME
+          value: "ecommerce-k8s"
+        - name: DD_ORCHESTRATOR_ENABLED
+          value: "true"
+        - name: DD_ORCHESTRATOR_COLLECT_RESOURCE_TAGS
+          value: "true"
+        - name: DD_KUBERNETES_KUBELET_CHECK_ENABLED
+          value: "false"
+        - name: DD_KUBERNETES_KUBELET_TLS_VERIFY
+          value: "false"
+        - name: DD_KUBERNETES_KUBELET_PORT
+          value: "10250"
+        - name: DD_KUBERNETES_NODENAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: DD_LEADER_ELECTION
+          value: "true"
+        - name: DD_LEADER_LEASE_DURATION
+          value: "60"
+      resources:
+        requests:
+          memory: "512Mi"
+          cpu: "200m"
+        limits:
+          memory: "1Gi"
+          cpu: "1000m"
+  clusterAgent:
+    config:
+      env:
+        - name: DD_COLLECT_KUBERNETES_STATE_METRICS
+          value: "true"
+        - name: DD_ORCHESTRATOR_EXPLORER_ENABLED
+          value: "true"
+        - name: DD_ORCHESTRATOR_CLUSTER_NAME
+          value: "ecommerce-k8s"
+      resources:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "256Mi"
+          cpu: "200m"

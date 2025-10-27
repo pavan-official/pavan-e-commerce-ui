@@ -1,0 +1,52 @@
+# 🔧 **Development Ingress Patch**
+# Override host configuration for development environment
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ecommerce-ingress
+  namespace: ecommerce-dev
+  annotations:
+    # Development-specific annotations
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    # Allow all hosts for development
+    nginx.ingress.kubernetes.io/server-alias: "localhost,127.0.0.1,*.local"
+spec:
+  rules:
+  - host: localhost
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ecommerce-frontend-service
+            port:
+              number: 80
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: ecommerce-frontend-service
+            port:
+              number: 80
+  - host: "*.local"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ecommerce-frontend-service
+            port:
+              number: 80
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: ecommerce-frontend-service
+            port:
+              number: 80
+

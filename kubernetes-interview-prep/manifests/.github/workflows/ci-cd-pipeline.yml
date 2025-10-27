@@ -1,0 +1,198 @@
+# 🚀 **CI/CD Pipeline for E-commerce Kubernetes Deployment**
+# Purpose: Automated build, test, and deployment pipeline
+# Interview Focus: GitOps, automated testing, security scanning, deployment strategies
+
+name: E-commerce CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/ecommerce-client
+  KUBERNETES_NAMESPACE: ecommerce-production
+
+jobs:
+  # 🔍 **Code Quality & Security**
+  quality-check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: client/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd client
+        npm ci
+        
+    - name: Run linting
+      run: |
+        cd client
+        npm run lint
+        
+    - name: Run type checking
+      run: |
+        cd client
+        npm run type-check
+        
+    - name: Run unit tests
+      run: |
+        cd client
+        npm run test:coverage
+        
+    - name: Security audit
+      run: |
+        cd client
+        npm audit --audit-level moderate
+        
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./client/coverage/lcov.info
+
+  # 🐳 **Docker Build & Security Scan**
+  docker-build:
+    needs: quality-check
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+          
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./client
+        file: ./client/Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  # 🧪 **Integration Testing**
+  integration-test:
+    needs: docker-build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup minikube
+      uses: medyagh/kubectl-action@v1
+      with:
+        cluster: minikube
+        
+    - name: Start minikube
+      run: |
+        minikube start --driver=docker
+        minikube addons enable ingress
+        
+    - name: Load Docker image into minikube
+      run: |
+        minikube image load ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        
+    - name: Deploy to minikube
+      run: |
+        kubectl apply -f kubernetes-interview-prep/manifests/
+        
+    - name: Wait for deployment
+      run: |
+        kubectl wait --for=condition=ready pod -l app=ecommerce -n ecommerce-production --timeout=300s
+        
+    - name: Run integration tests
+      run: |
+        # Test API endpoints
+        kubectl port-forward svc/ecommerce-frontend-service 8080:80 -n ecommerce-production &
+        sleep 10
+        curl -f http://localhost:8080/api/health
+        curl -f http://localhost:8080/api/products
+
+  # 🚀 **Deployment**
+  deploy:
+    needs: [quality-check, docker-build, integration-test]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'latest'
+        
+    - name: Configure kubectl
+      run: |
+        echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig
+        export KUBECONFIG=kubeconfig
+        
+    - name: Deploy to production
+      run: |
+        export KUBECONFIG=kubeconfig
+        # Update image tag in deployment
+        kubectl set image deployment/ecommerce-frontend ecommerce-app=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} -n ${{ env.KUBERNETES_NAMESPACE }}
+        
+        # Wait for rollout
+        kubectl rollout status deployment/ecommerce-frontend -n ${{ env.KUBERNETES_NAMESPACE }}
+        
+        # Verify deployment
+        kubectl get pods -n ${{ env.KUBERNETES_NAMESPACE }}
+        
+    - name: Run smoke tests
+      run: |
+        export KUBECONFIG=kubeconfig
+        # Port forward and test
+        kubectl port-forward svc/ecommerce-frontend-service 8080:80 -n ${{ env.KUBERNETES_NAMESPACE }} &
+        sleep 10
+        curl -f http://localhost:8080/api/health
+        
+    - name: Notify deployment status
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#deployments'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}

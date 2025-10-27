@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logstash
+  namespace: logging
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: logstash
+  template:
+    metadata:
+      labels:
+        app: logstash
+    spec:
+      containers:
+      - name: logstash
+        image: docker.elastic.co/logstash/logstash:8.11.0
+        env:
+        - name: LS_JAVA_OPTS
+          value: "-Xms1g -Xmx1g"
+        - name: ELASTICSEARCH_HOSTS
+          value: "http://elasticsearch:9200"
+        ports:
+        - containerPort: 5044
+          name: beats
+        - containerPort: 5000
+          name: tcp
+        - containerPort: 9600
+          name: http
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: logstash-config
+          mountPath: /usr/share/logstash/pipeline
+        - name: logstash-patterns
+          mountPath: /usr/share/logstash/patterns
+        livenessProbe:
+          httpGet:
+            path: /_node/stats
+            port: 9600
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /_node/stats
+            port: 9600
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: logstash-config
+        configMap:
+          name: logstash-config
+      - name: logstash-patterns
+        configMap:
+          name: logstash-patterns

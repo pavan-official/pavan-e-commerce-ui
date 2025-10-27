@@ -1,0 +1,17 @@
+# 🚀 **Production Environment**
+# Production namespace configuration
+# Interview Story: "This is our main restaurant where we serve customers"
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ecommerce-production
+  labels:
+    environment: production
+    purpose: production
+    team: ecommerce
+  annotations:
+    description: "Production environment for e-commerce application"
+    contact: "ops-team@company.com"
+    monitoring: "enabled"
+    backup: "enabled"

@@ -1,0 +1,39 @@
+# ⚙️ **Production ConfigMap Patch**
+# Production-specific configuration overrides
+# Interview Story: "This overrides the base recipe with production-specific ingredients"
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ecommerce-config
+  namespace: ecommerce-production
+data:
+  # Production-specific overrides
+  NODE_ENV: "production"
+  NEXT_PUBLIC_APP_URL: "https://ecommerce.yourdomain.com"
+  NEXT_PUBLIC_API_URL: "https://ecommerce.yourdomain.com/api"
+  
+  # Production database
+  POSTGRES_HOST: "postgres-production-service"
+  
+  # Production Redis
+  REDIS_HOST: "redis-production-service"
+  
+  # Production logging
+  LOG_LEVEL: "info"
+  
+  # Production performance
+  CACHE_TTL: "3600"
+  SESSION_TIMEOUT: "86400"
+  MAX_CONNECTIONS: "100"
+  
+  # Production security
+  CORS_ORIGIN: "https://ecommerce.yourdomain.com"
+  RATE_LIMIT_WINDOW: "900000"
+  RATE_LIMIT_MAX: "100"
+  
+  # Production features
+  ENABLE_ANALYTICS: "true"
+  ENABLE_MONITORING: "true"
+  ENABLE_TRACING: "true"
+  ENABLE_CACHING: "true"

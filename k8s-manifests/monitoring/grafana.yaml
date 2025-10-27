@@ -1,0 +1,312 @@
+# ==================================================================================================
+# GRAFANA DEPLOYMENT - KUBERNETES MANIFEST
+# ==================================================================================================
+#
+# Purpose: Deploy Grafana for comprehensive dashboards and visualization
+# Why: Essential for monitoring visualization, alerting, and business intelligence
+#
+# Interview Topics:
+# - Dashboard provisioning and management
+# - Datasource configuration
+# - User management and authentication
+# - Persistent storage for dashboards
+# - Security and RBAC
+#
+# ==================================================================================================
+
+---
+# 📊 **Grafana ConfigMap - Datasources**
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: monitoring
+  labels:
+    app: grafana
+data:
+  datasources.yaml: |
+    apiVersion: 1
+
+    datasources:
+      # Prometheus datasource
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus:9090
+        isDefault: true
+        editable: true
+        
+        jsonData:
+          queryTimeout: 60s
+          httpMethod: POST
+          timeInterval: 15s
+          manageAlerts: true
+          alertmanagerUid: alertmanager
+        version: 1
+
+      # AlertManager datasource
+      - name: AlertManager
+        type: alertmanager
+        access: proxy
+        url: http://alertmanager:9093
+        editable: true
+        
+        jsonData:
+          implementation: prometheus
+          handleGrafanaManagedAlerts: true
+
+      # Jaeger tracing datasource
+      - name: Jaeger
+        type: jaeger
+        access: proxy
+        url: http://jaeger:16686
+        editable: true
+        
+        jsonData:
+          tracesToLogs:
+            datasourceUid: 'loki'
+            tags: ['job', 'instance', 'pod', 'namespace']
+            mappedTags: [{ key: 'service.name', value: 'service' }]
+            mapTagNamesEnabled: false
+            spanStartTimeShift: '-1h'
+            spanEndTimeShift: '1h'
+            filterByTraceID: false
+            filterBySpanID: false
+          
+          tracesToMetrics:
+            datasourceUid: 'prometheus'
+            tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
+            queries:
+              - name: 'Sample query'
+                query: 'sum(rate(traces_spanmetrics_latency_bucket{$$__tags}[5m]))'
+
+---
+# 📊 **Grafana ConfigMap - Dashboards**
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: monitoring
+  labels:
+    app: grafana
+data:
+  dashboard-providers.yaml: |
+    apiVersion: 1
+
+    providers:
+      - name: 'default'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 10
+        allowUiUpdates: true
+        options:
+          path: /var/lib/grafana/dashboards/default
+
+  ecommerce-overview.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "E-Commerce Overview",
+        "tags": ["ecommerce"],
+        "style": "dark",
+        "timezone": "browser",
+        "panels": [
+          {
+            "id": 1,
+            "title": "Application Health",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "up{job=\"ecommerce-app\"}",
+                "legendFormat": "{{instance}}"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
+                },
+                "thresholds": {
+                  "steps": [
+                    {"color": "red", "value": 0},
+                    {"color": "green", "value": 1}
+                  ]
+                }
+              }
+            },
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+          },
+          {
+            "id": 2,
+            "title": "Request Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(http_requests_total[5m])",
+                "legendFormat": "{{method}} {{endpoint}}"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+          }
+        ],
+        "time": {
+          "from": "now-1h",
+          "to": "now"
+        },
+        "refresh": "30s"
+      }
+    }
+
+---
+# 🔐 **Grafana Secret - Admin Credentials**
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-admin
+  namespace: monitoring
+  labels:
+    app: grafana
+type: Opaque
+data:
+  admin-user: YWRtaW4=  # admin
+  admin-password: YWRtaW4xMjM=  # admin123
+
+---
+# 📊 **Grafana Deployment**
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: grafana/grafana:10.0.0
+        ports:
+        - containerPort: 3000
+          name: http-grafana
+        env:
+        - name: GF_SECURITY_ADMIN_USER
+          valueFrom:
+            secretKeyRef:
+              name: grafana-admin
+              key: admin-user
+        - name: GF_SECURITY_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: grafana-admin
+              key: admin-password
+        - name: GF_USERS_ALLOW_SIGN_UP
+          value: "false"
+        - name: GF_SERVER_ROOT_URL
+          value: "http://grafana.local"
+        - name: GF_INSTALL_PLUGINS
+          value: "grafana-piechart-panel"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+        volumeMounts:
+        - name: grafana-storage
+          mountPath: /var/lib/grafana
+        - name: grafana-datasources
+          mountPath: /etc/grafana/provisioning/datasources
+        - name: grafana-dashboards
+          mountPath: /etc/grafana/provisioning/dashboards
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          timeoutSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          timeoutSeconds: 30
+      volumes:
+      - name: grafana-storage
+        persistentVolumeClaim:
+          claimName: grafana-pvc
+      - name: grafana-datasources
+        configMap:
+          defaultMode: 420
+          name: grafana-datasources
+      - name: grafana-dashboards
+        configMap:
+          defaultMode: 420
+          name: grafana-dashboards
+
+---
+# 💾 **Grafana PersistentVolumeClaim**
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-pvc
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard
+
+---
+# 🌐 **Grafana Service**
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+spec:
+  selector:
+    app: grafana
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+    name: http-grafana
+  type: ClusterIP
+
+---
+# 🔗 **Grafana Ingress**
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress
+  namespace: monitoring
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+  - host: grafana.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana
+            port:
+              number: 3000

@@ -1,0 +1,141 @@
+# DataDog Operator Installation
+# Based on: https://docs.datadoghq.com/containers/kubernetes/?tab=datadogoperator
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: datadog-operator
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: datadog-operator
+  namespace: datadog-operator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: datadog-operator
+rules:
+  - apiGroups: [""]
+    resources:
+      - nodes
+      - nodes/proxy
+      - nodes/metrics
+      - services
+      - endpoints
+      - pods
+      - events
+      - configmaps
+      - secrets
+      - namespaces
+      - persistentvolumes
+      - persistentvolumeclaims
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources:
+      - deployments
+      - replicasets
+      - statefulsets
+      - daemonsets
+    verbs: ["list", "watch", "get"]
+  - apiGroups: ["batch"]
+    resources:
+      - jobs
+      - cronjobs
+    verbs: ["list", "watch", "get"]
+  - apiGroups: ["autoscaling"]
+    resources:
+      - horizontalpodautoscalers
+    verbs: ["list", "watch", "get"]
+  - apiGroups: ["admissionregistration.k8s.io"]
+    resources:
+      - mutatingwebhookconfigurations
+      - validatingwebhookconfigurations
+    verbs: ["list", "watch", "get", "create", "update", "delete"]
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources:
+      - customresourcedefinitions
+    verbs: ["list", "watch", "get"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources:
+      - clusterroles
+      - clusterrolebindings
+      - roles
+      - rolebindings
+    verbs: ["list", "watch", "get"]
+  - apiGroups: ["datadoghq.com"]
+    resources:
+      - datadogagents
+      - datadogagents/status
+      - datadogagents/finalizers
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: datadog-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: datadog-operator
+subjects:
+  - kind: ServiceAccount
+    name: datadog-operator
+    namespace: datadog-operator
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: datadog-operator
+  namespace: datadog-operator
+  labels:
+    app: datadog-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: datadog-operator
+  template:
+    metadata:
+      labels:
+        app: datadog-operator
+    spec:
+      serviceAccountName: datadog-operator
+      containers:
+        - name: datadog-operator
+          image: datadog/operator:1.18.0
+          ports:
+            - containerPort: 8080
+              name: metrics
+          env:
+            - name: WATCH_NAMESPACE
+              value: ""
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "datadog-operator"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: datadog-operator-metrics
+  namespace: datadog-operator
+  labels:
+    app: datadog-operator
+spec:
+  selector:
+    app: datadog-operator
+  ports:
+    - port: 8080
+      targetPort: metrics
+      name: metrics

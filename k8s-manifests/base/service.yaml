@@ -1,0 +1,27 @@
+# 🌐 **Base Service**
+# Common service configuration for all environments
+# Interview Story: "This is our base service that all environments inherit from"
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: ecommerce-frontend-service
+  namespace: ecommerce-production
+  labels:
+    app: ecommerce
+    component: frontend
+    managed-by: kustomize
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: ecommerce
+    component: frontend
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 3600

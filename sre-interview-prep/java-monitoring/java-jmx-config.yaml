@@ -1,0 +1,162 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: java-jmx-config
+  namespace: monitoring
+data:
+  # JVM monitoring configuration
+  jvm-monitoring.yaml: |
+    # JVM Memory Monitoring
+    - name: jvm.heap.used
+      type: gauge
+      help: "JVM heap memory used"
+      labels:
+        - instance
+        - job
+        - service
+    
+    - name: jvm.heap.max
+      type: gauge
+      help: "JVM heap memory max"
+      labels:
+        - instance
+        - job
+        - service
+    
+    - name: jvm.nonheap.used
+      type: gauge
+      help: "JVM non-heap memory used"
+      labels:
+        - instance
+        - job
+        - service
+    
+    # Garbage Collection Monitoring
+    - name: jvm.gc.collection.count
+      type: counter
+      help: "JVM garbage collection count"
+      labels:
+        - instance
+        - job
+        - service
+        - gc_name
+    
+    - name: jvm.gc.collection.time
+      type: counter
+      help: "JVM garbage collection time in milliseconds"
+      labels:
+        - instance
+        - job
+        - service
+        - gc_name
+    
+    # Thread Monitoring
+    - name: jvm.threads.count
+      type: gauge
+      help: "JVM thread count"
+      labels:
+        - instance
+        - job
+        - service
+    
+    - name: jvm.threads.daemon
+      type: gauge
+      help: "JVM daemon thread count"
+      labels:
+        - instance
+        - job
+        - service
+    
+    - name: jvm.threads.peak
+      type: gauge
+      help: "JVM peak thread count"
+      labels:
+        - instance
+        - job
+        - service
+    
+    # CPU Monitoring
+    - name: jvm.cpu.process
+      type: gauge
+      help: "JVM process CPU usage"
+      labels:
+        - instance
+        - job
+        - service
+    
+    - name: jvm.cpu.system
+      type: gauge
+      help: "JVM system CPU usage"
+      labels:
+        - instance
+        - job
+        - service
+
+  # Application-specific metrics
+  app-metrics.yaml: |
+    # E-commerce specific metrics
+    - name: ecommerce.orders.total
+      type: counter
+      help: "Total number of orders"
+      labels:
+        - instance
+        - job
+        - service
+        - status
+    
+    - name: ecommerce.cart.items
+      type: gauge
+      help: "Number of items in cart"
+      labels:
+        - instance
+        - job
+        - service
+        - user_id
+    
+    - name: ecommerce.api.requests
+      type: counter
+      help: "API requests count"
+      labels:
+        - instance
+        - job
+        - service
+        - method
+        - endpoint
+        - status_code
+    
+    - name: ecommerce.api.duration
+      type: histogram
+      help: "API request duration in seconds"
+      labels:
+        - instance
+        - job
+        - service
+        - method
+        - endpoint
+    
+    - name: ecommerce.database.connections
+      type: gauge
+      help: "Database connection pool size"
+      labels:
+        - instance
+        - job
+        - service
+        - pool_name
+    
+    - name: ecommerce.cache.hits
+      type: counter
+      help: "Cache hits count"
+      labels:
+        - instance
+        - job
+        - service
+        - cache_name
+    
+    - name: ecommerce.cache.misses
+      type: counter
+      help: "Cache misses count"
+      labels:
+        - instance
+        - job
+        - service
+        - cache_name

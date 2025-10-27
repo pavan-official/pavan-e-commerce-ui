@@ -1,0 +1,15 @@
+# 🛡️ **E-commerce Pod Disruption Budget**
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ecommerce-frontend-pdb
+  namespace: ecommerce-production
+  labels:
+    app: ecommerce
+    component: frontend
+spec:
+  minAvailable: 3
+  selector:
+    matchLabels:
+      app: ecommerce
+      component: frontend

@@ -1,0 +1,206 @@
+# Production-Scale Kubernetes Deployment for E-Commerce Platform
+# Designed by DevOps Infrastructure Expert with 30+ Years Experience
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ecommerce-production
+  labels:
+    name: ecommerce-production
+    environment: production
+    tier: frontend
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ecommerce-config
+  namespace: ecommerce-production
+data:
+  # Database Configuration
+  DATABASE_URL: "postgresql://ecommerce_user:ecommerce_password@postgres-service:5432/ecommerce?schema=public"
+  
+  # Application Configuration
+  NODE_ENV: "production"
+  NEXTAUTH_URL: "https://ecommerce.local"
+  NEXTAUTH_SECRET: "your-super-secure-nextauth-secret-key-for-production"
+  
+  # Security Configuration
+  ENCRYPTION_KEY: "your-32-character-encryption-key-here"
+  
+  # External Service URLs (for Kubernetes service discovery)
+  POSTGRES_HOST: "postgres-service"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "ecommerce"
+  POSTGRES_USER: "ecommerce_user"
+  POSTGRES_PASSWORD: "ecommerce_password"
+  
+  # Session Configuration (Kubernetes-aware)
+  SESSION_COOKIE_DOMAIN: ".ecommerce.local"
+  SESSION_COOKIE_SECURE: "true"
+  SESSION_COOKIE_HTTPONLY: "true"
+  SESSION_COOKIE_SAMESITE: "lax"
+  
+  # Performance Configuration
+  MAX_CONNECTIONS: "100"
+  CONNECTION_TIMEOUT: "30000"
+  REQUEST_TIMEOUT: "30000"
+  
+  # Monitoring Configuration
+  LOG_LEVEL: "info"
+  ENABLE_METRICS: "true"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ecommerce-secrets
+  namespace: ecommerce-production
+type: Opaque
+data:
+  # Base64 encoded secrets (use: echo -n "secret" | base64)
+  postgres-password: ZWNvbW1lcmNlX3Bhc3N3b3Jk  # ecommerce_password
+  nextauth-secret: eW91ci1zdXBlci1zZWN1cmUtbmV4dGF1dGgtc2VjcmV0LWtleS1mb3ItcHJvZHVjdGlvbg==  # your-super-secure-nextauth-secret-key-for-production
+  encryption-key: eW91ci0zMi1jaGFyYWN0ZXItZW5jcnlwdGlvbi1rZXktaGVyZQ==  # your-32-character-encryption-key-here
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: ecommerce-production
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+  namespace: ecommerce-production
+  labels:
+    app: postgres
+    tier: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+        tier: database
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: ecommerce-config
+              key: POSTGRES_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            configMapKeyRef:
+              name: ecommerce-config
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ecommerce-secrets
+              key: postgres-password
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        - name: init-script
+          mountPath: /docker-entrypoint-initdb.d
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - ecommerce_user
+            - -d
+            - ecommerce
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - ecommerce_user
+            - -d
+            - ecommerce
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+      - name: init-script
+        configMap:
+          name: postgres-init-script
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: ecommerce-production
+  labels:
+    app: postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-script
+  namespace: ecommerce-production
+data:
+  init.sql: |
+    -- Production Database Initialization Script
+    -- Designed for Kubernetes deployment
+    
+    -- Create database if not exists
+    CREATE DATABASE IF NOT EXISTS ecommerce;
+    
+    -- Create user with proper permissions
+    CREATE USER IF NOT EXISTS ecommerce_user WITH PASSWORD 'ecommerce_password';
+    
+    -- Grant privileges
+    GRANT ALL PRIVILEGES ON DATABASE ecommerce TO ecommerce_user;
+    
+    -- Connect to ecommerce database
+    \c ecommerce;
+    
+    -- Enable UUID extension
+    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+    
+    -- Create health check table
+    CREATE TABLE IF NOT EXISTS health_check (
+        id SERIAL PRIMARY KEY,
+        status VARCHAR(50) DEFAULT 'healthy',
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    -- Insert initial health check
+    INSERT INTO health_check (status) VALUES ('healthy') ON CONFLICT DO NOTHING;

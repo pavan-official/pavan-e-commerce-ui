@@ -1,0 +1,39 @@
+# 🔐 **E-commerce RBAC Configuration**
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ecommerce-frontend
+  namespace: ecommerce-production
+  labels:
+    app: ecommerce
+    component: frontend
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ecommerce-frontend-role
+  namespace: ecommerce-production
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["autoscaling"]
+  resources: ["horizontalpodautoscalers"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ecommerce-frontend-rolebinding
+  namespace: ecommerce-production
+subjects:
+- kind: ServiceAccount
+  name: ecommerce-frontend
+  namespace: ecommerce-production
+roleRef:
+  kind: Role
+  name: ecommerce-frontend-role
+  apiGroup: rbac.authorization.k8s.io

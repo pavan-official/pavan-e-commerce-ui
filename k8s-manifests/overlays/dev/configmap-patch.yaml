@@ -1,0 +1,28 @@
+# ⚙️ **Development ConfigMap Patch**
+# Development-specific configuration overrides
+# Interview Story: "This overrides the base recipe with development-specific ingredients"
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ecommerce-config
+  namespace: ecommerce-dev
+data:
+  # Development-specific overrides
+  NODE_ENV: "development"
+  NEXT_PUBLIC_APP_URL: "https://dev.ecommerce.example.com"
+  NEXT_PUBLIC_API_URL: "https://dev.ecommerce.example.com/api"
+  
+  # Development database
+  POSTGRES_HOST: "postgres-dev-service"
+  
+  # Development Redis
+  REDIS_HOST: "redis-dev-service"
+  
+  # Development logging
+  LOG_LEVEL: "debug"
+  
+  # Development performance
+  CACHE_TTL: "300"
+  SESSION_TIMEOUT: "3600"
+  MAX_CONNECTIONS: "50"

@@ -1,0 +1,254 @@
+# ==================================================================================================
+# JAEGER DEPLOYMENT - KUBERNETES MANIFEST
+# ==================================================================================================
+#
+# Purpose: Deploy Jaeger for distributed tracing and performance analysis
+# Why: Essential for debugging microservices, performance optimization, and service dependency mapping
+#
+# Interview Topics:
+# - Distributed tracing concepts
+# - Service mesh integration
+# - Trace sampling strategies
+# - Performance bottleneck identification
+# - Integration with monitoring stack
+#
+# ==================================================================================================
+
+---
+# 📊 **Jaeger Deployment**
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jaeger
+  namespace: monitoring
+  labels:
+    app: jaeger
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jaeger
+  template:
+    metadata:
+      labels:
+        app: jaeger
+    spec:
+      containers:
+      - name: jaeger
+        image: jaegertracing/all-in-one:1.47
+        args:
+          - '--memory.max-traces=50000'
+          - '--query.base-path=/jaeger'
+          - '--query.ui-config=/etc/jaeger/ui-config.json'
+        ports:
+        - containerPort: 16686
+          name: http-query
+        - containerPort: 14268
+          name: http-collector
+        - containerPort: 14250
+          name: grpc-collector
+        - containerPort: 6831
+          name: udp-agent
+        - containerPort: 6832
+          name: udp-agent-thr
+        - containerPort: 5778
+          name: config-server
+        env:
+        - name: COLLECTOR_OTLP_ENABLED
+          value: "true"
+        - name: SPAN_STORAGE_TYPE
+          value: "memory"
+        - name: LOG_LEVEL
+          value: "info"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+        volumeMounts:
+        - name: jaeger-ui-config
+          mountPath: /etc/jaeger/ui-config.json
+          subPath: ui-config.json
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 16686
+          initialDelaySeconds: 30
+          timeoutSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 16686
+          initialDelaySeconds: 30
+          timeoutSeconds: 30
+      volumes:
+      - name: jaeger-ui-config
+        configMap:
+          name: jaeger-ui-config
+
+---
+# ⚙️ **Jaeger UI ConfigMap**
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jaeger-ui-config
+  namespace: monitoring
+  labels:
+    app: jaeger
+data:
+  ui-config.json: |
+    {
+      "dependencies": {
+        "dagMaxNumServices": 200,
+        "menuEnabled": true
+      },
+      "tracking": {
+        "gaID": null,
+        "trackErrors": true
+      },
+      "menu": [
+        {
+          "label": "About Jaeger",
+          "items": [
+            {
+              "label": "Documentation",
+              "url": "https://www.jaegertracing.io/docs/"
+            },
+            {
+              "label": "GitHub",
+              "url": "https://github.com/jaegertracing/jaeger"
+            }
+          ]
+        }
+      ],
+      "search": {
+        "maxLookback": {
+          "label": "2 Days",
+          "value": "2d"
+        },
+        "defaultLookback": "1h"
+      },
+      "linkPatterns": [
+        {
+          "key": "traceID",
+          "url": "/trace/$${traceID}",
+          "text": "View Trace"
+        }
+      ]
+    }
+
+---
+# 🌐 **Jaeger Service**
+apiVersion: v1
+kind: Service
+metadata:
+  name: jaeger
+  namespace: monitoring
+  labels:
+    app: jaeger
+spec:
+  selector:
+    app: jaeger
+  ports:
+  - port: 16686
+    targetPort: 16686
+    protocol: TCP
+    name: http-query
+  - port: 14268
+    targetPort: 14268
+    protocol: TCP
+    name: http-collector
+  - port: 14250
+    targetPort: 14250
+    protocol: TCP
+    name: grpc-collector
+  - port: 6831
+    targetPort: 6831
+    protocol: UDP
+    name: udp-agent
+  - port: 6832
+    targetPort: 6832
+    protocol: UDP
+    name: udp-agent-thr
+  - port: 5778
+    targetPort: 5778
+    protocol: TCP
+    name: config-server
+  type: ClusterIP
+
+---
+# 🔗 **Jaeger Ingress**
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jaeger-ingress
+  namespace: monitoring
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+  - host: jaeger.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: jaeger
+            port:
+              number: 16686
+
+---
+# 📊 **Jaeger Agent DaemonSet (Optional)**
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: jaeger-agent
+  namespace: monitoring
+  labels:
+    app: jaeger-agent
+spec:
+  selector:
+    matchLabels:
+      app: jaeger-agent
+  template:
+    metadata:
+      labels:
+        app: jaeger-agent
+    spec:
+      containers:
+      - name: jaeger-agent
+        image: jaegertracing/jaeger-agent:1.47
+        args:
+          - '--reporter.grpc.host-port=jaeger:14250'
+          - '--reporter.type=grpc'
+        ports:
+        - containerPort: 6831
+          name: udp-agent
+          protocol: UDP
+        - containerPort: 6832
+          name: udp-agent-thr
+          protocol: UDP
+        - containerPort: 5778
+          name: config-server
+          protocol: TCP
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        volumeMounts:
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+      volumes:
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+      hostNetwork: true
+      hostPID: true

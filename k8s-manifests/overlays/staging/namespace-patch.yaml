@@ -1,0 +1,15 @@
+# 🏷️ **Staging Namespace Patch**
+# Staging-specific namespace configuration
+# Interview Story: "This creates our staging workspace"
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ecommerce-staging
+  labels:
+    environment: staging
+    purpose: testing
+    team: ecommerce
+  annotations:
+    description: "Staging environment for e-commerce application"
+    contact: "qa-team@company.com"

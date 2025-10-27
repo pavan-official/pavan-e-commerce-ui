@@ -1,0 +1,43 @@
+# 🚀 **Simple E-commerce Docker Image**
+# Purpose: Deploy working e-commerce application without complex build issues
+# Why: Use development mode for Kubernetes deployment demonstration
+
+FROM node:20-alpine
+
+# Create app directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy application code
+COPY . .
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Set permissions
+RUN chown -R nextjs:nodejs /app
+USER nextjs
+
+# Expose port
+EXPOSE 3000
+
+# Set environment variables for development mode
+ENV NODE_ENV=development
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3000/api/health || exit 1
+
+# Start the application in development mode
+CMD ["npm", "run", "dev"]

@@ -1,0 +1,21 @@
+# 🧪 **Development Environment Namespace**
+# Learning: Namespaces provide logical separation between environments
+# This is like having separate "rooms" in your Kubernetes cluster
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ecommerce-dev
+  labels:
+    environment: development
+    purpose: development-testing
+    team: platform-engineering
+  annotations:
+    description: "Development environment for e-commerce platform"
+    contact: "platform-team@company.com"
+---
+# 🎯 **Learning Point**: Why do we use namespaces?
+# 1. **Resource Isolation**: Each environment gets its own resources
+# 2. **Security Boundaries**: RBAC can be scoped to namespaces
+# 3. **Resource Quotas**: Limit resource usage per environment
+# 4. **Network Policies**: Control traffic between environments

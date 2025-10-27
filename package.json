@@ -1,27 +1,48 @@
 {
-  "name": "ecomgithub",
-  "version": "0.1.0",
+  "name": "e-commerce-ui",
+  "version": "1.0.0",
+  "description": "Full-stack e-commerce platform with Next.js",
   "private": true,
+  "workspaces": [
+    "client",
+    "admin"
+  ],
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "next": "15.4.5"
+    "dev": "concurrently \"npm run dev --workspace=client\" \"npm run dev --workspace=admin\"",
+    "build": "npm run build --workspace=client && npm run build --workspace=admin",
+    "start": "concurrently \"npm run start --workspace=client\" \"npm run start --workspace=admin\"",
+    "lint": "npm run lint --workspace=client && npm run lint --workspace=admin",
+    "setup": "./setup.sh",
+    "validate-config": "node scripts/validate-config.js",
+    "install-all": "npm install && npm install --workspace=client && npm install --workspace=admin",
+    "clean": "npm run clean --workspace=client && npm run clean --workspace=admin",
+    "type-check": "npm run type-check --workspace=client && npm run type-check --workspace=admin"
   },
   "devDependencies": {
-    "typescript": "^5",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
-    "eslint": "^9",
-    "eslint-config-next": "15.4.5",
-    "@eslint/eslintrc": "^3"
-  }
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "keywords": [
+    "e-commerce",
+    "nextjs",
+    "typescript",
+    "tailwindcss",
+    "shadcn",
+    "stripe",
+    "postgresql",
+    "redis"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/e-commerce-ui.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/e-commerce-ui/issues"
+  },
+  "homepage": "https://github.com/yourusername/e-commerce-ui#readme"
 }
