@@ -1,14 +1,14 @@
 'use client'
 
+import { useCustomAuth } from '@/hooks/useCustomAuth'
 import {
-    CardElement,
-    Elements,
-    useElements,
-    useStripe,
+  CardElement,
+  Elements,
+  useElements,
+  useStripe,
 } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
-import { useSession } from 'next-auth/react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
@@ -19,16 +19,20 @@ interface StripePaymentFormProps {
   onError: (error: string) => void
 }
 
-function PaymentForm({ orderId, amount, _onSuccess, _onError }: StripePaymentFormProps) {
+function PaymentForm({ orderId, amount, onSuccess, onError }: StripePaymentFormProps) {
   const stripe = useStripe()
   const elements = useElements()
-  const { data: session } = useSession()
+  const { user } = useCustomAuth()
   const [isProcessing, setIsProcessing] = useState(false)
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  const handleError = useCallback((error: string) => {
+    onError(error)
+  }, [onError])
+
   useEffect(() => {
-    if (!session) return
+    if (!user) return
 
     // Create payment intent
     const createPaymentIntent = async () => {
@@ -46,16 +50,16 @@ function PaymentForm({ orderId, amount, _onSuccess, _onError }: StripePaymentFor
         if (data.success) {
           setClientSecret(data.data.clientSecret)
         } else {
-          onError(data.error?.message || 'Failed to create payment intent')
+          handleError(data.error?.message || 'Failed to create payment intent')
         }
       } catch (error) {
         console.error('Error creating payment intent:', error)
-        onError('An error occurred while creating payment intent')
+        handleError('An error occurred while creating payment intent')
       }
     }
 
     createPaymentIntent()
-  }, [orderId, session, onError])
+  }, [orderId, user, handleError])
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -80,8 +84,8 @@ function PaymentForm({ orderId, amount, _onSuccess, _onError }: StripePaymentFor
         payment_method: {
           card: cardElement,
           billing_details: {
-            name: session?.user?.name || undefined,
-            email: session?.user?.email || undefined,
+            name: user?.name || undefined,
+            email: user?.email || undefined,
           },
         },
       })
@@ -167,7 +171,7 @@ function PaymentForm({ orderId, amount, _onSuccess, _onError }: StripePaymentFor
   )
 }
 
-export default function StripePaymentForm(_props: StripePaymentFormProps) {
+export default function StripePaymentForm(props: StripePaymentFormProps) {
   return (
     <Elements stripe={stripePromise}>
       <PaymentForm {...props} />

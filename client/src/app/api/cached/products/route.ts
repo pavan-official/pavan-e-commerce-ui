@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Invalid query parameters',
-            details: validation.error.errors,
+            details: validation.error.issues,
           },
         },
         { status: 400 }
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build where clause
-    const where: ApiResponse = {
+    const where: any = {
       isActive: true,
     }
 
@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
     const skip = (pageNum - 1) * limitNum
 
     // Build orderBy clause
-    const orderBy: ApiResponse = {}
+    const orderBy: any = {}
     orderBy[sort] = order
 
     // Execute query

@@ -1,6 +1,5 @@
-import { authOptions } from '@/lib/auth'
+import { getServerUser } from '@/lib/custom-auth'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -10,9 +9,9 @@ const addToWishlistSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getServerUser(request)
 
-    if (!session?.user?.id) {
+    if (!user?.id) {
       return NextResponse.json(
         {
           success: false,
@@ -26,7 +25,7 @@ export async function GET(request: NextRequest) {
     }
 
     const wishlistItems = await prisma.wishlistItem.findMany({
-      where: { userId: session.user.id },
+      where: { userId: user.id },
       include: {
         product: {
           include: {
@@ -60,9 +59,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getServerUser(request)
 
-    if (!session?.user?.id) {
+    if (!user?.id) {
       return NextResponse.json(
         {
           success: false,
@@ -85,7 +84,7 @@ export async function POST(request: NextRequest) {
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Invalid input',
-            details: validation.error.errors,
+            details: validation.error.issues,
           },
         },
         { status: 400 }
@@ -116,7 +115,7 @@ export async function POST(request: NextRequest) {
     const existingItem = await prisma.wishlistItem.findUnique({
       where: {
         userId_productId: {
-          userId: session.user.id,
+          userId: user.id,
           productId,
         },
       },
@@ -138,7 +137,7 @@ export async function POST(request: NextRequest) {
     // Add to wishlist
     const wishlistItem = await prisma.wishlistItem.create({
       data: {
-        userId: session.user.id,
+        userId: user.id,
         productId,
       },
       include: {

@@ -1,17 +1,17 @@
 'use client'
 
+import { useCustomAuth } from '@/hooks/useCustomAuth'
 import { useCartStore } from '@/stores/cartStore'
 import { useOrderStore } from '@/stores/orderStore'
-import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 interface CheckoutFormProps {
-  onSuccess?: (order: ApiResponse) => void
+  onSuccess?: (order: any) => void
 }
 
 export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
-  const { data: session } = useSession()
+  const { user } = useCustomAuth()
   const router = useRouter()
   const { summary, items } = useCartStore()
   const { createOrder, isLoading } = useOrderStore()
@@ -43,13 +43,16 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
     const { name, value } = e.target
     const [section, field] = name.split('.')
 
-    setFormData(prev => ({
-      ...prev,
-      [section]: {
-        ...prev[section as keyof typeof prev],
-        [field]: value,
-      },
-    }))
+    setFormData(prev => {
+      const currentSection = prev[section as keyof typeof prev] || {}
+      return {
+        ...prev,
+        [section]: {
+          ...currentSection,
+          [field]: value,
+        },
+      }
+    })
 
     // Clear error when user starts typing
     if (errors[name]) {
@@ -82,8 +85,8 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
       return
     }
 
-    if (!session) {
-      router.push('/auth/signin')
+    if (!user) {
+      router.push('/auth/custom-signin')
       return
     }
 

@@ -39,14 +39,15 @@ const ProductInteraction = ({
     }
   };
 
-  const handleAddToCart = () => {
-    addToCart({
-      ...product,
-      quantity,
-      selectedColor,
-      selectedSize,
-    });
-    toast.success("Product added to cart")
+  const handleAddToCart = async () => {
+    try {
+      // Convert product ID to string as expected by the API
+      await addToCart(product.id.toString(), undefined, quantity);
+      toast.success("Product added to cart");
+    } catch (error) {
+      console.error('Add to cart error:', error);
+      toast.error("Failed to add product to cart");
+    }
   };
   return (
     <div className="flex flex-col gap-4 mt-4">
@@ -54,7 +55,7 @@ const ProductInteraction = ({
       <div className="flex flex-col gap-2 text-xs">
         <span className="text-gray-500">Size</span>
         <div className="flex items-center gap-2">
-          {product.sizes.map((size) => (
+          {product.sizes?.map((size) => (
             <div
               className={`cursor-pointer border-1 p-[2px] ${
                 selectedSize === size ? "border-gray-600" : "border-gray-300"
@@ -79,7 +80,7 @@ const ProductInteraction = ({
       <div className="flex flex-col gap-2 text-sm">
         <span className="text-gray-500">Color</span>
         <div className="flex items-center gap-2">
-          {product.colors.map((color) => (
+          {product.colors?.map((color) => (
             <div
               className={`cursor-pointer border-1 p-[2px] ${
                 selectedColor === color ? "border-gray-300" : "border-white"

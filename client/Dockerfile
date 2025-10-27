@@ -94,6 +94,12 @@ RUN npx prisma generate
 ENV NEXT_TELEMETRY_DISABLED 1
 ENV NODE_ENV production
 
+# Set cookie configuration for build time
+ENV SESSION_COOKIE_DOMAIN localhost
+ENV SESSION_COOKIE_SECURE false
+ENV SESSION_COOKIE_SAMESITE lax
+ENV SESSION_COOKIE_HTTPONLY true
+
 # Build Next.js application
 # Why: Generates optimized production build
 # Interview Note: This creates .next folder with compiled code
@@ -130,13 +136,20 @@ COPY --from=builder /app/public ./public
 # Copy Next.js production build output
 # Why: This is the compiled application that needs to run
 # --chown: Set correct ownership for non-root user
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
+
+# Copy necessary node_modules for runtime
+# Why: Next.js needs React and other runtime dependencies
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 # Copy Prisma schema and generated client
 # Why: Needed for database operations at runtime
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+
+# Copy startup script
+COPY --chown=nextjs:nodejs start.sh ./start.sh
+RUN chmod +x start.sh
 
 # Switch to non-root user
 # Why: Security - if container is compromised, attacker has limited privileges
@@ -163,10 +176,9 @@ ENV HOSTNAME "0.0.0.0"
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Start the application
-# Why: Use node instead of npm for better signal handling
-# Interview Note: Direct node execution enables graceful shutdown (SIGTERM handling)
-CMD ["node", "server.js"]
+# Start the application with database setup
+# Why: Use startup script to handle database migrations and then start Next.js
+CMD ["./start.sh"]
 
 # ==================================================================================================
 # BUILD INSTRUCTIONS

@@ -118,7 +118,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
             }
           })
           
-          const response = await fetch(`/api/notifications?${params.toString()}`)
+          const response = await fetch(`/api/notifications/?${params.toString()}`)
           const data = await response.json()
           
           if (data.success) {
@@ -250,7 +250,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
       // Bulk operations
       markAllAsRead: async () => {
         try {
-          const response = await fetch('/api/notifications/bulk', {
+          const response = await fetch('/api/notifications/bulk/', {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -279,7 +279,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
 
       markAllAsUnread: async () => {
         try {
-          const response = await fetch('/api/notifications/bulk', {
+          const response = await fetch('/api/notifications/bulk/', {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -308,7 +308,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
 
       deleteAllNotifications: async () => {
         try {
-          const response = await fetch('/api/notifications/bulk', {
+          const response = await fetch('/api/notifications/bulk/', {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -334,7 +334,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
 
       deleteReadNotifications: async () => {
         try {
-          const response = await fetch('/api/notifications/bulk', {
+          const response = await fetch('/api/notifications/bulk/', {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',

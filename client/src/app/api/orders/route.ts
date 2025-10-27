@@ -1,36 +1,43 @@
-import { authOptions } from '@/lib/auth'
+import { getTokenFromRequest, verifyJWTToken } from '@/lib/custom-auth'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 const createOrderSchema = z.object({
+  items: z.array(z.object({
+    productId: z.string(),
+    variantId: z.string().nullable().optional(),
+    quantity: z.number().int().min(1),
+    price: z.number().positive(),
+  })),
   shippingAddress: z.object({
-    street: z.string().min(1, 'Street address is required'),
-    city: z.string().min(1, 'City is required'),
-    state: z.string().min(1, 'State is required'),
-    zipCode: z.string().min(1, 'ZIP code is required'),
-    country: z.string().min(1, 'Country is required'),
+    street: z.string().min(1),
+    city: z.string().min(1),
+    state: z.string().min(1),
+    zip: z.string().min(1),
+    country: z.string().min(1),
   }),
   billingAddress: z.object({
-    street: z.string().min(1, 'Street address is required'),
-    city: z.string().min(1, 'City is required'),
-    state: z.string().min(1, 'State is required'),
-    zipCode: z.string().min(1, 'ZIP code is required'),
-    country: z.string().min(1, 'Country is required'),
+    street: z.string().min(1),
+    city: z.string().min(1),
+    state: z.string().min(1),
+    zip: z.string().min(1),
+    country: z.string().min(1),
   }),
-  paymentMethod: z.string().min(1, 'Payment method is required'),
-  shippingMethod: z.string().optional(),
-  notes: z.string().optional(),
+  paymentMethod: z.enum(['stripe', 'paypal']),
+  subtotal: z.number().positive(),
+  tax: z.number().min(0),
+  total: z.number().positive(),
 })
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-
-    if (!session?.user?.id) {
+    // Get token from request
+    const token = getTokenFromRequest(request)
+    
+    if (!token) {
       return NextResponse.json(
-        {
+        { 
           success: false,
           error: {
             code: 'UNAUTHORIZED',
@@ -41,78 +48,16 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '10')
-    const status = searchParams.get('status')
-
-    const skip = (page - 1) * limit
-
-    // Build where clause
-    const where: ApiResponse = { userId: session.user.id }
-    if (status) {
-      where.status = status
-    }
-
-    const [orders, total] = await Promise.all([
-      prisma.order.findMany({
-        where,
-        skip,
-        take: limit,
-        include: {
-          items: {
-            include: {
-              product: {
-                include: {
-                  category: true,
-                },
-              },
-              variant: true,
-            },
-          },
-          payments: true,
-        },
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.order.count({ where }),
-    ])
-
-    return NextResponse.json({
-      success: true,
-      data: orders,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    })
-  } catch (error) {
-    console.error('Error fetching orders:', error)
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to fetch orders',
-        },
-      },
-      { status: 500 }
-    )
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
-
-    if (!session?.user?.id) {
+    // Verify JWT token
+    const user = verifyJWTToken(token)
+    
+    if (!user) {
       return NextResponse.json(
-        {
+        { 
           success: false,
           error: {
             code: 'UNAUTHORIZED',
-            message: 'Authentication required',
+            message: 'Invalid authentication token',
           },
         },
         { status: 401 }
@@ -128,174 +73,65 @@ export async function POST(request: NextRequest) {
           success: false,
           error: {
             code: 'VALIDATION_ERROR',
-            message: 'Invalid input',
-            details: validation.error.errors,
+            message: 'Invalid request data',
+            details: validation.error.issues,
           },
         },
         { status: 400 }
       )
     }
 
-    const { shippingAddress, billingAddress, paymentMethod, shippingMethod, notes } = validation.data
+    const { items, shippingAddress, billingAddress, paymentMethod, subtotal, tax, total } = validation.data
 
-    // Get user's cart items
-    const cartItems = await prisma.cartItem.findMany({
-      where: { userId: session.user.id },
-      include: {
-        product: true,
-        variant: true,
-      },
-    })
-
-    if (cartItems.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'EMPTY_CART',
-            message: 'Cart is empty',
-          },
-        },
-        { status: 400 }
-      )
-    }
-
-    // Calculate totals
-    let subtotal = 0
-    const orderItems = []
-
-    for (const cartItem of cartItems) {
-      const price = cartItem.variant?.price || cartItem.product.price
-      const itemTotal = price * cartItem.quantity
-      subtotal += itemTotal
-
-      // Check stock availability
-      const availableStock = cartItem.variant?.quantity || cartItem.product.quantity
-      if (availableStock < cartItem.quantity) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: {
-              code: 'INSUFFICIENT_STOCK',
-              message: `Insufficient stock for ${cartItem.product.name}`,
-            },
-          },
-          { status: 400 }
-        )
-      }
-
-      orderItems.push({
-        productId: cartItem.productId,
-        variantId: cartItem.variantId,
-        quantity: cartItem.quantity,
-        price,
-      })
-    }
-
-    const tax = subtotal * 0.08 // 8% tax
-    const shipping = shippingMethod === 'express' ? 15.99 : 9.99
-    const total = subtotal + tax + shipping
-
-    // Generate order number
-    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
-
-    // Create order in transaction
-    const order = await prisma.$transaction(async (tx) => {
-      // Create order
-      const newOrder = await tx.order.create({
-        data: {
-          orderNumber,
-          userId: session.user.id,
-          status: 'PENDING',
-          subtotal,
-          tax,
-          shipping,
-          discount: 0,
-          total,
-          shippingAddress,
-          billingAddress,
-          paymentStatus: 'PENDING',
-          paymentMethod,
-          shippingMethod: shippingMethod || 'standard',
-          notes,
-        },
-      })
-
-      // Create order items
-      await tx.orderItem.createMany({
-        data: orderItems.map(item => ({
-          orderId: newOrder.id,
-          productId: item.productId,
-          variantId: item.variantId,
-          quantity: item.quantity,
-          price: item.price,
-        })),
-      })
-
-      // Update stock
-      for (const cartItem of cartItems) {
-        if (cartItem.variantId) {
-          await tx.productVariant.update({
-            where: { id: cartItem.variantId },
-            data: { quantity: { decrement: cartItem.quantity } },
-          })
-        } else {
-          await tx.product.update({
-            where: { id: cartItem.productId },
-            data: { quantity: { decrement: cartItem.quantity } },
-          })
+    // Create order with items
+    const order = await prisma.order.create({
+      data: {
+        orderNumber: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        userId: user.id,
+        status: 'PENDING',
+        subtotal,
+        tax,
+        shipping: 0,
+        total,
+        shippingAddress,
+        billingAddress,
+        paymentMethod,
+        items: {
+          create: items.map(item => ({
+            productId: item.productId,
+            variantId: item.variantId,
+            quantity: item.quantity,
+            price: item.price,
+          }))
         }
-      }
-
-      // Clear cart
-      await tx.cartItem.deleteMany({
-        where: { userId: session.user.id },
-      })
-
-      return newOrder
-    })
-
-    // Fetch complete order with relations
-    const completeOrder = await prisma.order.findUnique({
-      where: { id: order.id },
+      },
       include: {
         items: {
           include: {
-            product: {
-              include: {
-                category: true,
-              },
-            },
+            product: true,
             variant: true,
-          },
-        },
-        payments: true,
-      },
+          }
+        }
+      }
     })
 
-    // Create notification for order creation
-    await prisma.notification.create({
+    // Clear user's cart after successful order creation
+    await prisma.cartItem.deleteMany({
+      where: { userId: user.id }
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: 'Order created successfully',
       data: {
-        userId: session.user.id,
-        type: 'ORDER_UPDATE',
-        title: 'Order Created Successfully',
-        message: `Your order #${orderNumber} has been created and is being processed.`,
-        data: {
-          orderId: order.id,
-          orderNumber,
-          status: 'PENDING',
-        },
-      },
-    })
+        id: order.id,
+        status: order.status,
+        total: order.total,
+        items: order.items,
+        createdAt: order.createdAt,
+      }
+    }, { status: 201 })
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Order created successfully',
-        data: completeOrder,
-      },
-      { status: 201 }
-    )
   } catch (error) {
     console.error('Error creating order:', error)
     return NextResponse.json(
@@ -304,6 +140,73 @@ export async function POST(request: NextRequest) {
         error: {
           code: 'INTERNAL_SERVER_ERROR',
           message: 'An error occurred while creating the order',
+        },
+      },
+      { status: 500 }
+    )
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    // Get token from request
+    const token = getTokenFromRequest(request)
+    
+    if (!token) {
+      return NextResponse.json(
+        { 
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Authentication required',
+          },
+        },
+        { status: 401 }
+      )
+    }
+
+    // Verify JWT token
+    const user = verifyJWTToken(token)
+    
+    if (!user) {
+      return NextResponse.json(
+        { 
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Invalid authentication token',
+          },
+        },
+        { status: 401 }
+      )
+    }
+
+    const orders = await prisma.order.findMany({
+      where: { userId: user.id },
+      include: {
+        items: {
+          include: {
+            product: true,
+            variant: true,
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    return NextResponse.json({
+      success: true,
+      data: orders
+    })
+
+  } catch (error) {
+    console.error('Error fetching orders:', error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch orders',
         },
       },
       { status: 500 }

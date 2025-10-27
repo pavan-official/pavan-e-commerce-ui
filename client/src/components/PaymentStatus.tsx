@@ -1,6 +1,6 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
+import { useCustomAuth } from '@/hooks/useCustomAuth'
 import { useEffect, useState } from 'react'
 
 interface PaymentStatusProps {
@@ -27,14 +27,14 @@ interface Payment {
   }
 }
 
-export default function PaymentStatus({ paymentId, _onStatusChange }: PaymentStatusProps) {
-  const { data: session } = useSession()
+export default function PaymentStatus({ paymentId, onStatusChange }: PaymentStatusProps) {
+  const { user } = useCustomAuth()
   const [payment, setPayment] = useState<Payment | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!session || !paymentId) return
+    if (!user || !paymentId) return
 
     const fetchPaymentStatus = async () => {
       try {
@@ -57,15 +57,15 @@ export default function PaymentStatus({ paymentId, _onStatusChange }: PaymentSta
 
     fetchPaymentStatus()
 
-    // Poll for status updates every 5 seconds if payment is still pending
+    // Poll for status updates every 30 seconds if payment is still pending
     const interval = setInterval(() => {
       if (payment?.status === 'PENDING' || payment?.status === 'PROCESSING') {
         fetchPaymentStatus()
       }
-    }, 5000)
+    }, 30000)
 
     return () => clearInterval(interval)
-  }, [paymentId, session, onStatusChange, payment?.status])
+  }, [paymentId, user, onStatusChange, payment?.status])
 
   const getStatusColor = (status: string) => {
     switch (status) {

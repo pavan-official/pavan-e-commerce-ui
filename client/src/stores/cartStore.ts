@@ -72,13 +72,24 @@ export const useCartStore = create<CartState & CartActions>()(
         set({ isLoading: true, error: null })
         
         try {
-          const response = await fetch('/api/cart')
+          const response = await fetch('/api/cart/', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include', // Ensure cookies are sent
+          })
+          
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+          }
+          
           const data = await response.json()
 
           if (data.success) {
             set({
-              items: data.data.items,
-              summary: data.data.summary,
+              items: data.data.items || [],
+              summary: data.data.summary || initialSummary,
               isLoading: false,
             })
           } else {
@@ -87,9 +98,10 @@ export const useCartStore = create<CartState & CartActions>()(
               isLoading: false,
             })
           }
-        } catch (_error) {
+        } catch (error) {
+          console.error('Cart fetch error:', error)
           set({
-            error: 'An error occurred while fetching cart',
+            error: error instanceof Error ? error.message : 'An error occurred while fetching cart',
             isLoading: false,
           })
         }
@@ -99,11 +111,12 @@ export const useCartStore = create<CartState & CartActions>()(
         set({ isLoading: true, error: null })
         
         try {
-          const response = await fetch('/api/cart', {
+          const response = await fetch('/api/cart/', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
+            credentials: 'include', // Ensure cookies are sent
             body: JSON.stringify({
               productId,
               variantId,
@@ -111,13 +124,17 @@ export const useCartStore = create<CartState & CartActions>()(
             }),
           })
 
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+          }
+
           const data = await response.json()
 
           if (data.success) {
-            // Refresh cart after adding
+            // Always refresh cart from database to ensure consistency
             await get().fetchCart()
           } else {
-            // Handle specific error cases
+            // Handle specific error cases with detailed messages
             let errorMessage = 'Failed to add item to cart'
             
             if (response.status === 401) {
@@ -126,6 +143,8 @@ export const useCartStore = create<CartState & CartActions>()(
               errorMessage = 'Product not found'
             } else if (data.error?.code === 'INSUFFICIENT_STOCK') {
               errorMessage = data.error.message || 'Insufficient stock'
+            } else if (data.error?.code === 'VALIDATION_ERROR') {
+              errorMessage = 'Invalid product data'
             } else if (data.error?.message) {
               errorMessage = data.error.message
             }
@@ -135,11 +154,73 @@ export const useCartStore = create<CartState & CartActions>()(
               isLoading: false,
             })
           }
-        } catch (_error) {
+        } catch (error) {
+          console.error('Add to cart error:', error)
           set({
-            error: 'Network error. Please check your connection and try again.',
+            error: error instanceof Error ? error.message : 'Network error. Please check your connection and try again.',
             isLoading: false,
           })
+        }
+      },
+
+      addMultipleToCart: async (items: Array<{productId: string, variantId?: string, quantity: number}>) => {
+        set({ isLoading: true, error: null })
+        
+        try {
+          const results = []
+          const errors = []
+          
+          // Add items sequentially to maintain order and handle errors properly
+          for (const item of items) {
+            try {
+              const response = await fetch('/api/cart/', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify(item),
+              })
+
+              if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+              }
+
+              const data = await response.json()
+              
+              if (data.success) {
+                results.push({ success: true, item, data: data.data })
+              } else {
+                errors.push({ item, error: data.error?.message || 'Failed to add item' })
+              }
+            } catch (error) {
+              errors.push({ 
+                item, 
+                error: error instanceof Error ? error.message : 'Unknown error' 
+              })
+            }
+          }
+          
+          // Refresh cart to get updated state
+          await get().fetchCart()
+          
+          if (errors.length > 0) {
+            set({
+              error: `Some items could not be added: ${errors.map(e => e.error).join(', ')}`,
+              isLoading: false,
+            })
+          } else {
+            set({ isLoading: false, error: null })
+          }
+          
+          return { results, errors }
+        } catch (error) {
+          console.error('Add multiple to cart error:', error)
+          set({
+            error: error instanceof Error ? error.message : 'An error occurred while adding items to cart',
+            isLoading: false,
+          })
+          return { results: [], errors: [{ error: error instanceof Error ? error.message : 'Unknown error' }] }
         }
       },
 

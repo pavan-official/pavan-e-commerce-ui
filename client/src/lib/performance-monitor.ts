@@ -1,4 +1,4 @@
-import { ApiResponse, GenericObject, GenericGenericFunction, ErrorResponse } from '@/types/common';
+import { GenericObject, GenericGenericFunction, ErrorResponse } from '@/types/common';
 // Performance monitoring utilities
 export class PerformanceMonitor {
   private static instance: PerformanceMonitor
@@ -45,7 +45,7 @@ export class PerformanceMonitor {
     // First Input Delay (FID)
     const fidObserver = new PerformanceObserver((list) => {
       const entries = list.getEntries()
-      entries.forEach((entry: ApiResponse) => {
+      entries.forEach((entry: any) => {
         this.metrics.set('fid', entry.processingStart - entry.startTime)
         this.reportMetric('fid', entry.processingStart - entry.startTime)
       })
@@ -57,7 +57,7 @@ export class PerformanceMonitor {
     let clsValue = 0
     const clsObserver = new PerformanceObserver((list) => {
       const entries = list.getEntries()
-      entries.forEach((entry: ApiResponse) => {
+      entries.forEach((entry: any) => {
         if (!entry.hadRecentInput) {
           clsValue += entry.value
         }
@@ -116,9 +116,9 @@ export class PerformanceMonitor {
 
   private trackNavigationTiming(navigation: PerformanceNavigationTiming) {
     const metrics = {
-      'dom-content-loaded': navigation.domContentLoadedEventEnd - navigation.navigationStart,
-      'load-complete': navigation.loadEventEnd - navigation.navigationStart,
-      'first-byte': navigation.responseStart - navigation.navigationStart,
+      'dom-content-loaded': navigation.domContentLoadedEventEnd - navigation.startTime,
+      'load-complete': navigation.loadEventEnd - navigation.startTime,
+      'first-byte': navigation.responseStart - navigation.startTime,
       'dns-lookup': navigation.domainLookupEnd - navigation.domainLookupStart,
       'tcp-connect': navigation.connectEnd - navigation.connectStart,
       'ssl-negotiate': navigation.secureConnectionStart > 0 
@@ -140,10 +140,10 @@ export class PerformanceMonitor {
     return 'other'
   }
 
-  private reportMetric(name: string, value: number, metadata?: ApiResponse) {
+  private reportMetric(name: string, value: number, metadata?: any) {
     // Send to analytics service
-    if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', 'performance_metric', {
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('event', 'performance_metric', {
         metric_name: name,
         metric_value: value,
         ...metadata,
@@ -213,10 +213,10 @@ export function usePerformanceMonitor() {
 
 // Performance decorator for functions
 export function measurePerformance(_name: string) {
-  return function (target: ApiResponse, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value
 
-    descriptor.value = async function (...args: ApiResponse[]) {
+    descriptor.value = async function (...args: any[]) {
       const monitor = PerformanceMonitor.getInstance()
       const endTiming = monitor.startTiming(`${name}.${propertyKey}`)
       

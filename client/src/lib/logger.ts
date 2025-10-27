@@ -55,7 +55,7 @@ const consoleFormat = winston.format.combine(
 )
 
 // Mask sensitive data in logs
-function maskSensitiveData(data: ApiResponse): ApiResponse {
+function maskSensitiveData(data: any): any {
   if (typeof data !== 'object' || data === null) {
     return data
   }
@@ -159,27 +159,27 @@ class Logger {
   }
 
   // Error logging
-  error(message: string, meta?: ApiResponse): void {
+  error(message: string, meta?: any): void {
     this.logger.error(message, this.enrichMeta(meta))
   }
 
   // Warning logging
-  warn(message: string, meta?: ApiResponse): void {
+  warn(message: string, meta?: any): void {
     this.logger.warn(message, this.enrichMeta(meta))
   }
 
   // Info logging
-  info(message: string, meta?: ApiResponse): void {
+  info(message: string, meta?: any): void {
     this.logger.info(message, this.enrichMeta(meta))
   }
 
   // HTTP logging
-  http(message: string, meta?: ApiResponse): void {
+  http(message: string, meta?: any): void {
     this.logger.http(message, this.enrichMeta(meta))
   }
 
   // Debug logging
-  debug(message: string, meta?: ApiResponse): void {
+  debug(message: string, meta?: any): void {
     this.logger.debug(message, this.enrichMeta(meta))
   }
 
@@ -223,7 +223,7 @@ class Logger {
   }
 
   // Log security event
-  logSecurity(event: string, severity: 'low' | 'medium' | 'high' | 'critical', meta?: ApiResponse): void {
+  logSecurity(event: string, severity: 'low' | 'medium' | 'high' | 'critical', meta?: any): void {
     const level = severity === 'critical' || severity === 'high' ? 'error' : 'warn'
     
     this.logger.log(level, `SECURITY: ${event}`, {
@@ -246,7 +246,7 @@ class Logger {
   }
 
   // Log business event
-  logBusiness(event: string, meta?: ApiResponse): void {
+  logBusiness(event: string, meta?: any): void {
     this.info(`BUSINESS: ${event}`, {
       ...this.enrichMeta(meta),
       businessEvent: true,
@@ -254,7 +254,7 @@ class Logger {
   }
 
   // Enrich metadata with context
-  private enrichMeta(meta?: ApiResponse): ApiResponse {
+  private enrichMeta(meta?: any): any {
     return {
       ...meta,
       environment: process.env.NODE_ENV,
@@ -287,15 +287,15 @@ class Logger {
 export const logger = Logger.getInstance()
 
 // Request logging middleware
-export function withRequestLogging(_handler: GenericFunction) {
-  return async (request: Request, context: ApiResponse) => {
+export function withRequestLogging(_handler: any) {
+  return async (request: Request, context: any) => {
     const startTime = Date.now()
     const url = new URL(request.url)
     
     logger.http(`→ ${request.method} ${url.pathname}`)
     
     try {
-      const response = await handler(request, context)
+      const response = await _handler(request, context)
       const duration = Date.now() - startTime
       
       logger.logResponse(request, response.status, duration)
@@ -305,32 +305,32 @@ export function withRequestLogging(_handler: GenericFunction) {
       const duration = Date.now() - startTime
       
       logger.error(`✗ ${request.method} ${url.pathname} failed after ${duration}ms`, {
-        error: error.message,
-        stack: error.stack,
+        error: _error instanceof Error ? _error.message : 'Unknown error',
+        stack: _error instanceof Error ? _error.stack : undefined,
       })
       
-      throw error
+      throw _error
     }
   }
 }
 
 // Performance logging decorator
 export function logPerformance(_threshold: number = 1000) {
-  return function (target: ApiResponse, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value
 
-    descriptor.value = async function (...args: ApiResponse[]) {
+    descriptor.value = async function (...args: any[]) {
       const startTime = Date.now()
       
       try {
         const result = await originalMethod.apply(this, args)
         const duration = Date.now() - startTime
         
-        if (duration > threshold) {
+        if (duration > _threshold) {
           logger.warn(`Slow operation: ${propertyKey} took ${duration}ms`, {
             method: propertyKey,
             duration,
-            threshold,
+            threshold: _threshold,
           })
         }
         
@@ -340,9 +340,9 @@ export function logPerformance(_threshold: number = 1000) {
         logger.error(`Operation failed: ${propertyKey} after ${duration}ms`, {
           method: propertyKey,
           duration,
-          error: error.message,
+          error: _error instanceof Error ? _error.message : 'Unknown error',
         })
-        throw error
+        throw _error
       }
     }
 

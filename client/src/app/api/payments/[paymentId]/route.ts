@@ -1,16 +1,15 @@
-import { authOptions } from '@/lib/auth'
+import { getServerUser } from '@/lib/custom-auth'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { paymentId: string } }
+  { params }: { params: Promise<{ paymentId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getServerUser(request)
 
-    if (!session?.user?.id) {
+    if (!user?.id) {
       return NextResponse.json(
         {
           success: false,
@@ -23,13 +22,13 @@ export async function GET(
       )
     }
 
-    const { paymentId } = params
+    const { paymentId } = await params
 
     const payment = await prisma.payment.findFirst({
       where: {
         id: paymentId,
         order: {
-          userId: session.user.id,
+          userId: user.id,
         },
       },
       include: {

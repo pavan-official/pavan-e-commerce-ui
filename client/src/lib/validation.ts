@@ -213,10 +213,10 @@ export function preventXSS(input: string): string {
 
 // Validation middleware
 export function validateInput<T>(schema: z.ZodSchema<T>) {
-  return function (target: ApiResponse, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value
 
-    descriptor.value = async function (...args: ApiResponse[]) {
+    descriptor.value = async function (...args: any[]) {
       const request = args[0]
       
       try {
@@ -238,7 +238,7 @@ export function validateInput<T>(schema: z.ZodSchema<T>) {
               error: {
                 code: 'VALIDATION_ERROR',
                 message: 'Invalid input data',
-                details: error.errors,
+                details: error.issues,
               },
             }),
             { 
@@ -270,10 +270,10 @@ export function validateInput<T>(schema: z.ZodSchema<T>) {
 
 // Query parameter validation
 export function validateQuery<T>(schema: z.ZodSchema<T>) {
-  return function (target: ApiResponse, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value
 
-    descriptor.value = async function (...args: ApiResponse[]) {
+    descriptor.value = async function (...args: any[]) {
       const request = args[0]
       
       try {
@@ -296,7 +296,7 @@ export function validateQuery<T>(schema: z.ZodSchema<T>) {
               error: {
                 code: 'VALIDATION_ERROR',
                 message: 'Invalid query parameters',
-                details: error.errors,
+                details: error.issues,
               },
             }),
             { 
@@ -329,12 +329,12 @@ export function validateQuery<T>(schema: z.ZodSchema<T>) {
 // Rate limiting for validation attempts
 export function validateWithRateLimit(
   schema: z.ZodSchema<any>,
-  rateLimiter: ApiResponse
+  rateLimiter: any
 ) {
-  return function (target: ApiResponse, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value
 
-    descriptor.value = async function (...args: ApiResponse[]) {
+    descriptor.value = async function (...args: any[]) {
       const request = args[0]
       
       // Check rate limit first
@@ -358,7 +358,7 @@ export function validateWithRateLimit(
               error: {
                 code: 'VALIDATION_ERROR',
                 message: 'Invalid input data',
-                details: error.errors,
+                details: error.issues,
               },
             }),
             { 

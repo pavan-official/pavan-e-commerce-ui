@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Invalid parameters',
-            details: validation.error.errors,
+            details: validation.error.issues,
           },
         },
         { status: 400 }

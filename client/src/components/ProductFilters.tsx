@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 
 interface ProductFiltersProps {
   className?: string
-  onFiltersChange?: (filters: ApiResponse) => void
+  onFiltersChange?: (filters: any) => void
 }
 
 export default function ProductFilters({ 
@@ -49,7 +49,7 @@ export default function ProductFilters({
     }
   }, [aggregations])
 
-  const handleFilterChange = (key: string, value: ApiResponse) => {
+  const handleFilterChange = (key: string, value: any) => {
     const newFilters = { ...localFilters, [key]: value }
     setLocalFilters(newFilters)
     setFilters(newFilters)

@@ -1,13 +1,12 @@
-import { authOptions } from '@/lib/auth'
+import { getServerUser } from '@/lib/custom-auth'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getServerUser(request)
 
-    if (!session?.user?.id || session.user.role !== 'ADMIN') {
+    if (!user?.id || user.role !== 'ADMIN') {
       return NextResponse.json(
         {
           success: false,
@@ -30,7 +29,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     // Build where clause
-    const where: ApiResponse = {}
+    const where: any = {}
     
     if (status) {
       where.status = status

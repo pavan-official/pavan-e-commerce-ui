@@ -49,15 +49,12 @@ export class EncryptionService {
     try {
       const iv = crypto.randomBytes(ENCRYPTION_CONFIG.ivLength)
       const cipher = crypto.createCipher(ENCRYPTION_CONFIG.algorithm, this.encryptionKey)
-      cipher.setAAD(Buffer.from('additional-data', 'utf8'))
       
       let encrypted = cipher.update(data, 'utf8', 'hex')
       encrypted += cipher.final('hex')
       
-      const tag = cipher.getAuthTag()
-      
-      // Combine iv, tag, and encrypted data
-      const result = iv.toString('hex') + ':' + tag.toString('hex') + ':' + encrypted
+      // Combine iv and encrypted data
+      const result = iv.toString('hex') + ':' + encrypted
       
       return result
     } catch (error) {
@@ -70,17 +67,14 @@ export class EncryptionService {
   decrypt(encryptedData: string): string {
     try {
       const parts = encryptedData.split(':')
-      if (parts.length !== 3) {
+      if (parts.length !== 2) {
         throw new Error('Invalid encrypted data format')
       }
       
       const iv = Buffer.from(parts[0], 'hex')
-      const tag = Buffer.from(parts[1], 'hex')
-      const encrypted = parts[2]
+      const encrypted = parts[1]
       
       const decipher = crypto.createDecipher(ENCRYPTION_CONFIG.algorithm, this.encryptionKey)
-      decipher.setAAD(Buffer.from('additional-data', 'utf8'))
-      decipher.setAuthTag(tag)
       
       let decrypted = decipher.update(encrypted, 'hex', 'utf8')
       decrypted += decipher.final('utf8')

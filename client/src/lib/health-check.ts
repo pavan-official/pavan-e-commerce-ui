@@ -78,7 +78,7 @@ export class HealthCheckService {
         checks,
       }
     } catch (error) {
-      logger.error('Health check failed', { error: error.message })
+      logger.error('Health check failed', { error: error instanceof Error ? error.message : 'Unknown error' })
       
       return {
         status: 'unhealthy',
@@ -136,12 +136,12 @@ export class HealthCheckService {
     } catch (error) {
       const responseTime = Date.now() - startTime
       
-      logger.error('Database health check failed', { error: error.message })
+      logger.error('Database health check failed', { error: error instanceof Error ? error.message : 'Unknown error' })
       
       return {
         status: 'unhealthy',
         responseTime,
-        message: `Database error: ${error.message}`,
+        message: `Database error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       }
     }
   }
@@ -187,12 +187,12 @@ export class HealthCheckService {
     } catch (error) {
       const responseTime = Date.now() - startTime
       
-      logger.error('Redis health check failed', { error: error.message })
+      logger.error('Redis health check failed', { error: error instanceof Error ? error.message : 'Unknown error' })
       
       return {
         status: 'unhealthy',
         responseTime,
-        message: `Redis error: ${error.message}`,
+        message: `Redis error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       }
     }
   }
@@ -245,11 +245,11 @@ export class HealthCheckService {
         },
       }
     } catch (error) {
-      logger.error('Memory health check failed', { error: error.message })
+      logger.error('Memory health check failed', { error: error instanceof Error ? error.message : 'Unknown error' })
       
       return {
         status: 'unhealthy',
-        message: `Memory check error: ${error.message}`,
+        message: `Memory check error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       }
     }
   }
@@ -267,11 +267,11 @@ export class HealthCheckService {
         },
       }
     } catch (error) {
-      logger.error('Disk health check failed', { error: error.message })
+      logger.error('Disk health check failed', { error: error instanceof Error ? error.message : 'Unknown error' })
       
       return {
         status: 'unhealthy',
-        message: `Disk check error: ${error.message}`,
+        message: `Disk check error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       }
     }
   }
@@ -295,7 +295,7 @@ export class HealthCheckService {
 
       return { ready: true }
     } catch (error) {
-      return { ready: false, reason: error.message }
+      return { ready: false, reason: error instanceof Error ? error.message : 'Unknown error' }
     }
   }
 

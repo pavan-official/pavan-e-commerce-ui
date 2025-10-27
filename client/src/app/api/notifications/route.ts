@@ -1,23 +1,22 @@
-import { authOptions } from '@/lib/auth'
+import { getServerUser } from '@/lib/custom-auth'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 const createNotificationSchema = z.object({
-  type: z.enum(['ORDER_UPDATE', 'PAYMENT_UPDATE', 'REVIEW_MODERATION', 'REVIEW_DELETED', 'SYSTEM_ANNOUNCEMENT', 'PROMOTION']),
+  type: z.enum(['ORDER_UPDATE', 'PAYMENT_SUCCESS', 'SHIPMENT_UPDATE', 'REVIEW_REQUEST', 'PROMOTION', 'SYSTEM']),
   title: z.string().min(1, 'Title is required').max(100, 'Title too long'),
   message: z.string().min(1, 'Message is required').max(500, 'Message too long'),
-  data: z.record(z.any()).optional(),
+  data: z.record(z.string(), z.any()).optional(),
   userId: z.string().optional(), // If not provided, will be set from session
 })
 
 // GET /api/notifications - Get user's notifications
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getServerUser(request)
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
@@ -41,8 +40,8 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     // Build where clause
-    const where: ApiResponse = {
-      userId: session.user.id,
+    const where: any = {
+      userId: user.id,
     }
 
     if (type) {
@@ -54,7 +53,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build orderBy clause
-    let orderBy: ApiResponse = { createdAt: 'desc' }
+    let orderBy: any = { createdAt: 'desc' }
     switch (sortBy) {
       case 'createdAt':
         orderBy = { createdAt: sortOrder }
@@ -78,7 +77,7 @@ export async function GET(request: NextRequest) {
       prisma.notification.count({ where }),
       prisma.notification.count({
         where: {
-          userId: session.user.id,
+          userId: user.id,
           isRead: false,
         },
       }),
@@ -117,9 +116,9 @@ export async function GET(request: NextRequest) {
 // POST /api/notifications - Create a new notification
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getServerUser(request)
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
@@ -142,7 +141,7 @@ export async function POST(request: NextRequest) {
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Invalid notification data',
-            details: validation.error.errors,
+            details: validation.error.issues,
           },
         },
         { status: 400 }
@@ -154,7 +153,7 @@ export async function POST(request: NextRequest) {
     // Create the notification
     const notification = await prisma.notification.create({
       data: {
-        userId: userId || session.user.id,
+        userId: userId || user.id,
         type,
         title,
         message,

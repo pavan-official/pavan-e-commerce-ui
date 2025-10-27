@@ -36,7 +36,7 @@ const UserChart = () => {
         <div className="text-center">
           <p className="text-red-600 mb-2">Error loading user data</p>
           <p className="text-sm text-gray-500 mb-4">{error}</p>
-          <Button onClick={() => fetchUserAnalytics()} variant="outline">
+          <Button onClick={() => fetchUserAnalytics()}>
             Try Again
           </Button>
         </div>
@@ -153,7 +153,7 @@ const UserChart = () => {
               <Users className="h-5 w-5" />
               <span>User Registrations</span>
             </CardTitle>
-            <Select value={selectedPeriod} onValueChange={(value: ApiResponse) => setPeriod(value)}>
+            <Select value={selectedPeriod} onValueChange={(value: "year" | "week" | "day" | "month") => setPeriod(value)}>
               <SelectTrigger className="w-32">
                 <SelectValue />
               </SelectTrigger>
@@ -234,7 +234,7 @@ const UserChart = () => {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name} ${(Number(percent) * 100).toFixed(0)}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"

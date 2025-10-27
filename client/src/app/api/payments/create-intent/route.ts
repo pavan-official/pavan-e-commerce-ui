@@ -1,7 +1,6 @@
-import { authOptions } from '@/lib/auth'
+import { getServerUser } from '@/lib/custom-auth'
 import { prisma } from '@/lib/prisma'
 import { getStripeInstance } from '@/lib/stripe'
-import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -11,9 +10,9 @@ const createPaymentIntentSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getServerUser(request)
 
-    if (!session?.user?.id) {
+    if (!user?.id) {
       return NextResponse.json(
         {
           success: false,
@@ -36,7 +35,7 @@ export async function POST(request: NextRequest) {
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Invalid input',
-            details: validation.error.errors,
+            details: validation.error.issues,
           },
         },
         { status: 400 }
@@ -49,7 +48,7 @@ export async function POST(request: NextRequest) {
     const order = await prisma.order.findFirst({
       where: {
         id: orderId,
-        userId: session.user.id,
+        userId: user.id,
       },
       include: {
         items: {
@@ -99,7 +98,7 @@ export async function POST(request: NextRequest) {
     try {
       const stripe = getStripeInstance()
       const customers = await stripe.customers.list({
-        email: session.user.email!,
+        email: user.email!,
         limit: 1,
       })
 
@@ -107,10 +106,10 @@ export async function POST(request: NextRequest) {
         customerId = customers.data[0].id
       } else {
         const customer = await stripe.customers.create({
-          email: session.user.email!,
-          name: session.user.name || undefined,
+          email: user.email!,
+          name: user.name || undefined,
           metadata: {
-            userId: session.user.id,
+            userId: user.id,
           },
         })
         customerId = customer.id
@@ -123,25 +122,25 @@ export async function POST(request: NextRequest) {
     // Create payment intent
     const stripe = getStripeInstance()
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(order.total * 100), // Convert to cents
+      amount: Math.round(Number(order.total) * 100), // Convert to cents
       currency: 'usd',
       customer: customerId || undefined,
       metadata: {
         orderId: order.id,
         orderNumber: order.orderNumber,
-        userId: session.user.id,
+        userId: user.id,
       },
       description: `Payment for order ${order.orderNumber}`,
-      shipping: {
-        name: order.shippingAddress.street,
+      shipping: order.shippingAddress ? {
+        name: (order.shippingAddress as any).street,
         address: {
-          line1: order.shippingAddress.street,
-          city: order.shippingAddress.city,
-          state: order.shippingAddress.state,
-          postal_code: order.shippingAddress.zipCode,
-          country: order.shippingAddress.country,
+          line1: (order.shippingAddress as any).street,
+          city: (order.shippingAddress as any).city,
+          state: (order.shippingAddress as any).state,
+          postal_code: (order.shippingAddress as any).zipCode,
+          country: (order.shippingAddress as any).country,
         },
-      },
+      } : undefined,
       automatic_payment_methods: {
         enabled: true,
       },

@@ -2,17 +2,17 @@
 
 import { useNotificationStore } from '@/stores/notificationStore'
 import {
-  AlertCircle,
-  Bell,
-  Check,
-  CheckCheck,
-  CreditCard,
-  Filter,
-  Gift,
-  Megaphone,
-  MessageSquare,
-  Package,
-  Trash2
+    AlertCircle,
+    Bell,
+    Check,
+    CheckCheck,
+    CreditCard,
+    Filter,
+    Gift,
+    Megaphone,
+    MessageSquare,
+    Package,
+    Trash2
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
@@ -39,13 +39,13 @@ const notificationColors = {
   PROMOTION: 'text-pink-600 bg-pink-100',
 }
 
-export default function NotificationCenter({ onClose, className = '' }: NotificationCenterProps) {
+export default function NotificationCenter({ _onClose, className = '' }: NotificationCenterProps) {
   const {
     notifications,
     pagination,
     unreadCount,
     isLoading,
-    _error,
+    error,
     filters,
     fetchNotifications,
     markAsRead,
@@ -54,7 +54,7 @@ export default function NotificationCenter({ onClose, className = '' }: Notifica
     markAllAsRead,
     deleteAllNotifications,
     deleteReadNotifications,
-    _setFilters,
+    setFilters,
     setPage,
     setTypeFilter,
     setUnreadOnly,
@@ -136,12 +136,12 @@ export default function NotificationCenter({ onClose, className = '' }: Notifica
     )
   }
 
-  if (_error) {
+  if (error) {
     return (
       <div className={`p-4 ${className}`}>
         <div className="text-center py-8">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <p className="text-red-600 mb-4">{_error}</p>
+          <p className="text-red-600 mb-4">{error}</p>
           <button
             onClick={() => fetchNotifications()}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"

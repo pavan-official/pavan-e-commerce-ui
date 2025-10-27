@@ -1,6 +1,5 @@
-import { authOptions } from '@/lib/auth'
+import { getServerUser } from '@/lib/auth-utils'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -10,12 +9,12 @@ const updateCartItemSchema = z.object({
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { itemId: string } }
+  { params }: { params: Promise<{ itemId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getServerUser(request)
 
-    if (!session?.user?.id) {
+    if (!user?.id) {
       return NextResponse.json(
         {
           success: false,
@@ -28,7 +27,7 @@ export async function PUT(
       )
     }
 
-    const { itemId } = params
+    const { itemId } = await params
     const body = await request.json()
     const validation = updateCartItemSchema.safeParse(body)
 
@@ -39,7 +38,7 @@ export async function PUT(
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Invalid input',
-            details: validation.error.errors,
+            details: validation.error.issues,
           },
         },
         { status: 400 }
@@ -52,7 +51,7 @@ export async function PUT(
     const existingItem = await prisma.cartItem.findFirst({
       where: {
         id: itemId,
-        userId: session.user.id,
+        userId: user.id,
       },
       include: {
         product: true,
@@ -126,12 +125,12 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { itemId: string } }
+  { params }: { params: Promise<{ itemId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getServerUser(request)
 
-    if (!session?.user?.id) {
+    if (!user?.id) {
       return NextResponse.json(
         {
           success: false,
@@ -144,13 +143,13 @@ export async function DELETE(
       )
     }
 
-    const { itemId } = params
+    const { itemId } = await params
 
     // Check if cart item exists and belongs to user
     const existingItem = await prisma.cartItem.findFirst({
       where: {
         id: itemId,
-        userId: session.user.id,
+        userId: user.id,
       },
     })
 

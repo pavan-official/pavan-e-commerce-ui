@@ -23,7 +23,7 @@ export async function GET() {
     return NextResponse.json(
       {
         alive: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 503 }
     )

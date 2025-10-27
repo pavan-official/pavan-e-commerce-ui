@@ -1,6 +1,5 @@
-import { authOptions } from '@/lib/auth'
+import { getServerUser } from '@/lib/auth-utils'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -13,11 +12,12 @@ const updateReviewSchema = z.object({
 // GET /api/products/[id]/reviews/[reviewId] - Get a specific review
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; reviewId: string } }
+  { params }: { params: Promise<{ id: string; reviewId: string }> }
 ) {
   try {
+    const { id, reviewId } = await params
     const review = await prisma.review.findUnique({
-      where: { id: params.reviewId },
+      where: { id: reviewId },
       include: {
         user: {
           select: {
@@ -25,11 +25,6 @@ export async function GET(
             name: true,
             email: true,
             image: true,
-          },
-        },
-        _count: {
-          select: {
-            helpfulVotes: true,
           },
         },
       },
@@ -52,7 +47,6 @@ export async function GET(
       success: true,
       data: {
         ...review,
-        helpfulCount: review._count.helpfulVotes,
       },
     })
   } catch (error) {
@@ -73,12 +67,13 @@ export async function GET(
 // PUT /api/products/[id]/reviews/[reviewId] - Update a review
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; reviewId: string } }
+  { params }: { params: Promise<{ id: string; reviewId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const { reviewId } = await params
+    const user = await getServerUser(request)
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
@@ -101,7 +96,7 @@ export async function PUT(
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Invalid review data',
-            details: validation.error.errors,
+            details: validation.error.issues,
           },
         },
         { status: 400 }
@@ -111,8 +106,8 @@ export async function PUT(
     // Check if review exists and belongs to user
     const existingReview = await prisma.review.findFirst({
       where: {
-        id: params.reviewId,
-        userId: session.user.id,
+        id: reviewId,
+        userId: user.id,
       },
     })
 
@@ -131,7 +126,7 @@ export async function PUT(
 
     // Update the review
     const updatedReview = await prisma.review.update({
-      where: { id: params.reviewId },
+      where: { id: reviewId },
       data: {
         ...validation.data,
         isApproved: false, // Reset approval status when edited
@@ -171,12 +166,13 @@ export async function PUT(
 // DELETE /api/products/[id]/reviews/[reviewId] - Delete a review
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; reviewId: string } }
+  { params }: { params: Promise<{ id: string; reviewId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const { reviewId } = await params
+    const user = await getServerUser(request)
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
@@ -192,8 +188,8 @@ export async function DELETE(
     // Check if review exists and belongs to user
     const existingReview = await prisma.review.findFirst({
       where: {
-        id: params.reviewId,
-        userId: session.user.id,
+        id: reviewId,
+        userId: user.id,
       },
     })
 
@@ -212,7 +208,7 @@ export async function DELETE(
 
     // Delete the review
     await prisma.review.delete({
-      where: { id: params.reviewId },
+      where: { id: reviewId },
     })
 
     return NextResponse.json({

@@ -1,14 +1,13 @@
-import { authOptions } from '@/lib/auth'
+import { getServerUser } from '@/lib/auth-utils'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 
 // GET /api/analytics/dashboard - Get dashboard overview data
-export async function GET(__request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getServerUser(request)
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
@@ -22,12 +21,7 @@ export async function GET(__request: NextRequest) {
     }
 
     // Check if user is admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true },
-    })
-
-    if (user?.role !== 'ADMIN') {
+    if (user.role !== 'ADMIN') {
       return NextResponse.json(
         {
           success: false,
@@ -141,7 +135,7 @@ export async function GET(__request: NextRequest) {
         where: { isActive: true },
       }),
       prisma.product.count({
-        where: { stock: { lte: 10 }, isActive: true },
+        where: { quantity: { lte: 10 }, isActive: true },
       }),
 
       // Order status metrics

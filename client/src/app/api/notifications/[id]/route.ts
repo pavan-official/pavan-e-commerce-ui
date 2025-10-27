@@ -1,6 +1,5 @@
-import { authOptions } from '@/lib/auth'
+import { getServerUser } from '@/lib/custom-auth'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -11,12 +10,13 @@ const updateNotificationSchema = z.object({
 // GET /api/notifications/[id] - Get a specific notification
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const { id } = await params
+    const user = await getServerUser(request)
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
@@ -31,8 +31,8 @@ export async function GET(
 
     const notification = await prisma.notification.findFirst({
       where: {
-        id: params.id,
-        userId: session.user.id,
+        id: id,
+        userId: user.id,
       },
     })
 
@@ -71,12 +71,13 @@ export async function GET(
 // PUT /api/notifications/[id] - Update a notification
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const { id } = await params
+    const user = await getServerUser(request)
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
@@ -99,7 +100,7 @@ export async function PUT(
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Invalid notification data',
-            details: validation.error.errors,
+            details: validation.error.issues,
           },
         },
         { status: 400 }
@@ -109,8 +110,8 @@ export async function PUT(
     // Check if notification exists and belongs to user
     const existingNotification = await prisma.notification.findFirst({
       where: {
-        id: params.id,
-        userId: session.user.id,
+        id: id,
+        userId: user.id,
       },
     })
 
@@ -129,7 +130,7 @@ export async function PUT(
 
     // Update the notification
     const updatedNotification = await prisma.notification.update({
-      where: { id: params.id },
+      where: { id: id },
       data: validation.data,
     })
 
@@ -156,12 +157,13 @@ export async function PUT(
 // DELETE /api/notifications/[id] - Delete a notification
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const { id } = await params
+    const user = await getServerUser(request)
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
@@ -177,8 +179,8 @@ export async function DELETE(
     // Check if notification exists and belongs to user
     const existingNotification = await prisma.notification.findFirst({
       where: {
-        id: params.id,
-        userId: session.user.id,
+        id: id,
+        userId: user.id,
       },
     })
 
@@ -197,7 +199,7 @@ export async function DELETE(
 
     // Delete the notification
     await prisma.notification.delete({
-      where: { id: params.id },
+      where: { id: id },
     })
 
     return NextResponse.json({

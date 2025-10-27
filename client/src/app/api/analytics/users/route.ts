@@ -1,6 +1,5 @@
-import { authOptions } from '@/lib/auth'
+import { getServerUser } from '@/lib/auth-utils'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -13,9 +12,9 @@ const userAnalyticsSchema = z.object({
 // GET /api/analytics/users - Get user analytics data
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getServerUser(request)
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
@@ -29,12 +28,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user is admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true },
-    })
-
-    if (user?.role !== 'ADMIN') {
+    if (user.role !== 'ADMIN') {
       return NextResponse.json(
         {
           success: false,
@@ -59,7 +53,7 @@ export async function GET(request: NextRequest) {
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Invalid analytics parameters',
-            details: validation.error.errors,
+            details: validation.error.issues,
           },
         },
         { status: 400 }

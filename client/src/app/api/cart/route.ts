@@ -1,6 +1,5 @@
-import { authOptions } from '@/lib/auth'
+import { getTokenFromRequest, verifyJWTToken } from '@/lib/custom-auth'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -12,11 +11,12 @@ const addToCartSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-
-    if (!session?.user?.id) {
+    // Get token from request
+    const token = getTokenFromRequest(request)
+    
+    if (!token) {
       return NextResponse.json(
-        {
+        { 
           success: false,
           error: {
             code: 'UNAUTHORIZED',
@@ -27,8 +27,24 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Verify JWT token
+    const user = verifyJWTToken(token)
+    
+    if (!user) {
+      return NextResponse.json(
+        { 
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Invalid authentication token',
+          },
+        },
+        { status: 401 }
+      )
+    }
+
     const cartItems = await prisma.cartItem.findMany({
-      where: { userId: session.user.id },
+      where: { userId: user.id },
       include: {
         product: {
           include: {
@@ -92,15 +108,32 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-
-    if (!session?.user?.id) {
+    // Get token from request
+    const token = getTokenFromRequest(request)
+    
+    if (!token) {
       return NextResponse.json(
         {
           success: false,
           error: {
             code: 'UNAUTHORIZED',
             message: 'Authentication required',
+          },
+        },
+        { status: 401 }
+      )
+    }
+
+    // Verify JWT token
+    const user = verifyJWTToken(token)
+    
+    if (!user) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Invalid authentication token',
           },
         },
         { status: 401 }
@@ -117,7 +150,7 @@ export async function POST(request: NextRequest) {
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Invalid input',
-            details: validation.error.errors,
+            details: validation.error.issues,
           },
         },
         { status: 400 }
@@ -197,13 +230,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if item already exists in cart
-    const existingItem = await prisma.cartItem.findUnique({
+    const existingItem = await prisma.cartItem.findFirst({
       where: {
-        userId_productId_variantId: {
-          userId: session.user.id,
-          productId,
-          variantId: variantId || null,
-        },
+        userId: user.id,
+        productId,
+        variantId: variantId || null,
       },
     })
 
@@ -228,7 +259,7 @@ export async function POST(request: NextRequest) {
       // Create new cart item
       cartItem = await prisma.cartItem.create({
         data: {
-          userId: session.user.id,
+          userId: user.id,
           productId,
           variantId: variantId || null,
           quantity,
@@ -255,12 +286,18 @@ export async function POST(request: NextRequest) {
     )
   } catch (error) {
     console.error('Error adding to cart:', error)
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined
+    })
     return NextResponse.json(
       {
         success: false,
         error: {
           code: 'INTERNAL_SERVER_ERROR',
           message: 'An error occurred while adding item to cart',
+          details: error instanceof Error ? error.message : 'Unknown error'
         },
       },
       { status: 500 }

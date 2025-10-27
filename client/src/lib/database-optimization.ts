@@ -69,13 +69,13 @@ export class DatabaseOptimizer {
         try {
           await prisma.$executeRawUnsafe(indexQuery)
         } catch (_error) {
-          console.warn(`Index creation warning: ${error}`)
+          console.warn(`Index creation warning: ${_error}`)
         }
       }
       
       console.log('✅ Database indexes created successfully')
     } catch (_error) {
-      console.error('❌ Error creating database indexes:', error)
+      console.error('❌ Error creating database indexes:', _error)
     }
   }
 
@@ -89,7 +89,7 @@ export class DatabaseOptimizer {
       
       console.log('✅ Database queries optimized')
     } catch (_error) {
-      console.error('❌ Error optimizing database queries:', error)
+      console.error('❌ Error optimizing database queries:', _error)
     }
   }
 
@@ -125,7 +125,7 @@ export class DatabaseOptimizer {
       
       console.log(`✅ Cleaned up ${deletedNotifications.count} old notifications and ${deletedSessions.count} old sessions`)
     } catch (_error) {
-      console.error('❌ Error cleaning up old data:', error)
+      console.error('❌ Error cleaning up old data:', _error)
     }
   }
 
@@ -185,7 +185,7 @@ export class DatabaseOptimizer {
         connections: connectionStats,
       }
     } catch (_error) {
-      console.error('❌ Error getting performance metrics:', error)
+      console.error('❌ Error getting performance metrics:', _error)
       return null
     }
   }
@@ -199,7 +199,7 @@ export class DatabaseOptimizer {
       
       console.log('✅ Database maintenance completed')
     } catch (_error) {
-      console.error('❌ Error running database maintenance:', error)
+      console.error('❌ Error running database maintenance:', _error)
     }
   }
 
@@ -234,10 +234,10 @@ export class DatabaseOptimizer {
         timestamp: new Date().toISOString(),
       }
     } catch (_error) {
-      console.error('❌ Database health check failed:', error)
+      console.error('❌ Database health check failed:', _error)
       return {
         healthy: false,
-        error: error.message,
+        error: _error instanceof Error ? _error.message : 'Unknown error',
         timestamp: new Date().toISOString(),
       }
     }

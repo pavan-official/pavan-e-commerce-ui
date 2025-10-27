@@ -1,8 +1,8 @@
 'use client'
 
+import { useCustomAuth } from '@/hooks/useCustomAuth'
 import { useReviewStore } from '@/stores/reviewStore'
 import { MoreVertical, ThumbsUp } from 'lucide-react'
-import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import RatingDisplay from './RatingDisplay'
@@ -13,20 +13,20 @@ interface ReviewListProps {
 }
 
 export default function ReviewList({ productId, className = '' }: ReviewListProps) {
-  const { _data: session } = useSession()
+  const { user, loading } = useCustomAuth()
   const {
     reviews,
     stats,
     pagination,
     isLoading,
-    _error,
+    error,
     filters,
     fetchReviews,
     setPage,
     setSorting,
     setRatingFilter,
     voteHelpful,
-    _removeVote,
+    removeVote,
     deleteReview,
   } = useReviewStore()
 
@@ -293,7 +293,7 @@ export default function ReviewList({ productId, className = '' }: ReviewListProp
     )
   }
 
-  if (_error) {
+  if (error) {
     return (
       <div className={`${className}`}>
         <div className="text-center py-12">
@@ -303,7 +303,7 @@ export default function ReviewList({ productId, className = '' }: ReviewListProp
             </svg>
           </div>
           <h3 className="mt-4 text-lg font-medium text-gray-900">Error Loading Reviews</h3>
-          <p className="mt-2 text-sm text-gray-500">{_error}</p>
+          <p className="mt-2 text-sm text-gray-500">{error}</p>
         </div>
       </div>
     )
@@ -437,7 +437,7 @@ export default function ReviewList({ productId, className = '' }: ReviewListProp
                 </div>
 
                 {/* Review Actions */}
-                {session?.user?.id === review.userId && (
+                {user?.id === review.userId && (
                   <div className="flex-shrink-0">
                     <div className="relative">
                       <button className="p-1 text-gray-400 hover:text-gray-600">

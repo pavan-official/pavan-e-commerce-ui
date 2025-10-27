@@ -10,6 +10,8 @@ resources:
   - namespace.yaml
   - configmap.yaml
   - secrets.yaml
+  - postgres.yaml
+  - redis.yaml
   - deployment.yaml
   - service.yaml
   - ingress.yaml

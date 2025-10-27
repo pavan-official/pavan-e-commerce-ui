@@ -23,14 +23,14 @@ export function isValidEmail(email: string): boolean {
 
 // Secure phone validation function
 export function isValidPhone(phone: string): boolean {
-  const phoneRegex = /^+?[ds-()]{10,}$/;
+  const phoneRegex = /^\+?[\d\s\-\(\)]{10,}$/;
   return phoneRegex.test(phone);
 }
 
 // Secure password validation function
 export function isValidPassword(password: string): boolean {
   // At least 8 characters, 1 uppercase, 1 lowercase, 1 number
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*d)[a-zA-Zd@$!%*?&]{8,}$/;
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/;
   return passwordRegex.test(password);
 }
 

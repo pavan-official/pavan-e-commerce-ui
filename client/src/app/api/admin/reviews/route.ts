@@ -1,14 +1,13 @@
-import { authOptions } from '@/lib/auth'
+import { getServerUser } from '@/lib/auth-utils'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 
 // GET /api/admin/reviews - Get all reviews for moderation
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getServerUser(request)
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
@@ -22,12 +21,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user is admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true },
-    })
-
-    if (user?.role !== 'ADMIN') {
+    if (user.role !== 'ADMIN') {
       return NextResponse.json(
         {
           success: false,
@@ -50,34 +44,26 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     // Build where clause
-    const where: ApiResponse = {}
-    if (status === 'pending') {
-      where.isApproved = false
-    } else if (status === 'approved') {
-      where.isApproved = true
-    } else if (status === 'rejected') {
-      where.isApproved = false
-      where.rejectedAt = { not: null }
+    const where: any = {}
+    if (status !== 'all') {
+      where.status = status.toUpperCase()
     }
 
-    // Build orderBy clause
-    let orderBy: ApiResponse = { createdAt: 'desc' }
-    switch (sortBy) {
-      case 'rating':
-        orderBy = { rating: sortOrder }
-        break
-      case 'createdAt':
-        orderBy = { createdAt: sortOrder }
-        break
-      case 'updatedAt':
-        orderBy = { updatedAt: sortOrder }
-        break
+    // Build order by clause
+    const orderBy: any = {}
+    if (sortBy === 'createdAt') {
+      orderBy.createdAt = sortOrder
+    } else if (sortBy === 'rating') {
+      orderBy.rating = sortOrder
+    } else if (sortBy === 'helpfulVotes') {
+      orderBy.helpfulVotes = sortOrder
     }
 
-    // Get reviews with user and product information
-    const [reviews, total] = await Promise.all([
+    // Get reviews with pagination
+    const [reviews, totalCount] = await Promise.all([
       prisma.review.findMany({
         where,
+        orderBy,
         skip,
         take: limit,
         include: {
@@ -86,80 +72,58 @@ export async function GET(request: NextRequest) {
               id: true,
               name: true,
               email: true,
-              image: true,
             },
           },
           product: {
             select: {
               id: true,
               name: true,
-              slug: true,
-              thumbnail: true,
-            },
-          },
-          _count: {
-            select: {
-              helpfulVotes: true,
+              images: true,
             },
           },
         },
-        orderBy,
       }),
       prisma.review.count({ where }),
     ])
 
-    // Get moderation statistics
-    const stats = await prisma.review.aggregate({
+    // Get statistics
+    const stats = await prisma.review.groupBy({
+      by: ['isApproved'],
       _count: {
-        id: true,
+        isApproved: true,
       },
     })
 
-    const pendingCount = await prisma.review.count({
-      where: { isApproved: false, rejectedAt: null },
-    })
-
-    const approvedCount = await prisma.review.count({
-      where: { isApproved: true },
-    })
-
-    const rejectedCount = await prisma.review.count({
-      where: { isApproved: false, rejectedAt: { not: null } },
-    })
-
-    // Calculate helpful counts
-    const reviewsWithHelpful = reviews.map(review => ({
-      ...review,
-      helpfulCount: review._count.helpfulVotes,
-    }))
+    const statusCounts = stats.reduce((acc, stat) => {
+      acc[stat.isApproved ? 'approved' : 'pending'] = stat._count.isApproved
+      return acc
+    }, {} as Record<string, number>)
 
     return NextResponse.json({
       success: true,
       data: {
-        reviews: reviewsWithHelpful,
+        reviews,
         pagination: {
           page,
           limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-          hasNext: page < Math.ceil(total / limit),
-          hasPrev: page > 1,
+          total: totalCount,
+          pages: Math.ceil(totalCount / limit),
         },
         stats: {
-          total: stats._count.id,
-          pending: pendingCount,
-          approved: approvedCount,
-          rejected: rejectedCount,
+          total: totalCount,
+          pending: statusCounts.pending || 0,
+          approved: statusCounts.approved || 0,
+          rejected: statusCounts.rejected || 0,
         },
       },
     })
   } catch (error) {
-    console.error('Error fetching reviews for moderation:', error)
+    console.error('Error fetching reviews:', error)
     return NextResponse.json(
       {
         success: false,
         error: {
-          code: 'INTERNAL_SERVER_ERROR',
+          code: 'INTERNAL_ERROR',
           message: 'Failed to fetch reviews',
         },
       },

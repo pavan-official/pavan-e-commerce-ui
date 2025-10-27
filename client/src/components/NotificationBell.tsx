@@ -79,7 +79,7 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
           </div>
 
           {/* Notification Center Content */}
-          <NotificationCenter onClose={() => setIsOpen(false)} />
+          <NotificationCenter _onClose={() => setIsOpen(false)} />
         </div>
       )}
     </div>

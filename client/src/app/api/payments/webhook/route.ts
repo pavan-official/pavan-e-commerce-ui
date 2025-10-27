@@ -77,7 +77,6 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
         processedAt: new Date(),
         providerData: {
           status: paymentIntent.status,
-          charges: paymentIntent.charges,
         },
       },
     })
@@ -138,7 +137,7 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
         status: 'FAILED',
         providerData: {
           status: paymentIntent.status,
-          last_payment_error: paymentIntent.last_payment_error,
+          last_payment_error: paymentIntent.last_payment_error ? JSON.parse(JSON.stringify(paymentIntent.last_payment_error)) : null,
         },
       },
     })
@@ -166,13 +165,13 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
       await prisma.notification.create({
         data: {
           userId: payment.order.userId,
-          type: 'PAYMENT_FAILED',
+          type: 'PAYMENT_SUCCESS',
           title: 'Payment Failed',
           message: `Your payment for order ${payment.order.orderNumber} has failed. Please try again.`,
           data: {
             orderId: payment.order.id,
             orderNumber: payment.order.orderNumber,
-            error: paymentIntent.last_payment_error,
+            error: paymentIntent.last_payment_error ? JSON.parse(JSON.stringify(paymentIntent.last_payment_error)) : null,
           },
         },
       })
@@ -239,7 +238,7 @@ async function handleChargeDisputeCreated(dispute: Stripe.Dispute) {
       where: {
         providerData: {
           path: ['charges', 'data'],
-          array_contains: [{ id: dispute.charge }],
+          array_contains: [{ id: typeof dispute.charge === 'string' ? dispute.charge : dispute.charge.id }],
         },
       },
       include: {
@@ -258,7 +257,7 @@ async function handleChargeDisputeCreated(dispute: Stripe.Dispute) {
             orderId: payment.order.id,
             orderNumber: payment.order.orderNumber,
             disputeId: dispute.id,
-            chargeId: dispute.charge,
+            chargeId: typeof dispute.charge === 'string' ? dispute.charge : dispute.charge.id,
             amount: dispute.amount,
             reason: dispute.reason,
           },

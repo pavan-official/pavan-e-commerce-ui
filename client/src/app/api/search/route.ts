@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Invalid search parameters',
-            details: validation.error.errors,
+            details: validation.error.issues,
           },
         },
         { status: 400 }
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     // Build where clause
-    const where: ApiResponse = {
+    const where: any = {
       isActive: true, // Only show active products
     }
 
@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build orderBy clause
-    let orderBy: ApiResponse = { createdAt: 'desc' } // Default sorting
+    let orderBy: any = { createdAt: 'desc' } // Default sorting
 
     switch (sortBy) {
       case 'name':

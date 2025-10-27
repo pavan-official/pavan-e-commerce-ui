@@ -1,15 +1,14 @@
-import { authOptions } from '@/lib/auth'
+import { getServerUser } from '@/lib/custom-auth'
 import { logger } from '@/lib/logger'
 import { metricsCollector } from '@/lib/metrics'
-import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 
 // GET /api/metrics - Get metrics summary (admin only)
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getServerUser(request)
 
-    if (!session || session.user.role !== 'ADMIN') {
+    if (!user || user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Unauthorized - Admin access required' },
         { status: 401 }
@@ -29,7 +28,7 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
     })
   } catch (error) {
-    logger.error('Metrics endpoint failed', { error: error.message })
+    logger.error('Metrics endpoint failed', { error: error instanceof Error ? error.message : 'Unknown error' })
 
     return NextResponse.json(
       {

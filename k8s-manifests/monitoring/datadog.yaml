@@ -1,0 +1,405 @@
+# ==================================================================================================
+# DATADOG AGENT DEPLOYMENT - KUBERNETES MANIFEST
+# ==================================================================================================
+#
+# Purpose: Deploy DataDog Agent for comprehensive APM, logs, and infrastructure monitoring
+# Why: Essential for enterprise-grade observability, APM, and log management
+#
+# Interview Topics:
+# - DataDog Agent configuration and deployment
+# - APM instrumentation and tracing
+# - Log aggregation and parsing
+# - Custom metrics and dashboards
+# - Infrastructure monitoring
+#
+# ==================================================================================================
+
+---
+# 🔐 **DataDog ServiceAccount**
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: datadog-agent
+  namespace: monitoring
+  labels:
+    app: datadog-agent
+
+---
+# 🔑 **DataDog RBAC - ClusterRole**
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: datadog-agent
+rules:
+- apiGroups: [""]
+  resources:
+  - nodes
+  - nodes/proxy
+  - nodes/metrics
+  - services
+  - endpoints
+  - pods
+  - events
+  - configmaps
+  - secrets
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["quota.openshift.io"]
+  resources:
+  - clusterresourcequotas
+  verbs: ["get", "list"]
+- apiGroups: ["autoscaling"]
+  resources:
+  - horizontalpodautoscalers
+  verbs: ["list", "watch"]
+- apiGroups: [""]
+  resources:
+  - namespaces
+  verbs: ["list", "watch", "get"]
+- apiGroups: ["apps"]
+  resources:
+  - deployments
+  - replicasets
+  verbs: ["list", "watch", "get"]
+- apiGroups: ["batch"]
+  resources:
+  - jobs
+  - cronjobs
+  verbs: ["list", "watch", "get"]
+
+---
+# 🔗 **DataDog RBAC - ClusterRoleBinding**
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: datadog-agent
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: datadog-agent
+subjects:
+- kind: ServiceAccount
+  name: datadog-agent
+  namespace: monitoring
+
+---
+# ⚙️ **DataDog ConfigMap**
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: datadog-config
+  namespace: monitoring
+  labels:
+    app: datadog-agent
+data:
+  # Main DataDog configuration
+  datadog.yaml: |
+    api_key: 70f5b7b9c5c5f198b76c8823c9a7b38d
+    site: datadoghq.com
+    
+    # Logging configuration
+    log_level: INFO
+    log_file: /var/log/datadog/agent.log
+    
+    # APM configuration
+    apm_config:
+      enabled: true
+      non_local_traffic: true
+      env: production
+      service: ecommerce-app
+    
+    # Process monitoring
+    process_config:
+      enabled: true
+      blacklist_patterns:
+        - "name:datadog-agent"
+    
+    # Log collection
+    logs_enabled: true
+    logs_config:
+      container_collect_all: true
+      container_include_patterns:
+        - "name:ecommerce-*"
+      container_exclude_patterns:
+        - "name:datadog-agent"
+    
+    # Custom metrics
+    custom_metrics:
+      enabled: true
+    
+    # Kubernetes integration
+    kubernetes:
+      enabled: true
+      collect_kubernetes_events: true
+      collect_kubernetes_metrics: true
+      leader_lease_duration: 60
+      leader_election: true
+    
+    # Tags
+    tags:
+      - "env:production"
+      - "service:ecommerce"
+      - "team:sre"
+      - "cluster:k8s-local"
+
+  # Next.js application monitoring
+  nextjs.yaml: |
+    init_config:
+    instances:
+      - name: nextjs-app
+        tags:
+          - env:production
+          - service:ecommerce-frontend
+        custom_metrics:
+          - name: nextjs.page_load_time
+            type: histogram
+            description: "Next.js page load time"
+          - name: nextjs.api_response_time
+            type: histogram
+            description: "API response time"
+          - name: nextjs.memory_usage
+            type: gauge
+            description: "Memory usage"
+          - name: nextjs.cpu_usage
+            type: gauge
+            description: "CPU usage"
+
+  # PostgreSQL monitoring
+  postgres.yaml: |
+    init_config:
+    instances:
+      - host: postgres-service
+        port: 5432
+        username: postgres
+        password: <POSTGRES_PASSWORD>
+        tags:
+          - env:production
+          - service:postgres
+        custom_metrics:
+          - name: postgres.connections
+            type: gauge
+          - name: postgres.query_time
+            type: histogram
+          - name: postgres.cache_hit_ratio
+            type: gauge
+
+  # Redis monitoring
+  redis.yaml: |
+    init_config:
+    instances:
+      - host: redis-service
+        port: 6379
+        tags:
+          - env:production
+          - service:redis
+        custom_metrics:
+          - name: redis.memory_usage
+            type: gauge
+          - name: redis.connected_clients
+            type: gauge
+          - name: redis.commands_per_second
+            type: gauge
+
+  # Kubernetes monitoring
+  kubernetes_apiserver.yaml: |
+    init_config:
+    instances:
+      - host: kubernetes.default.svc
+        port: 443
+        bearer_token_path: /var/run/secrets/kubernetes.io/serviceaccount/token
+        ssl_ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        tags:
+          - env:production
+          - service:kubernetes
+
+---
+# 🔐 **DataDog Secret**
+apiVersion: v1
+kind: Secret
+metadata:
+  name: datadog-secret
+  namespace: monitoring
+  labels:
+    app: datadog-agent
+type: Opaque
+data:
+  api-key: NzBmNWI3YjljNWM1ZjE5OGI3NmM4ODIzYzlhN2IzOGQ=
+  postgres-password: cG9zdGdyZXM=
+
+---
+# 📊 **DataDog Agent DaemonSet**
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: datadog-agent
+  namespace: monitoring
+  labels:
+    app: datadog-agent
+spec:
+  selector:
+    matchLabels:
+      app: datadog-agent
+  template:
+    metadata:
+      labels:
+        app: datadog-agent
+      annotations:
+        # DataDog annotations for APM
+        ad.datadoghq.com/datadog-agent.check_names: '["datadog"]'
+        ad.datadoghq.com/datadog-agent.init_configs: '[{}]'
+        ad.datadoghq.com/datadog-agent.instances: '[{"prometheus_url": "http://%%host%%:9090/metrics"}]'
+        ad.datadoghq.com/datadog-agent.logs: '[{"source":"datadog-agent","service":"datadog-agent"}]'
+    spec:
+      serviceAccountName: datadog-agent
+      containers:
+      - name: agent
+        image: datadog/agent:7.48.0
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: DD_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: datadog-secret
+              key: api-key
+        - name: DD_SITE
+          value: "datadoghq.com"
+        - name: DD_HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: DD_TAGS
+          value: "env:production service:ecommerce cluster:k8s-local"
+        - name: DD_LOGS_ENABLED
+          value: "true"
+        - name: DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL
+          value: "true"
+        - name: DD_PROCESS_AGENT_ENABLED
+          value: "true"
+        - name: DD_APM_ENABLED
+          value: "true"
+        - name: DD_APM_NON_LOCAL_TRAFFIC
+          value: "true"
+        - name: DD_APM_ENV
+          value: "production"
+        - name: DD_APM_SERVICE
+          value: "ecommerce-app"
+        - name: DD_AC_EXCLUDE
+          value: "name:datadog-agent"
+        - name: DD_AC_INCLUDE
+          value: "name:ecommerce-*"
+        - name: KUBERNETES
+          value: "true"
+        - name: DD_KUBERNETES_KUBELET_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: DD_KUBERNETES_KUBELET_NODENAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: DD_CLUSTER_NAME
+          value: "ecommerce-k8s"
+        - name: DD_COLLECT_KUBERNETES_EVENTS
+          value: "true"
+        - name: DD_COLLECT_KUBERNETES_METRICS
+          value: "true"
+        - name: DD_LEADER_ELECTION
+          value: "true"
+        - name: DD_LEADER_LEASE_DURATION
+          value: "60"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8126
+          name: trace-agent
+          protocol: TCP
+        - containerPort: 8125
+          name: dogstatsd
+          protocol: UDP
+        - containerPort: 5555
+          name: health
+          protocol: TCP
+        volumeMounts:
+        - name: dockersocket
+          mountPath: /var/run/docker.sock
+        - name: procdir
+          mountPath: /host/proc
+          readOnly: true
+        - name: cgroups
+          mountPath: /host/sys/fs/cgroup
+          readOnly: true
+        - name: dd-agent-config
+          mountPath: /etc/datadog-agent/conf.d
+        - name: dd-agent-config-main
+          mountPath: /etc/datadog-agent/datadog.yaml
+          subPath: datadog.yaml
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5555
+          initialDelaySeconds: 15
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 5555
+          initialDelaySeconds: 15
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: dockersocket
+        hostPath:
+          path: /var/run/docker.sock
+      - name: procdir
+        hostPath:
+          path: /proc
+      - name: cgroups
+        hostPath:
+          path: /sys/fs/cgroup
+      - name: dd-agent-config
+        configMap:
+          name: datadog-config
+      - name: dd-agent-config-main
+        configMap:
+          name: datadog-config
+      tolerations:
+      - effect: NoSchedule
+        operator: Exists
+      - effect: NoExecute
+        operator: Exists
+      nodeSelector:
+        kubernetes.io/os: linux
+
+---
+# 🌐 **DataDog Agent Service**
+apiVersion: v1
+kind: Service
+metadata:
+  name: datadog-agent
+  namespace: monitoring
+  labels:
+    app: datadog-agent
+spec:
+  selector:
+    app: datadog-agent
+  ports:
+  - port: 8126
+    targetPort: 8126
+    protocol: TCP
+    name: trace-agent
+  - port: 8125
+    targetPort: 8125
+    protocol: UDP
+    name: dogstatsd
+  - port: 5555
+    targetPort: 5555
+    protocol: TCP
+    name: health
+  type: ClusterIP

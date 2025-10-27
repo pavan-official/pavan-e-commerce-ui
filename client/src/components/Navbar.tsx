@@ -1,9 +1,9 @@
 "use client";
 
+import { useAuth } from "@/contexts/AuthContext";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { Heart, Home } from "lucide-react";
-import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -12,17 +12,20 @@ import CartSidebar from "./CartSidebar";
 import NotificationBell from "./NotificationBell";
 
 const Navbar = () => {
-  const { data: session } = useSession();
+  const { user, logout, loading } = useAuth();
   const { summary, fetchCart } = useCartStore();
   const { items: wishlistItems, fetchWishlist } = useWishlistStore();
   const [isCartOpen, setIsCartOpen] = useState(false);
 
+  // Debug logging
+  console.log('Navbar - user:', user, 'loading:', loading);
+
   useEffect(() => {
-    if (session) {
+    if (user) {
       fetchCart();
       fetchWishlist();
     }
-  }, [session, fetchCart, fetchWishlist]);
+  }, [user, fetchCart, fetchWishlist]);
 
   return (
     <>
@@ -78,21 +81,21 @@ const Navbar = () => {
           </button>
           
           {/* Notifications */}
-          {session && <NotificationBell />}
+          {user && <NotificationBell />}
           
           {/* Auth */}
-          {session ? (
+          {user ? (
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-700">Hello, {session.user.name}</span>
+              <span className="text-sm text-gray-700">Hello, {user.name}</span>
               <button
-                onClick={() => signOut()}
+                onClick={() => logout()}
                 className="text-sm text-gray-600 hover:text-gray-900"
               >
                 Sign out
               </button>
             </div>
           ) : (
-            <Link href="/auth/signin" className="text-sm text-gray-600 hover:text-gray-900">
+            <Link href="/auth/custom-signin" className="text-sm text-gray-600 hover:text-gray-900">
               Sign in
             </Link>
           )}

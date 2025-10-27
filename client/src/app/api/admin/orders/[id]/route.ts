@@ -1,6 +1,5 @@
-import { authOptions } from '@/lib/auth'
+import { getServerUser } from '@/lib/custom-auth'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -15,12 +14,12 @@ const updateOrderSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getServerUser(request)
 
-    if (!session?.user?.id || session.user.role !== 'ADMIN') {
+    if (!user?.id || user.role !== 'ADMIN') {
       return NextResponse.json(
         {
           success: false,
@@ -33,7 +32,7 @@ export async function GET(
       )
     }
 
-    const { id } = params
+    const { id } = await params
 
     const order = await prisma.order.findUnique({
       where: { id },
@@ -94,12 +93,12 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getServerUser(request)
 
-    if (!session?.user?.id || session.user.role !== 'ADMIN') {
+    if (!user?.id || user.role !== 'ADMIN') {
       return NextResponse.json(
         {
           success: false,
@@ -112,7 +111,7 @@ export async function PUT(
       )
     }
 
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
     const validation = updateOrderSchema.safeParse(body)
 
@@ -123,7 +122,7 @@ export async function PUT(
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Invalid input',
-            details: validation.error.errors,
+            details: validation.error.issues,
           },
         },
         { status: 400 }

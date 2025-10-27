@@ -39,7 +39,7 @@ const SalesChart = () => {
         <div className="text-center">
           <p className="text-red-600 mb-2">Error loading sales data</p>
           <p className="text-sm text-gray-500 mb-4">{error}</p>
-          <Button onClick={() => fetchSalesAnalytics()} variant="outline">
+          <Button onClick={() => fetchSalesAnalytics()}>
             Try Again
           </Button>
         </div>
@@ -159,7 +159,7 @@ const SalesChart = () => {
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                label={({ name, percent }) => `${name} ${(Number(percent) * 100).toFixed(0)}%`}
                 outerRadius={120}
                 fill="#8884d8"
                 dataKey="revenue"
@@ -238,7 +238,7 @@ const SalesChart = () => {
               <span>Sales Analytics</span>
             </CardTitle>
             <div className="flex items-center space-x-4">
-              <Select value={selectedPeriod} onValueChange={(value: ApiResponse) => setPeriod(value)}>
+              <Select value={selectedPeriod} onValueChange={(value: "year" | "week" | "day" | "month") => setPeriod(value)}>
                 <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>
@@ -252,22 +252,16 @@ const SalesChart = () => {
               
               <div className="flex items-center space-x-2">
                 <Button
-                  variant={chartType === 'line' ? 'default' : 'outline'}
-                  size="sm"
                   onClick={() => setChartType('line')}
                 >
                   <TrendingUp className="h-4 w-4" />
                 </Button>
                 <Button
-                  variant={chartType === 'bar' ? 'default' : 'outline'}
-                  size="sm"
                   onClick={() => setChartType('bar')}
                 >
                   <BarChart3 className="h-4 w-4" />
                 </Button>
                 <Button
-                  variant={chartType === 'pie' ? 'default' : 'outline'}
-                  size="sm"
                   onClick={() => setChartType('pie')}
                 >
                   <PieChartIcon className="h-4 w-4" />
@@ -275,7 +269,7 @@ const SalesChart = () => {
               </div>
 
               {chartType !== 'pie' && (
-                <Select value={dataType} onValueChange={(value: ApiResponse) => setDataType(value)}>
+                <Select value={dataType} onValueChange={(value: "revenue" | "orders") => setDataType(value)}>
                   <SelectTrigger className="w-24">
                     <SelectValue />
                   </SelectTrigger>

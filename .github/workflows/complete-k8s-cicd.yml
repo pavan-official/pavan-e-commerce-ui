@@ -1,0 +1,227 @@
+name: Complete Kubernetes CI/CD Pipeline
+
+on:
+    push:
+        branches: [main, develop]
+    pull_request:
+        branches: [main]
+    workflow_dispatch:
+
+env:
+    REGISTRY: ghcr.io
+    IMAGE_NAME: ${{ github.repository }}
+    KUBERNETES_NAMESPACE: ecommerce-production
+    DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+
+jobs:
+    # Build and Test Application
+    build-and-test:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "18"
+                  cache: "npm"
+
+            - name: Install dependencies
+              run: |
+                  cd client
+                  npm ci
+
+            - name: Run tests
+              run: |
+                  cd client
+                  npm run test:ci
+
+            - name: Build application
+              run: |
+                  cd client
+                  npm run build
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Log in to Container Registry
+              uses: docker/login-action@v3
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Extract metadata
+              id: meta
+              uses: docker/metadata-action@v5
+              with:
+                  images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+                  tags: |
+                      type=ref,event=branch
+                      type=ref,event=pr
+                      type=sha,prefix={{branch}}-
+                      type=raw,value=latest,enable={{is_default_branch}}
+
+            - name: Build and push Docker image
+              uses: docker/build-push-action@v5
+              with:
+                  context: ./client
+                  push: true
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+    # Deploy to Kubernetes
+    deploy-to-kubernetes:
+        needs: build-and-test
+        runs-on: ubuntu-latest
+        if: github.ref == 'refs/heads/main'
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up kubectl
+              uses: azure/setup-kubectl@v3
+              with:
+                  version: "v1.28.0"
+
+            - name: Set up Minikube
+              uses: medyagh/setup-minikube@v1
+              with:
+                  minikube-version: 1.33.1
+                  kubernetes-version: v1.28.0
+                  driver: docker
+                  memory: 4096
+                  cpus: 2
+
+            - name: Start Minikube
+              run: |
+                  minikube start --driver=docker --memory=4096 --cpus=2
+                  minikube addons enable ingress
+                  minikube addons enable metrics-server
+
+            - name: Build Docker image in Minikube
+              run: |
+                  eval $(minikube docker-env)
+                  cd client
+                  docker build -t ecommerce-frontend:latest .
+
+            - name: Deploy to Kubernetes
+              run: |
+                  # Create namespace
+                  kubectl create namespace ${{ env.KUBERNETES_NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+
+                  # Deploy application
+                  cd k8s-manifests/scripts
+                  chmod +x deploy.sh
+                  ./deploy.sh ${{ env.KUBERNETES_NAMESPACE }}
+
+            - name: Deploy Monitoring Stack
+              run: |
+                  # Deploy DataDog
+                  cd k8s-manifests/monitoring
+                  chmod +x deploy-datadog-operator.sh
+                  DATADOG_API_KEY=${{ env.DATADOG_API_KEY }} ./deploy-datadog-operator.sh
+
+                  # Deploy Prometheus, Grafana, Jaeger
+                  kubectl apply -f prometheus.yaml
+                  kubectl apply -f grafana.yaml
+                  kubectl apply -f jaeger.yaml
+                  kubectl apply -f alertmanager.yaml
+
+            - name: Wait for deployments
+              run: |
+                  kubectl wait --for=condition=available --timeout=300s deployment/ecommerce-frontend-deployment -n ${{ env.KUBERNETES_NAMESPACE }}
+                  kubectl wait --for=condition=available --timeout=300s deployment/postgres -n ${{ env.KUBERNETES_NAMESPACE }}
+                  kubectl wait --for=condition=available --timeout=300s deployment/prometheus -n monitoring
+                  kubectl wait --for=condition=available --timeout=300s deployment/grafana -n monitoring
+
+            - name: Get application URLs
+              run: |
+                  echo "🚀 Application deployed successfully!"
+                  echo "📊 Frontend: http://$(minikube ip):3000"
+                  echo "📈 Grafana: http://$(minikube ip):3001"
+                  echo "🔍 Prometheus: http://$(minikube ip):9090"
+                  echo "🔗 Jaeger: http://$(minikube ip):16686"
+                  echo "📋 Kubernetes Dashboard: minikube dashboard"
+
+            - name: Run integration tests
+              run: |
+                  # Wait for services to be ready
+                  sleep 30
+
+                  # Test frontend
+                  curl -f http://$(minikube ip):3000/api/health || exit 1
+
+                  # Test database connection
+                  kubectl exec -n ${{ env.KUBERNETES_NAMESPACE }} deployment/postgres -- pg_isready || exit 1
+
+                  echo "✅ All integration tests passed!"
+
+    # Security Scanning
+    security-scan:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Run Trivy vulnerability scanner
+              uses: aquasecurity/trivy-action@master
+              with:
+                  scan-type: "fs"
+                  scan-ref: "."
+                  format: "sarif"
+                  output: "trivy-results.sarif"
+
+            - name: Upload Trivy scan results
+              uses: github/codeql-action/upload-sarif@v2
+              with:
+                  sarif_file: "trivy-results.sarif"
+
+    # Performance Testing
+    performance-test:
+        needs: deploy-to-kubernetes
+        runs-on: ubuntu-latest
+        if: github.ref == 'refs/heads/main'
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up kubectl
+              uses: azure/setup-kubectl@v3
+
+            - name: Set up Minikube
+              uses: medyagh/setup-minikube@v1
+
+            - name: Start Minikube
+              run: |
+                  minikube start --driver=docker --memory=4096 --cpus=2
+
+            - name: Run performance tests
+              run: |
+                  # Install k6 for performance testing
+                  sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+                  echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+                  sudo apt-get update
+                  sudo apt-get install k6
+
+                  # Run basic performance test
+                  echo "import http from 'k6/http';" > test.js
+                  echo "export default function() {" >> test.js
+                  echo "  http.get('http://$(minikube ip):3000/api/health');" >> test.js
+                  echo "}" >> test.js
+
+                  k6 run --vus 10 --duration 30s test.js
+
+    # Cleanup
+    cleanup:
+        if: always()
+        runs-on: ubuntu-latest
+        steps:
+            - name: Cleanup Minikube
+              run: |
+                  minikube delete || true

@@ -218,7 +218,7 @@ interface ProductAnalytics {
   insights: {
     revenueGrowth: number
     salesGrowth: number
-    categoryTrends: ApiResponse[]
+    categoryTrends: any[]
   }
 }
 
@@ -291,7 +291,7 @@ export const useAnalyticsStore = create<AnalyticsState & AnalyticsActions>((set,
     set({ isLoading: true, error: null })
     
     try {
-      const response = await fetch('/api/analytics/dashboard')
+      const response = await fetch('/api/analytics/dashboard/')
       const data = await response.json()
       
       if (data.success) {

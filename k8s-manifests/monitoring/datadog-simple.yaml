@@ -1,0 +1,284 @@
+# ==================================================================================================
+# DATADOG AGENT DEPLOYMENT - SIMPLIFIED VERSION
+# ==================================================================================================
+
+---
+# 🔐 **DataDog ServiceAccount**
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: datadog-agent
+  namespace: monitoring
+  labels:
+    app: datadog-agent
+
+---
+# 🔑 **DataDog RBAC - ClusterRole**
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: datadog-agent
+rules:
+- apiGroups: [""]
+  resources:
+  - nodes
+  - nodes/proxy
+  - nodes/metrics
+  - services
+  - endpoints
+  - pods
+  - events
+  - configmaps
+  - secrets
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["quota.openshift.io"]
+  resources:
+  - clusterresourcequotas
+  verbs: ["get", "list"]
+- apiGroups: ["autoscaling"]
+  resources:
+  - horizontalpodautoscalers
+  verbs: ["list", "watch"]
+- apiGroups: [""]
+  resources:
+  - namespaces
+  verbs: ["list", "watch", "get"]
+- apiGroups: ["apps"]
+  resources:
+  - deployments
+  - replicasets
+  - statefulsets
+  - daemonsets
+  verbs: ["list", "watch", "get"]
+- apiGroups: ["batch"]
+  resources:
+  - jobs
+  - cronjobs
+  verbs: ["list", "watch", "get"]
+- apiGroups: [""]
+  resources:
+  - persistentvolumes
+  - persistentvolumeclaims
+  verbs: ["list", "watch", "get"]
+
+---
+# 🔗 **DataDog RBAC - ClusterRoleBinding**
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: datadog-agent
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: datadog-agent
+subjects:
+- kind: ServiceAccount
+  name: datadog-agent
+  namespace: monitoring
+
+---
+# 🔐 **DataDog Secret**
+apiVersion: v1
+kind: Secret
+metadata:
+  name: datadog-secret
+  namespace: monitoring
+  labels:
+    app: datadog-agent
+type: Opaque
+data:
+  api-key: N2YwMzY2ZmNiODRjMzJhNGNhMWEwYWI5NDJhZjg2YTQ=
+
+---
+# 📊 **DataDog Agent DaemonSet**
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: datadog-agent
+  namespace: monitoring
+  labels:
+    app: datadog-agent
+spec:
+  selector:
+    matchLabels:
+      app: datadog-agent
+  template:
+    metadata:
+      labels:
+        app: datadog-agent
+    spec:
+      serviceAccountName: datadog-agent
+      containers:
+      - name: agent
+        image: datadog/agent:7.48.0
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: DD_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: datadog-secret
+              key: api-key
+        - name: DD_SITE
+          value: "us5.datadoghq.com"
+        - name: DD_HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: DD_TAGS
+          value: "env:production service:ecommerce cluster:k8s-local"
+        - name: DD_LOGS_ENABLED
+          value: "true"
+        - name: DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL
+          value: "true"
+        - name: DD_PROCESS_AGENT_ENABLED
+          value: "false"
+        - name: DD_PROCESS_CONFIG_ENABLED
+          value: "false"
+        - name: DD_LOG_LEVEL
+          value: "INFO"
+        - name: DD_DEBUG
+          value: "true"
+        - name: DD_ENV
+          value: "production"
+        - name: DD_VERSION
+          value: "1.0.0"
+        - name: DD_APM_NON_LOCAL_TRAFFIC
+          value: "true"
+        - name: DD_APM_ENV
+          value: "production"
+        - name: DD_APM_SERVICE
+          value: "ecommerce-app"
+        - name: DD_AC_EXCLUDE
+          value: "name:datadog-agent"
+        - name: DD_AC_INCLUDE
+          value: "name:ecommerce-*"
+        - name: KUBERNETES
+          value: "true"
+        - name: DD_KUBERNETES_KUBELET_TLS_VERIFY
+          value: "false"
+        - name: DD_KUBERNETES_KUBELET_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: DD_KUBERNETES_KUBELET_PORT
+          value: "10250"
+        - name: DD_KUBERNETES_KUBELET_NODENAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: DD_KUBERNETES_KUBELET_CHECK_ENABLED
+          value: "false"
+        - name: DD_CLUSTER_NAME
+          value: "ecommerce-k8s"
+        - name: DD_ORCHESTRATOR_CLUSTER_NAME
+          value: "ecommerce-k8s"
+        - name: DD_ORCHESTRATOR_EXPLORER_ENABLED
+          value: "true"
+        - name: DD_ORCHESTRATOR_ENABLED
+          value: "true"
+        - name: DD_ORCHESTRATOR_COLLECT_RESOURCE_TAGS
+          value: "true"
+        - name: DD_COLLECT_KUBERNETES_EVENTS
+          value: "true"
+        - name: DD_COLLECT_KUBERNETES_METRICS
+          value: "true"
+        - name: DD_KUBERNETES_COLLECT_METADATA_TAGS
+          value: "true"
+        - name: DD_KUBERNETES_METADATA_TAG_UPDATE_FREQ
+          value: "60"
+        - name: DD_KUBERNETES_CADVISOR_METRICS_ENABLED
+          value: "true"
+        - name: DD_KUBERNETES_CADVISOR_METRICS_PORT
+          value: "4194"
+        - name: DD_CLUSTER_AGENT_ENABLED
+          value: "false"
+        - name: DD_LEADER_ELECTION
+          value: "true"
+        - name: DD_LEADER_LEASE_DURATION
+          value: "60"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        ports:
+        - containerPort: 8126
+          name: trace-agent
+          protocol: TCP
+        - containerPort: 8125
+          name: dogstatsd
+          protocol: UDP
+        - containerPort: 5555
+          name: health
+          protocol: TCP
+        volumeMounts:
+        - name: dockersocket
+          mountPath: /var/run/docker.sock
+        - name: procdir
+          mountPath: /host/proc
+          readOnly: true
+        - name: cgroups
+          mountPath: /host/sys/fs/cgroup
+          readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5555
+          initialDelaySeconds: 15
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 5555
+          initialDelaySeconds: 15
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: dockersocket
+        hostPath:
+          path: /var/run/docker.sock
+      - name: procdir
+        hostPath:
+          path: /proc
+      - name: cgroups
+        hostPath:
+          path: /sys/fs/cgroup
+      tolerations:
+      - effect: NoSchedule
+        operator: Exists
+      - effect: NoExecute
+        operator: Exists
+      nodeSelector:
+        kubernetes.io/os: linux
+
+---
+# 🌐 **DataDog Agent Service**
+apiVersion: v1
+kind: Service
+metadata:
+  name: datadog-agent
+  namespace: monitoring
+  labels:
+    app: datadog-agent
+spec:
+  selector:
+    app: datadog-agent
+  ports:
+  - port: 8126
+    targetPort: 8126
+    protocol: TCP
+    name: trace-agent
+  - port: 8125
+    targetPort: 8125
+    protocol: UDP
+    name: dogstatsd
+  - port: 5555
+    targetPort: 5555
+    protocol: TCP
+    name: health
+  type: ClusterIP

@@ -42,7 +42,7 @@ interface SearchResult {
     name: string
     slug: string
   }
-  variants: ApiResponse[]
+  variants: any[]
   averageRating: number
   reviewCount: number
   quantity: number
@@ -70,7 +70,7 @@ interface SearchState {
   // UI state
   isLoading: boolean
   error: string | null
-  suggestions: ApiResponse[]
+  suggestions: any[]
   isSuggestionsLoading: boolean
   
   // Search history
@@ -102,7 +102,7 @@ interface SearchActions {
   // Local state management
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
-  setSuggestions: (suggestions: ApiResponse[]) => void
+  setSuggestions: (suggestions: any[]) => void
   setSuggestionsLoading: (loading: boolean) => void
 }
 
@@ -161,7 +161,7 @@ export const useSearchStore = create<SearchState & SearchActions>()(
             params.append('limit', String(pagination.limit))
           }
           
-          const response = await fetch(`/api/search?${params.toString()}`)
+          const response = await fetch(`/api/search/?${params.toString()}`)
           const data = await response.json()
           
           if (data.success) {
@@ -200,7 +200,7 @@ export const useSearchStore = create<SearchState & SearchActions>()(
         set({ isSuggestionsLoading: true })
         
         try {
-          const response = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}&limit=5`)
+          const response = await fetch(`/api/search/suggestions/?q=${encodeURIComponent(query)}&limit=5`)
           const data = await response.json()
           
           if (data.success) {
@@ -304,7 +304,7 @@ export const useSearchStore = create<SearchState & SearchActions>()(
       // Local state setters
       setLoading: (loading: boolean) => set({ isLoading: loading }),
       setError: (error: string | null) => set({ error }),
-      setSuggestions: (suggestions: ApiResponse[]) => set({ suggestions }),
+      setSuggestions: (suggestions: any[]) => set({ suggestions }),
       setSuggestionsLoading: (loading: boolean) => set({ isSuggestionsLoading: loading }),
     }),
     {

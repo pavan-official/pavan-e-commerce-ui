@@ -1,6 +1,5 @@
-import { authOptions } from '@/lib/auth'
+import { getServerUser } from '@/lib/auth-utils'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -14,9 +13,10 @@ const createReviewSchema = z.object({
 // GET /api/products/[id]/reviews - Get all reviews for a product
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const { searchParams } = new URL(request.url)
     const page = Number(searchParams.get('page')) || 1
     const limit = Number(searchParams.get('limit')) || 10
@@ -28,8 +28,8 @@ export async function GET(
     const skip = (page - 1) * limit
 
     // Build where clause
-    const where: ApiResponse = {
-      productId: params.id,
+    const where: any = {
+      productId: id,
     }
 
     if (approvedOnly) {
@@ -41,7 +41,7 @@ export async function GET(
     }
 
     // Build orderBy clause
-    let orderBy: ApiResponse = { createdAt: 'desc' }
+    let orderBy: any = { createdAt: 'desc' }
     switch (sortBy) {
       case 'rating':
         orderBy = { rating: sortOrder }
@@ -69,17 +69,12 @@ export async function GET(
               image: true,
             },
           },
-          _count: {
-            select: {
-              helpfulVotes: true,
-            },
-          },
         },
         orderBy,
       }),
       prisma.review.count({ where }),
       prisma.review.aggregate({
-        where: { productId: params.id, isApproved: true },
+        where: { productId: id, isApproved: true },
         _avg: { rating: true },
         _count: { rating: true },
       }),
@@ -88,14 +83,13 @@ export async function GET(
     // Get rating distribution
     const ratingDistribution = await prisma.review.groupBy({
       by: ['rating'],
-      where: { productId: params.id, isApproved: true },
+      where: { productId: id, isApproved: true },
       _count: { rating: true },
     })
 
     // Calculate helpful counts
     const reviewsWithHelpful = reviews.map(review => ({
       ...review,
-      helpfulCount: review._count.helpfulVotes,
     }))
 
     return NextResponse.json({
@@ -138,12 +132,13 @@ export async function GET(
 // POST /api/products/[id]/reviews - Create a new review
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const { id } = await params
+    const user = await getServerUser(request)
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
@@ -166,7 +161,7 @@ export async function POST(
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Invalid review data',
-            details: validation.error.errors,
+            details: validation.error.issues,
           },
         },
         { status: 400 }
@@ -177,7 +172,7 @@ export async function POST(
 
     // Check if product exists
     const product = await prisma.product.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!product) {
@@ -196,8 +191,8 @@ export async function POST(
     // Check if user already reviewed this product
     const existingReview = await prisma.review.findFirst({
       where: {
-        productId: params.id,
-        userId: session.user.id,
+        productId: id,
+        userId: user.id,
       },
     })
 
@@ -219,7 +214,7 @@ export async function POST(
       const order = await prisma.order.findFirst({
         where: {
           id: orderId,
-          userId: session.user.id,
+          userId: user.id,
           status: { in: ['CONFIRMED', 'SHIPPED', 'DELIVERED'] },
         },
       })
@@ -241,8 +236,8 @@ export async function POST(
     // Create the review
     const review = await prisma.review.create({
       data: {
-        productId: params.id,
-        userId: session.user.id,
+        productId: id,
+        userId: user.id,
         orderId: orderId || null,
         rating,
         title,

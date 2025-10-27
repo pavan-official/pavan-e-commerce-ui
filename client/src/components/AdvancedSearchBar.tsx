@@ -64,7 +64,7 @@ export default function AdvancedSearchBar({
   const handleSearch = (searchQuery?: string) => {
     const searchTerm = searchQuery || query
     if (searchTerm.trim()) {
-      setFilters({ q: searchTerm, page: 1 })
+      setFilters({ q: searchTerm })
       applyFilters()
       setIsOpen(false)
       router.push(`/products?q=${encodeURIComponent(searchTerm)}`)
@@ -80,7 +80,7 @@ export default function AdvancedSearchBar({
     }
   }
 
-  const handleSuggestionClick = (suggestion: ApiResponse) => {
+  const handleSuggestionClick = (suggestion: any) => {
     if (suggestion.type === 'product') {
       router.push(suggestion.url)
     } else if (suggestion.type === 'category') {

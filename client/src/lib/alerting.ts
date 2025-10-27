@@ -39,7 +39,7 @@ export interface AlertRule {
   id: string
   name: string
   type: AlertType
-  condition: (data: ApiResponse) => boolean
+  condition: (data: any) => boolean
   severity: AlertSeverity
   message: string
   cooldown: number // Minimum time between alerts (ms)
@@ -169,10 +169,10 @@ export class AlertingService {
             triggeredAlerts.push(alert)
           }
         }
-      } catch (_error) {
+      } catch (error) {
         logger.error(`Error checking alert rule: ${rule.name}`, {
           ruleId,
-          error: error.message,
+          error: error instanceof Error ? error.message : 'Unknown error',
         })
       }
     }
@@ -227,8 +227,8 @@ export class AlertingService {
 
       const timeSinceLastTrigger = Date.now() - lastTriggerTime
       return timeSinceLastTrigger >= cooldown
-    } catch (_error) {
-      logger.error('Error checking alert cooldown', { ruleId, error: error.message })
+    } catch (error) {
+      logger.error('Error checking alert cooldown', { ruleId, error: error instanceof Error ? error.message : 'Unknown error' })
       return true // Allow trigger if cooldown check fails
     }
   }
@@ -238,8 +238,8 @@ export class AlertingService {
     try {
       const cacheKey = CacheKeys.alertCooldown(ruleId)
       await cacheService.set(cacheKey, Date.now(), Math.floor(CacheTTL.MEDIUM / 1000))
-    } catch (_error) {
-      logger.error('Error updating alert trigger time', { ruleId, error: error.message })
+    } catch (error) {
+      logger.error('Error updating alert trigger time', { ruleId, error: error instanceof Error ? error.message : 'Unknown error' })
     }
   }
 
@@ -257,8 +257,8 @@ export class AlertingService {
       }
       
       await cacheService.set(cacheKey, recentAlerts, CacheTTL.MEDIUM)
-    } catch (_error) {
-      logger.error('Error caching alert', { alertId: alert.id, error: error.message })
+    } catch (error) {
+      logger.error('Error caching alert', { alertId: alert.id, error: error instanceof Error ? error.message : 'Unknown error' })
     }
   }
 
@@ -286,10 +286,10 @@ export class AlertingService {
       if (process.env.ALERT_EMAIL_TO) {
         await this.sendEmailNotification(alert)
       }
-    } catch (_error) {
+    } catch (error) {
       logger.error('Error sending alert notifications', {
         alertId: alert.id,
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
       })
     }
   }
@@ -343,10 +343,10 @@ export class AlertingService {
       })
 
       logger.info('Slack notification sent', { alertId: alert.id })
-    } catch (_error) {
+    } catch (error) {
       logger.error('Error sending Slack notification', {
         alertId: alert.id,
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
       })
     }
   }
@@ -356,10 +356,10 @@ export class AlertingService {
     try {
       // In a real implementation, you would use an email service like SendGrid
       logger.info('Email notification sent', { alertId: alert.id })
-    } catch (_error) {
+    } catch (error) {
       logger.error('Error sending email notification', {
         alertId: alert.id,
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
       })
     }
   }
@@ -371,8 +371,8 @@ export class AlertingService {
       const recentAlerts = await cacheService.get<Alert[]>(cacheKey) || []
       
       return recentAlerts.slice(0, limit)
-    } catch (_error) {
-      logger.error('Error getting recent alerts', { error: error.message })
+    } catch (error) {
+      logger.error('Error getting recent alerts', { error: error instanceof Error ? error.message : 'Unknown error' })
       return []
     }
   }
@@ -391,8 +391,8 @@ export class AlertingService {
       logger.info(`Alert resolved`, { alertId })
 
       return true
-    } catch (_error) {
-      logger.error('Error resolving alert', { alertId, error: error.message })
+    } catch (error) {
+      logger.error('Error resolving alert', { alertId, error: error instanceof Error ? error.message : 'Unknown error' })
       return false
     }
   }

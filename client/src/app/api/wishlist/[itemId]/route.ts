@@ -1,16 +1,15 @@
-import { authOptions } from '@/lib/auth'
+import { getServerUser } from '@/lib/custom-auth'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { itemId: string } }
+  { params }: { params: Promise<{ itemId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getServerUser(request)
 
-    if (!session?.user?.id) {
+    if (!user?.id) {
       return NextResponse.json(
         {
           success: false,
@@ -23,13 +22,13 @@ export async function DELETE(
       )
     }
 
-    const { itemId } = params
+    const { itemId } = await params
 
     // Check if wishlist item exists and belongs to user
     const existingItem = await prisma.wishlistItem.findFirst({
       where: {
         id: itemId,
-        userId: session.user.id,
+        userId: user.id,
       },
     })
 

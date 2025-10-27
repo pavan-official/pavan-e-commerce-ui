@@ -39,7 +39,7 @@ export class MetricsCollector {
   private static instance: MetricsCollector
   private metricsBuffer: Metric[] = []
   private bufferSize = 1000
-  private flushInterval = 60000 // 1 minute
+  private flushInterval = 300000 // 5 minutes
 
   private constructor() {
     // Start periodic flush
@@ -148,7 +148,7 @@ export class MetricsCollector {
 
       return summary
     } catch (error) {
-      logger.error('Error getting metrics summary', { error: error.message })
+      logger.error('Error getting metrics summary', { error: error instanceof Error ? error.message : 'Unknown error' })
       
       return {
         requests: { total: 0, perSecond: 0, byMethod: {}, byStatus: {} },
@@ -278,7 +278,7 @@ export class MetricsCollector {
 
       logger.info(`Flushed ${metricsToFlush.length} metrics`)
     } catch (error) {
-      logger.error('Error flushing metrics', { error: error.message })
+      logger.error('Error flushing metrics', { error: error instanceof Error ? error.message : 'Unknown error' })
     }
   }
 }
@@ -296,13 +296,13 @@ declare module '@/lib/redis' {
 export const metricsCollector = MetricsCollector.getInstance()
 
 // Metrics middleware
-export function withMetrics(_handler: GenericFunction) {
-  return async (request: Request, context: ApiResponse) => {
+export function withMetrics(_handler: any) {
+  return async (request: Request, context: any) => {
     const startTime = Date.now()
     const url = new URL(request.url)
 
     try {
-      const response = await handler(request, context)
+      const response = await _handler(request, context)
       const duration = Date.now() - startTime
 
       metricsCollector.recordRequest(
@@ -316,7 +316,7 @@ export function withMetrics(_handler: GenericFunction) {
     } catch (error) {
       const duration = Date.now() - startTime
 
-      metricsCollector.recordError(error.name, error.message)
+      metricsCollector.recordError(error instanceof Error ? error.name : 'UnknownError', error instanceof Error ? error.message : 'Unknown error')
       metricsCollector.recordRequest(request.method, url.pathname, 500, duration)
 
       throw error

@@ -1,6 +1,5 @@
-import { authOptions } from '@/lib/auth'
+import { getServerUser } from '@/lib/auth-utils'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -12,12 +11,13 @@ const moderateReviewSchema = z.object({
 // PUT /api/admin/reviews/[reviewId] - Moderate a review (approve/reject)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { reviewId: string } }
+  { params }: { params: Promise<{ reviewId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const { reviewId } = await params
+    const user = await getServerUser(request)
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
@@ -31,12 +31,7 @@ export async function PUT(
     }
 
     // Check if user is admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true },
-    })
-
-    if (user?.role !== 'ADMIN') {
+    if (user.role !== 'ADMIN') {
       return NextResponse.json(
         {
           success: false,
@@ -59,7 +54,7 @@ export async function PUT(
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Invalid moderation data',
-            details: validation.error.errors,
+            details: validation.error.issues,
           },
         },
         { status: 400 }
@@ -70,7 +65,7 @@ export async function PUT(
 
     // Check if review exists
     const existingReview = await prisma.review.findUnique({
-      where: { id: params.reviewId },
+      where: { id: reviewId },
       include: {
         user: {
           select: {
@@ -101,150 +96,12 @@ export async function PUT(
       )
     }
 
-    // Update review based on action
-    let updatedReview
-    if (action === 'approve') {
-      updatedReview = await prisma.review.update({
-        where: { id: params.reviewId },
-        data: {
-          isApproved: true,
-          approvedAt: new Date(),
-          approvedBy: session.user.id,
-          rejectedAt: null,
-          rejectionReason: null,
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-            },
-          },
-          product: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              thumbnail: true,
-            },
-          },
-        },
-      })
-    } else if (action === 'reject') {
-      updatedReview = await prisma.review.update({
-        where: { id: params.reviewId },
-        data: {
-          isApproved: false,
-          rejectedAt: new Date(),
-          rejectedBy: session.user.id,
-          rejectionReason: reason || 'Review does not meet our guidelines',
-          approvedAt: null,
-          approvedBy: null,
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-            },
-          },
-          product: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              thumbnail: true,
-            },
-          },
-        },
-      })
-    }
-
-    // Create notification for the user
-    await prisma.notification.create({
+    // Update review status
+    const updatedReview = await prisma.review.update({
+      where: { id: reviewId },
       data: {
-        userId: existingReview.userId,
-        type: 'REVIEW_MODERATION',
-        title: action === 'approve' ? 'Review Approved' : 'Review Rejected',
-        message: action === 'approve' 
-          ? `Your review for "${existingReview.product.name}" has been approved and is now visible to other customers.`
-          : `Your review for "${existingReview.product.name}" has been rejected. ${reason || 'It does not meet our review guidelines.'}`,
-        data: {
-          reviewId: params.reviewId,
-          productId: existingReview.productId,
-          action,
-          reason,
-        },
+        isApproved: action === 'approve',
       },
-    })
-
-    return NextResponse.json({
-      success: true,
-      data: updatedReview,
-      message: `Review ${action}d successfully`,
-    })
-  } catch (error) {
-    console.error('Error moderating review:', error)
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to moderate review',
-        },
-      },
-      { status: 500 }
-    )
-  }
-}
-
-// DELETE /api/admin/reviews/[reviewId] - Delete a review (admin only)
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { reviewId: string } }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-
-    if (!session) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'UNAUTHORIZED',
-            message: 'Authentication required',
-          },
-        },
-        { status: 401 }
-      )
-    }
-
-    // Check if user is admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true },
-    })
-
-    if (user?.role !== 'ADMIN') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'FORBIDDEN',
-            message: 'Admin access required',
-          },
-        },
-        { status: 403 }
-      )
-    }
-
-    // Check if review exists
-    const existingReview = await prisma.review.findUnique({
-      where: { id: params.reviewId },
       include: {
         user: {
           select: {
@@ -260,6 +117,70 @@ export async function DELETE(
           },
         },
       },
+    })
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        review: updatedReview,
+        action,
+        reason,
+      },
+    })
+  } catch (error) {
+    console.error('Error moderating review:', error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to moderate review',
+        },
+      },
+      { status: 500 }
+    )
+  }
+}
+
+// DELETE /api/admin/reviews/[reviewId] - Delete a review
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ reviewId: string }> }
+) {
+  try {
+    const { reviewId } = await params
+    const user = await getServerUser(request)
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Authentication required',
+          },
+        },
+        { status: 401 }
+      )
+    }
+
+    // Check if user is admin
+    if (user.role !== 'ADMIN') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'FORBIDDEN',
+            message: 'Admin access required',
+          },
+        },
+        { status: 403 }
+      )
+    }
+
+    // Check if review exists
+    const existingReview = await prisma.review.findUnique({
+      where: { id: reviewId },
     })
 
     if (!existingReview) {
@@ -277,21 +198,7 @@ export async function DELETE(
 
     // Delete the review
     await prisma.review.delete({
-      where: { id: params.reviewId },
-    })
-
-    // Create notification for the user
-    await prisma.notification.create({
-      data: {
-        userId: existingReview.userId,
-        type: 'REVIEW_DELETED',
-        title: 'Review Deleted',
-        message: `Your review for "${existingReview.product.name}" has been deleted by an administrator.`,
-        data: {
-          reviewId: params.reviewId,
-          productId: existingReview.productId,
-        },
-      },
+      where: { id: reviewId },
     })
 
     return NextResponse.json({
@@ -304,7 +211,7 @@ export async function DELETE(
       {
         success: false,
         error: {
-          code: 'INTERNAL_SERVER_ERROR',
+          code: 'INTERNAL_ERROR',
           message: 'Failed to delete review',
         },
       },

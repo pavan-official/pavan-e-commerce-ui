@@ -1,0 +1,86 @@
+# DataDog Agent Configuration using Helm Values
+# Based on: https://docs.datadoghq.com/containers/kubernetes/?tab=datadogoperator
+
+datadog:
+  apiKeyExistingSecret: datadog-secret
+  site: us5.datadoghq.com
+  clusterName: ecommerce-k8s
+  
+  # Enable features
+  logs:
+    enabled: true
+    containerCollectAll: true
+  
+  apm:
+    enabled: true
+    nonLocalTraffic: true
+  
+  processAgent:
+    enabled: false
+  
+  # System probe configuration
+  networkMonitoring:
+    enabled: true
+  
+  systemProbe:
+    enableTCPQueueLength: true
+    enableOOMKill: true
+  
+  securityAgent:
+    runtime:
+      enabled: true
+  
+  runtimeMetrics:
+    enabled: true
+  
+  # Kubernetes specific configuration
+  collectEvents: true
+  collectKubernetesMetrics: true
+  collectMetadataTags: true
+  metadataTagUpdateFreq: 60
+  
+  # cAdvisor metrics
+  cAdvisorMetricsEnabled: true
+  cAdvisorMetricsPort: 4194
+  
+  # Orchestrator configuration
+  orchestratorExplorer:
+    enabled: true
+    clusterName: ecommerce-k8s
+  
+  orchestrator:
+    enabled: true
+    collectResourceTags: true
+  
+  # Kubelet configuration
+  kubeletCheckEnabled: false
+  kubeletTlsVerify: false
+  kubeletPort: 10250
+  
+  # Resource limits
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "200m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+# Cluster Agent configuration
+clusterAgent:
+  enabled: true
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+  
+  env:
+    - name: DD_COLLECT_KUBERNETES_STATE_METRICS
+      value: "true"
+    - name: DD_ORCHESTRATOR_EXPLORER_ENABLED
+      value: "true"
+    - name: DD_ORCHESTRATOR_CLUSTER_NAME
+      value: "ecommerce-k8s"

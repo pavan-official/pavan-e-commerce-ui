@@ -1,7 +1,7 @@
 'use client'
 
+import { useCustomAuth } from '@/hooks/useCustomAuth'
 import { useCartStore } from '@/stores/cartStore'
-import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -10,8 +10,8 @@ interface CartSidebarProps {
   onClose: () => void
 }
 
-export default function CartSidebar({ isOpen, _onClose }: CartSidebarProps) {
-  const { data: session } = useSession()
+export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
+  const { user } = useCustomAuth()
   const { items, summary, isLoading, error, updateQuantity, removeFromCart } = useCartStore()
 
   const handleQuantityChange = async (itemId: string, newQuantity: number) => {
@@ -53,11 +53,11 @@ export default function CartSidebar({ isOpen, _onClose }: CartSidebarProps) {
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto px-6 py-4">
-            {!session ? (
+            {!user ? (
               <div className="text-center py-8">
                 <p className="text-gray-500 mb-4">Please sign in to view your cart</p>
                 <Link
-                  href="/auth/signin"
+                  href="/auth/custom-signin"
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
                 >
                   Sign In
@@ -157,7 +157,7 @@ export default function CartSidebar({ isOpen, _onClose }: CartSidebarProps) {
           </div>
 
           {/* Footer */}
-          {session && items.length > 0 && (
+          {user && items.length > 0 && (
             <div className="border-t px-6 py-4">
               {/* Summary */}
               <div className="space-y-2 mb-4">

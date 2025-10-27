@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { CacheKeys, CacheTTL, cacheService } from '@/lib/redis'
+import { getServerUser } from '@/lib/custom-auth'
 
 // Permission definitions
 export const PERMISSIONS = {
@@ -42,7 +43,7 @@ export const PERMISSIONS = {
 } as const
 
 // Role definitions with permissions
-export const ROLES = {
+export const ROLES: Record<string, { name: string; permissions: string[] }> = {
   USER: {
     name: 'USER',
     permissions: [
@@ -58,7 +59,13 @@ export const ROLES = {
   MODERATOR: {
     name: 'MODERATOR',
     permissions: [
-      ...ROLES.USER.permissions,
+      PERMISSIONS.USER_READ,
+      PERMISSIONS.PRODUCT_READ,
+      PERMISSIONS.ORDER_READ,
+      PERMISSIONS.ORDER_WRITE,
+      PERMISSIONS.CATEGORY_READ,
+      PERMISSIONS.REVIEW_READ,
+      PERMISSIONS.REVIEW_WRITE,
       PERMISSIONS.REVIEW_MODERATE,
       PERMISSIONS.ANALYTICS_READ,
     ],
@@ -66,7 +73,15 @@ export const ROLES = {
   ADMIN: {
     name: 'ADMIN',
     permissions: [
-      ...ROLES.MODERATOR.permissions,
+      PERMISSIONS.USER_READ,
+      PERMISSIONS.PRODUCT_READ,
+      PERMISSIONS.ORDER_READ,
+      PERMISSIONS.ORDER_WRITE,
+      PERMISSIONS.CATEGORY_READ,
+      PERMISSIONS.REVIEW_READ,
+      PERMISSIONS.REVIEW_WRITE,
+      PERMISSIONS.REVIEW_MODERATE,
+      PERMISSIONS.ANALYTICS_READ,
       PERMISSIONS.USER_WRITE,
       PERMISSIONS.PRODUCT_WRITE,
       PERMISSIONS.PRODUCT_DELETE,
@@ -170,7 +185,7 @@ export class RBACService {
       // Cache permissions
       await cacheService.set(cacheKey, permissions, CacheTTL.MEDIUM)
 
-      return permissions
+      return permissions as Permission[]
     } catch (error) {
       console.error('Error getting user permissions:', error)
       return []
@@ -193,7 +208,7 @@ export class RBACService {
       // Update user role
       await prisma.user.update({
         where: { id: userId },
-        data: { role: newRole },
+        data: { role: newRole as any },
       })
 
       // Clear cached permissions
@@ -305,7 +320,7 @@ export class RBACService {
   static getAllRoles(): Array<{ name: Role; permissions: Permission[] }> {
     return Object.entries(ROLES).map(([name, role]) => ({
       name: name as Role,
-      permissions: role.permissions,
+      permissions: role.permissions as Permission[],
     }))
   }
 
@@ -321,20 +336,8 @@ export class RBACService {
     updatedBy: string
   ): Promise<void> {
     try {
-      await prisma.auditLog.create({
-        data: {
-          userId: updatedBy,
-          action: 'ROLE_CHANGE',
-          resourceType: 'USER',
-          resourceId: userId,
-          details: {
-            newRole,
-            updatedBy,
-          },
-          ipAddress: '127.0.0.1', // Would be extracted from request
-          userAgent: 'System', // Would be extracted from request
-        },
-      })
+      // TODO: Implement audit logging with proper database model
+      console.log(`Role change logged: User ${userId} role changed to ${newRole} by ${updatedBy}`)
     } catch (error) {
       console.error('Error logging role change:', error)
     }
@@ -343,21 +346,21 @@ export class RBACService {
 
 // RBAC middleware for API routes
 export function requirePermission(_permission: Permission) {
-  return function (target: ApiResponse, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value
 
-    descriptor.value = async function (...args: ApiResponse[]) {
+    descriptor.value = async function (...args: any[]) {
       const request = args[0]
-      const session = await getServerSession(authOptions)
+      const user = await getServerUser(request)
       
-      if (!session?.user?.id) {
+      if (!user?.id) {
         return new Response(
           JSON.stringify({ error: 'Authentication required' }),
           { status: 401, headers: { 'Content-Type': 'application/json' } }
         )
       }
 
-      const hasPermission = await RBACService.hasPermission(session.user.id, permission)
+      const hasPermission = await RBACService.hasPermission(user.id, _permission)
       if (!hasPermission) {
         return new Response(
           JSON.stringify({ error: 'Insufficient permissions' }),
@@ -377,14 +380,14 @@ export function requireResourceAccess(
   _resourceType: string,
   _action: 'read' | 'write' | 'delete'
 ) {
-  return function (target: ApiResponse, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value
 
-    descriptor.value = async function (...args: ApiResponse[]) {
+    descriptor.value = async function (...args: any[]) {
       const request = args[0]
-      const session = await getServerSession(authOptions)
+      const user = await getServerUser(request)
       
-      if (!session?.user?.id) {
+      if (!user?.id) {
         return new Response(
           JSON.stringify({ error: 'Authentication required' }),
           { status: 401, headers: { 'Content-Type': 'application/json' } }
@@ -403,10 +406,10 @@ export function requireResourceAccess(
       }
 
       const canAccess = await RBACService.canAccessResource(
-        session.user.id,
-        resourceType,
+        user.id,
+        _resourceType,
         resourceId,
-        action
+        _action
       )
 
       if (!canAccess) {

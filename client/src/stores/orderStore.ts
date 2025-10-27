@@ -41,8 +41,8 @@ interface Order {
   shipping: number
   discount: number
   total: number
-  shippingAddress: ApiResponse
-  billingAddress: ApiResponse
+  shippingAddress: any
+  billingAddress: any
   paymentStatus: string
   paymentMethod: string
   shippingMethod: string
@@ -74,8 +74,8 @@ interface OrderActions {
   // Order operations
   fetchOrders: (filters?: { status?: string; page?: number; limit?: number }) => Promise<void>
   fetchOrder: (orderId: string) => Promise<void>
-  createOrder: (orderData: ApiResponse) => Promise<Order | null>
-  updateOrder: (orderId: string, updates: ApiResponse) => Promise<void>
+  createOrder: (orderData: any) => Promise<Order | null>
+  updateOrder: (orderId: string, updates: any) => Promise<void>
   
   // Local state management
   setLoading: (loading: boolean) => void
@@ -104,7 +104,7 @@ export const useOrderStore = create<OrderState & OrderActions>()(
           if (filters.page) params.append('page', filters.page.toString())
           if (filters.limit) params.append('limit', filters.limit.toString())
 
-          const response = await fetch(`/api/orders?${params.toString()}`)
+          const response = await fetch(`/api/orders/?${params.toString()}`)
           const data = await response.json()
 
           if (data.success) {
@@ -130,7 +130,7 @@ export const useOrderStore = create<OrderState & OrderActions>()(
         set({ isLoading: true, error: null })
         
         try {
-          const response = await fetch(`/api/orders/${orderId}`)
+          const response = await fetch(`/api/orders/${orderId}/`)
           const data = await response.json()
 
           if (data.success) {
@@ -152,11 +152,11 @@ export const useOrderStore = create<OrderState & OrderActions>()(
         }
       },
 
-      createOrder: async (orderData: ApiResponse) => {
+      createOrder: async (orderData: any) => {
         set({ isLoading: true, error: null })
         
         try {
-          const response = await fetch('/api/orders', {
+          const response = await fetch('/api/orders/', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -190,7 +190,7 @@ export const useOrderStore = create<OrderState & OrderActions>()(
         }
       },
 
-      updateOrder: async (orderId: string, updates: ApiResponse) => {
+      updateOrder: async (orderId: string, updates: any) => {
         set({ isLoading: true, error: null })
         
         try {

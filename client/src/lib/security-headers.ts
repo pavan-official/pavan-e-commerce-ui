@@ -105,9 +105,9 @@ export class CSRFService {
 }
 
 // Security middleware
-export function withSecurityHeaders(_handler: GenericFunction) {
-  return async (request: NextRequest, context: ApiResponse) => {
-    const response = await handler(request, context)
+export function withSecurityHeaders(_handler: any) {
+  return async (request: NextRequest, context: any) => {
+    const response = await _handler(request, context)
     
     // Add security headers to response
     Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
@@ -119,18 +119,18 @@ export function withSecurityHeaders(_handler: GenericFunction) {
 }
 
 // CSRF protection middleware
-export function withCSRFProtection(_handler: GenericFunction) {
-  return async (request: NextRequest, context: ApiResponse) => {
+export function withCSRFProtection(_handler: any) {
+  return async (request: NextRequest, context: any) => {
     // Skip CSRF check for GET requests and safe methods
     if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
-      return handler(request, context)
+      return _handler(request, context)
     }
     
     // Skip CSRF check for API routes that don't need it
     const url = new URL(request.url)
     if (url.pathname.startsWith('/api/auth/') || 
         url.pathname.startsWith('/api/webhooks/')) {
-      return handler(request, context)
+      return _handler(request, context)
     }
     
     const csrfService = CSRFService.getInstance()
@@ -165,13 +165,13 @@ export function withCSRFProtection(_handler: GenericFunction) {
       )
     }
     
-    return handler(request, context)
+    return _handler(request, context)
   }
 }
 
 // Request sanitization middleware
-export function withRequestSanitization(_handler: GenericFunction) {
-  return async (request: NextRequest, context: ApiResponse) => {
+export function withRequestSanitization(_handler: any) {
+  return async (request: NextRequest, context: any) => {
     // Sanitize request headers
     const sanitizedHeaders = new Headers()
     for (const [key, value] of request.headers.entries()) {
@@ -193,14 +193,14 @@ export function withRequestSanitization(_handler: GenericFunction) {
       body: request.body,
     })
     
-    return handler(sanitizedRequest, context)
+    return _handler(sanitizedRequest, context)
   }
 }
 
 // IP whitelist middleware
 export function withIPWhitelist(allowedIPs: string[]) {
-  return function (handler: GenericFunction) {
-    return async (request: NextRequest, context: ApiResponse) => {
+  return function (handler: any) {
+    return async (request: NextRequest, context: any) => {
       const clientIP = getClientIP(request)
       
       if (!allowedIPs.includes(clientIP)) {
@@ -217,11 +217,11 @@ export function withIPWhitelist(allowedIPs: string[]) {
 
 // Request size limiting middleware
 export function withSizeLimit(_maxSize: number) {
-  return function (handler: GenericFunction) {
-    return async (request: NextRequest, context: ApiResponse) => {
+  return function (handler: any) {
+    return async (request: NextRequest, context: any) => {
       const contentLength = request.headers.get('content-length')
       
-      if (contentLength && parseInt(contentLength) > maxSize) {
+      if (contentLength && parseInt(contentLength) > _maxSize) {
         return new NextResponse(
           JSON.stringify({ error: 'Request too large' }),
           { status: 413, headers: { 'Content-Type': 'application/json' } }
@@ -234,14 +234,14 @@ export function withSizeLimit(_maxSize: number) {
 }
 
 // Security audit logging
-export function withSecurityAudit(_handler: GenericFunction) {
-  return async (request: NextRequest, context: ApiResponse) => {
+export function withSecurityAudit(_handler: any) {
+  return async (request: NextRequest, context: any) => {
     const startTime = Date.now()
     const clientIP = getClientIP(request)
     const userAgent = request.headers.get('user-agent') || 'Unknown'
     
     try {
-      const response = await handler(request, context)
+      const response = await _handler(request, context)
       
       // Log successful request
       console.log(`[SECURITY] ${request.method} ${request.url} - ${response.status} - ${clientIP} - ${Date.now() - startTime}ms`)
@@ -249,7 +249,7 @@ export function withSecurityAudit(_handler: GenericFunction) {
       return response
     } catch (error) {
       // Log failed request
-      console.error(`[SECURITY] ${request.method} ${request.url} - ERROR - ${clientIP} - ${userAgent} - ${error.message}`)
+      console.error(`[SECURITY] ${request.method} ${request.url} - ERROR - ${clientIP} - ${userAgent} - ${error instanceof Error ? error.message : 'Unknown error'}`)
       
       throw error
     }
@@ -266,7 +266,7 @@ function getClientIP(request: NextRequest): string {
   if (realIP) return realIP
   if (forwarded) return forwarded.split(',')[0].trim()
   
-  return request.ip || '127.0.0.1'
+  return '127.0.0.1'
 }
 
 // Security configuration for different environments

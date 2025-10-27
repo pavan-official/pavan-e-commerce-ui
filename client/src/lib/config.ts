@@ -56,14 +56,14 @@ interface RedisConfig {
 // ===========================================
 
 class ConfigValidator {
-  private static validateRequired(value: string | undefined, name: string): string {
+  public static validateRequired(value: string | undefined, name: string): string {
     if (!value) {
       throw new Error(`Missing required environment variable: ${name}`);
     }
     return value;
   }
 
-  private static validateUrl(value: string, name: string): string {
+  public static validateUrl(value: string, name: string): string {
     try {
       new URL(value);
       return value;
@@ -72,7 +72,7 @@ class ConfigValidator {
     }
   }
 
-  private static validateNumber(value: string | undefined, name: string, defaultValue: number): number {
+  public static validateNumber(value: string | undefined, name: string, defaultValue: number): number {
     if (!value) return defaultValue;
     const parsed = parseFloat(value);
     if (isNaN(parsed)) {
@@ -81,7 +81,7 @@ class ConfigValidator {
     return parsed;
   }
 
-  private static validateBoolean(value: string | undefined, name: string, defaultValue: boolean): boolean {
+  public static validateBoolean(value: string | undefined, name: string, defaultValue: boolean): boolean {
     if (!value) return defaultValue;
     return value.toLowerCase() === 'true';
   }
@@ -93,7 +93,7 @@ class ConfigValidator {
 
 class ConfigFactory {
   private static instance: ConfigFactory;
-  private config: ApiResponse;
+  private config: any;
 
   private constructor() {
     this.config = this.buildConfig();

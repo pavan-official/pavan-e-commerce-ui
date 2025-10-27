@@ -5,7 +5,6 @@ const redis = new Redis({
   host: process.env.REDIS_HOST || 'localhost',
   port: parseInt(process.env.REDIS_PORT || '6379'),
   password: process.env.REDIS_PASSWORD,
-  retryDelayOnFailover: 100,
   maxRetriesPerRequest: 3,
   lazyConnect: true,
   keepAlive: 30000,
@@ -43,7 +42,7 @@ export class CacheService {
   }
 
   // Set cache with TTL
-  async set(key: string, value: ApiResponse, ttlSeconds: number = 3600): Promise<void> {
+  async set(key: string, value: any, ttlSeconds: number = 3600): Promise<void> {
     try {
       const serializedValue = JSON.stringify(value)
       await this.redis.setex(key, ttlSeconds, serializedValue)
@@ -125,7 +124,7 @@ export class CacheService {
   }
 
   // Set with expiration
-  async setex(key: string, value: ApiResponse, ttlSeconds: number): Promise<void> {
+  async setex(key: string, value: any, ttlSeconds: number): Promise<void> {
     await this.set(key, value, ttlSeconds)
   }
 

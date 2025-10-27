@@ -52,7 +52,7 @@ const AnalyticsDashboard = () => {
           <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <p className="text-red-600 mb-2">Error loading analytics</p>
           <p className="text-sm text-gray-500 mb-4">{error}</p>
-          <Button onClick={fetchDashboardOverview} variant="outline">
+          <Button onClick={fetchDashboardOverview}>
             Try Again
           </Button>
         </div>
@@ -90,7 +90,7 @@ const AnalyticsDashboard = () => {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Badge variant="outline" className="text-green-600 border-green-600">
+          <Badge className="text-green-600 border-green-600">
             <CheckCircle className="h-3 w-3 mr-1" />
             Live Data
           </Badge>

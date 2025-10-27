@@ -12,14 +12,14 @@ export const getStripeInstance = (): Stripe => {
     if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
       console.warn('⚠️ Using mock Stripe instance during build phase')
       stripeInstance = new Stripe('sk_test_mock_key_for_build', {
-        apiVersion: '2024-12-18.acacia',
+        apiVersion: '2025-09-30.clover',
         typescript: true,
       })
     } else if (!secretKey) {
       throw new Error('STRIPE_SECRET_KEY environment variable is required')
     } else {
       stripeInstance = new Stripe(secretKey, {
-        apiVersion: '2024-12-18.acacia',
+        apiVersion: '2025-09-30.clover',
         typescript: true,
       })
     }

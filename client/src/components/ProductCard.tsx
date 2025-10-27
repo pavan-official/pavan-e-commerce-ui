@@ -1,9 +1,9 @@
 "use client";
 
+import { useAuth } from "@/contexts/AuthContext";
 import { useCartStore } from "@/stores/cartStore";
 import { ProductType } from "@/types";
 import { ShoppingCart } from "lucide-react";
-import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -16,7 +16,7 @@ const ProductCard = ({ product }: { product: ProductType }) => {
     color: product.colors?.[0] || 'default',
   });
 
-  const { _data: session } = useSession();
+  const { user, loading: authLoading } = useAuth();
   const _router = useRouter();
   const { addToCart } = useCartStore();
 
@@ -34,8 +34,15 @@ const ProductCard = ({ product }: { product: ProductType }) => {
   };
 
   const handleAddToCart = async () => {
-    if (!session) {
-      _router.push('/auth/signin');
+    // Handle authentication states intelligently
+    if (authLoading) {
+      toast.info("Please wait, verifying authentication...");
+      return;
+    }
+
+    if (!user) {
+      toast.info("Please sign in to add items to your cart");
+      _router.push('/auth/custom-signin/');
       return;
     }
 
@@ -43,7 +50,7 @@ const ProductCard = ({ product }: { product: ProductType }) => {
       await addToCart(product.id.toString(), undefined, 1);
       toast.success("Product added to cart");
     } catch (_error) {
-      toast._error("Failed to add product to cart");
+      toast.error("Failed to add product to cart");
     }
   };
 

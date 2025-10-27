@@ -1,6 +1,5 @@
-import { authOptions } from '@/lib/auth'
+import { getServerUser } from '@/lib/custom-auth'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -12,9 +11,9 @@ const bulkUpdateSchema = z.object({
 // PUT /api/notifications/bulk - Bulk operations on notifications
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getServerUser(request)
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
@@ -37,7 +36,7 @@ export async function PUT(request: NextRequest) {
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Invalid bulk operation data',
-            details: validation.error.errors,
+            details: validation.error.issues,
           },
         },
         { status: 400 }
@@ -48,7 +47,7 @@ export async function PUT(request: NextRequest) {
 
     let result
     const whereClause = {
-      userId: session.user.id,
+      userId: user.id,
       ...(notificationIds && { id: { in: notificationIds } }),
     }
 

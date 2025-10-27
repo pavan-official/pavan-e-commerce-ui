@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# 🚀 **Industry-Standard Deployment Script**
-# Complete deployment automation with Kustomize
-# Interview Story: "This is our automated deployment system that handles everything"
+# 🚀 **Kubernetes Deployment Script**
+# Production-ready deployment script for e-commerce application
+# Interview Story: "This script deploys our entire e-commerce platform to production"
 
-set -e
+set -e  # Exit on any error
 
 # Colors for output
 RED='\033[0;31m'
@@ -14,16 +14,14 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-ENVIRONMENT="${1:-dev}"
-IMAGE_TAG="${2:-latest}"
-NAMESPACE="ecommerce-${ENVIRONMENT}"
+NAMESPACE=${KUBERNETES_NAMESPACE:-ecommerce-production}
+ENVIRONMENT=${ENVIRONMENT:-production}
+IMAGE_TAG=${IMAGE_TAG:-latest}
 
-echo -e "${BLUE}🚀 Starting ${ENVIRONMENT} Deployment${NC}"
-echo -e "${BLUE}================================${NC}"
-echo -e "Environment: ${ENVIRONMENT}"
-echo -e "Namespace: ${NAMESPACE}"
-echo -e "Image Tag: ${IMAGE_TAG}"
-echo ""
+echo -e "${BLUE}🚀 Starting Kubernetes Deployment${NC}"
+echo -e "${BLUE}Environment: ${ENVIRONMENT}${NC}"
+echo -e "${BLUE}Namespace: ${NAMESPACE}${NC}"
+echo -e "${BLUE}Image Tag: ${IMAGE_TAG}${NC}"
 
 # Function to check if kubectl is available
 check_kubectl() {
@@ -34,135 +32,148 @@ check_kubectl() {
     echo -e "${GREEN}✅ kubectl is available${NC}"
 }
 
-# Function to check if kustomize is available
-check_kustomize() {
-    if ! command -v kustomize &> /dev/null; then
-        echo -e "${YELLOW}⚠️ kustomize not found, installing...${NC}"
-        # Install kustomize
-        curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
-        sudo mv kustomize /usr/local/bin/
+# Function to check if namespace exists
+check_namespace() {
+    if kubectl get namespace $NAMESPACE &> /dev/null; then
+        echo -e "${GREEN}✅ Namespace $NAMESPACE exists${NC}"
+    else
+        echo -e "${YELLOW}⚠️  Creating namespace $NAMESPACE${NC}"
+        kubectl create namespace $NAMESPACE
     fi
-    echo -e "${GREEN}✅ kustomize is available${NC}"
 }
 
-# Function to check if cluster is accessible
-check_cluster() {
-    if ! kubectl cluster-info &> /dev/null; then
-        echo -e "${RED}❌ Cannot connect to Kubernetes cluster${NC}"
-        echo -e "${YELLOW}💡 Make sure your kubeconfig is set correctly${NC}"
-        exit 1
+# Function to deploy secrets
+deploy_secrets() {
+    echo -e "${BLUE}🔐 Deploying secrets...${NC}"
+    
+    # Create secrets if they don't exist
+    if ! kubectl get secret ecommerce-secrets -n $NAMESPACE &> /dev/null; then
+        echo -e "${YELLOW}⚠️  Creating secrets...${NC}"
+        kubectl apply -f ../base/secrets.yaml -n $NAMESPACE
+    else
+        echo -e "${GREEN}✅ Secrets already exist${NC}"
     fi
-    echo -e "${GREEN}✅ Kubernetes cluster is accessible${NC}"
 }
 
-# Function to validate environment
-validate_environment() {
-    case $ENVIRONMENT in
-        dev|staging|prod)
-            echo -e "${GREEN}✅ Valid environment: ${ENVIRONMENT}${NC}"
-            ;;
-        *)
-            echo -e "${RED}❌ Invalid environment: ${ENVIRONMENT}${NC}"
-            echo -e "${YELLOW}💡 Valid environments: dev, staging, prod${NC}"
-            exit 1
-            ;;
-    esac
+# Function to deploy database
+deploy_database() {
+    echo -e "${BLUE}🗄️  Deploying database...${NC}"
+    
+    # Create temporary files with correct namespace
+    sed "s/namespace: ecommerce/namespace: $NAMESPACE/g" ../base/postgres.yaml | kubectl apply -f - -n $NAMESPACE
+    
+    echo -e "${BLUE}🔴 Deploying Redis...${NC}"
+    sed "s/namespace: ecommerce/namespace: $NAMESPACE/g" ../base/redis.yaml | kubectl apply -f - -n $NAMESPACE
+    
+    # Wait for database to be ready
+    echo -e "${YELLOW}⏳ Waiting for database to be ready...${NC}"
+    kubectl wait --for=condition=ready pod -l component=database -n $NAMESPACE --timeout=300s
+    kubectl wait --for=condition=ready pod -l component=cache -n $NAMESPACE --timeout=300s
 }
 
-# Function to update image tag
-update_image_tag() {
-    echo -e "${BLUE}🔄 Updating image tag to ${IMAGE_TAG}...${NC}"
+# Function to deploy application
+deploy_application() {
+    echo -e "${BLUE}🚀 Deploying application...${NC}"
     
-    # Update image tag in kustomization.yaml
-    sed -i.bak "s/newTag: .*/newTag: ${IMAGE_TAG}/" overlays/${ENVIRONMENT}/kustomization.yaml
+    # Update image tag in deployment
+    if [ "$IMAGE_TAG" != "latest" ]; then
+        echo -e "${BLUE}📝 Updating image tag to $IMAGE_TAG${NC}"
+        kubectl set image deployment/ecommerce-frontend \
+            ecommerce-app=pavandoc1990/ecommerce-production-client:$IMAGE_TAG \
+            -n $NAMESPACE
+    fi
     
-    echo -e "${GREEN}✅ Image tag updated${NC}"
+    # Apply deployment
+    sed "s/namespace: ecommerce/namespace: $NAMESPACE/g" ../base/deployment.yaml | kubectl apply -f - -n $NAMESPACE
+    sed "s/namespace: ecommerce/namespace: $NAMESPACE/g" ../base/service.yaml | kubectl apply -f - -n $NAMESPACE
+    sed "s/namespace: ecommerce/namespace: $NAMESPACE/g" ../base/ingress.yaml | kubectl apply -f - -n $NAMESPACE
 }
 
-# Function to deploy with kustomize
-deploy_with_kustomize() {
-    echo -e "${BLUE}🚀 Deploying with Kustomize...${NC}"
+# Function to deploy monitoring stack
+deploy_monitoring() {
+    echo -e "${BLUE}📊 Deploying monitoring stack...${NC}"
     
-    # Deploy using kustomize
-    kubectl apply -k overlays/${ENVIRONMENT}
-    
-    echo -e "${GREEN}✅ Deployment completed${NC}"
+    # Check if monitoring directory exists
+    if [ -d "../monitoring" ]; then
+        echo -e "${BLUE}📁 Found monitoring directory, deploying stack...${NC}"
+        cd ../monitoring
+        ./deploy-monitoring.sh
+        cd ../scripts
+        echo -e "${GREEN}✅ Monitoring stack deployed${NC}"
+    else
+        echo -e "${YELLOW}⚠️  Monitoring directory not found, skipping monitoring deployment${NC}"
+    fi
 }
 
 # Function to wait for deployment
 wait_for_deployment() {
-    echo -e "${BLUE}⏳ Waiting for deployment to be ready...${NC}"
-    
-    kubectl wait --for=condition=ready pod -l app=ecommerce -n ${NAMESPACE} --timeout=300s
-    
-    echo -e "${GREEN}✅ Deployment is ready${NC}"
+    echo -e "${YELLOW}⏳ Waiting for deployment to be ready...${NC}"
+    kubectl rollout status deployment/ecommerce-frontend -n $NAMESPACE --timeout=300s
 }
 
-# Function to verify deployment
-verify_deployment() {
-    echo -e "${BLUE}🔍 Verifying deployment...${NC}"
+# Function to run health checks
+run_health_checks() {
+    echo -e "${BLUE}🏥 Running health checks...${NC}"
     
-    echo -e "${BLUE}📊 Pod Status:${NC}"
-    kubectl get pods -n ${NAMESPACE}
+    # Get pod name
+    POD_NAME=$(kubectl get pods -l app=ecommerce,component=frontend -n $NAMESPACE -o jsonpath='{.items[0].metadata.name}')
     
-    echo -e "${BLUE}🌐 Service Status:${NC}"
-    kubectl get services -n ${NAMESPACE}
-    
-    echo -e "${BLUE}🔗 Ingress Status:${NC}"
-    kubectl get ingress -n ${NAMESPACE}
-    
-    echo -e "${GREEN}✅ Deployment verification completed${NC}"
-}
-
-# Function to show access information
-show_access_info() {
-    echo -e "${BLUE}🌐 Access Information:${NC}"
-    echo -e "${BLUE}====================${NC}"
-    
-    # Get service information
-    SERVICE_IP=$(kubectl get service ecommerce-frontend-service -n ${NAMESPACE} -o jsonpath='{.spec.clusterIP}' 2>/dev/null || echo "N/A")
-    SERVICE_PORT=$(kubectl get service ecommerce-frontend-service -n ${NAMESPACE} -o jsonpath='{.spec.ports[0].port}' 2>/dev/null || echo "N/A")
-    
-    echo -e "${GREEN}✅ Application is running at:${NC}"
-    echo -e "   Service IP: ${SERVICE_IP}:${SERVICE_PORT}"
-    echo -e "   Internal URL: http://${SERVICE_IP}:${SERVICE_PORT}"
-    
-    # Check if ingress is available
-    INGRESS_IP=$(kubectl get ingress ecommerce-ingress -n ${NAMESPACE} -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
-    if [ -n "$INGRESS_IP" ]; then
-        echo -e "   External URL: http://${INGRESS_IP}"
-    else
-        echo -e "   ${YELLOW}⚠️ Ingress not ready yet${NC}"
+    if [ -z "$POD_NAME" ]; then
+        echo -e "${RED}❌ No frontend pod found${NC}"
+        exit 1
     fi
     
-    echo ""
-    echo -e "${BLUE}🔧 Useful Commands:${NC}"
-    echo -e "   View logs: kubectl logs -f deployment/ecommerce-frontend -n ${NAMESPACE}"
-    echo -e "   Port forward: kubectl port-forward service/ecommerce-frontend-service 8080:80 -n ${NAMESPACE}"
-    echo -e "   Scale app: kubectl scale deployment ecommerce-frontend --replicas=5 -n ${NAMESPACE}"
-    echo -e "   Rollback: kubectl rollout undo deployment/ecommerce-frontend -n ${NAMESPACE}"
+    # Port forward and test
+    echo -e "${BLUE}🔗 Setting up port forward...${NC}"
+    kubectl port-forward pod/$POD_NAME 8080:3000 -n $NAMESPACE &
+    PORT_FORWARD_PID=$!
+    
+    # Wait for port forward to be ready
+    sleep 10
+    
+    # Test health endpoint
+    echo -e "${BLUE}🏥 Testing health endpoint...${NC}"
+    if curl -f http://localhost:8080/api/health; then
+        echo -e "${GREEN}✅ Health check passed${NC}"
+    else
+        echo -e "${RED}❌ Health check failed${NC}"
+        kill $PORT_FORWARD_PID 2>/dev/null || true
+        exit 1
+    fi
+    
+    # Clean up port forward
+    kill $PORT_FORWARD_PID 2>/dev/null || true
 }
 
-# Main deployment function
+# Function to show deployment status
+show_status() {
+    echo -e "${BLUE}📊 Deployment Status:${NC}"
+    kubectl get all -n $NAMESPACE
+    
+    echo -e "\n${BLUE}📋 Pod Status:${NC}"
+    kubectl get pods -n $NAMESPACE
+    
+    echo -e "\n${BLUE}🔗 Services:${NC}"
+    kubectl get services -n $NAMESPACE
+}
+
+# Main deployment flow
 main() {
-    echo -e "${BLUE}🚀 ${ENVIRONMENT} Deployment Started${NC}"
-    echo -e "${BLUE}===============================${NC}"
+    echo -e "${BLUE}🚀 Starting E-commerce Kubernetes Deployment${NC}"
     
-    # Pre-deployment checks
     check_kubectl
-    check_kustomize
-    check_cluster
-    validate_environment
-    
-    # Deployment steps
-    update_image_tag
-    deploy_with_kustomize
+    check_namespace
+    deploy_secrets
+    deploy_database
+    deploy_application
+    deploy_monitoring
     wait_for_deployment
-    verify_deployment
-    show_access_info
+    run_health_checks
+    show_status
     
-    echo -e "${GREEN}🎉 ${ENVIRONMENT} Deployment Completed Successfully!${NC}"
-    echo -e "${GREEN}============================================${NC}"
+    echo -e "${GREEN}🎉 Deployment completed successfully!${NC}"
+    echo -e "${BLUE}🌐 Application should be available at: http://localhost:3000${NC}"
+    echo -e "${BLUE}📊 Monitoring stack deployed in 'monitoring' namespace${NC}"
 }
 
 # Run main function

@@ -1,8 +1,8 @@
 'use client'
 
+import { useCustomAuth } from '@/hooks/useCustomAuth'
 import { useReviewStore } from '@/stores/reviewStore'
 import { Star } from 'lucide-react'
-import { useSession } from 'next-auth/react'
 import { useState } from 'react'
 
 interface ReviewFormProps {
@@ -20,7 +20,7 @@ export default function ReviewForm({
   onCancel,
   className = '',
 }: ReviewFormProps) {
-  const { data: session } = useSession()
+  const { user } = useCustomAuth()
   const { createReview, isSubmitting, error } = useReviewStore()
   
   const [rating, setRating] = useState(0)
@@ -32,7 +32,7 @@ export default function ReviewForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!session) {
+    if (!user) {
       alert('Please sign in to write a review')
       return
     }
@@ -70,7 +70,7 @@ export default function ReviewForm({
     onCancel?.()
   }
 
-  if (!session) {
+  if (!user) {
     return (
       <div className={`bg-gray-50 rounded-lg p-6 text-center ${className}`}>
         <h3 className="text-lg font-semibold text-gray-900 mb-2">

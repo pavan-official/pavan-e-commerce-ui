@@ -18,7 +18,7 @@ export class RateLimiter {
       keyGenerator: (req) => {
         // Default: use IP address
         const forwarded = req.headers.get('x-forwarded-for')
-        const ip = forwarded ? forwarded.split(',')[0] : req.ip || 'unknown'
+        const ip = forwarded ? forwarded.split(',')[0] : 'unknown'
         return ip
       },
       skipSuccessfulRequests: false,
@@ -127,7 +127,7 @@ export const rateLimiters = {
     maxRequests: 5, // 5 login attempts per 15 minutes
     keyGenerator: (req) => {
       const forwarded = req.headers.get('x-forwarded-for')
-      const ip = forwarded ? forwarded.split(',')[0] : req.ip || 'unknown'
+      const ip = forwarded ? forwarded.split(',')[0] : 'unknown'
       return `auth:${ip}`
     },
     message: 'Too many authentication attempts. Please try again later.',
@@ -160,7 +160,7 @@ export const rateLimiters = {
     maxRequests: 3, // 3 password reset attempts per hour
     keyGenerator: (req) => {
       const forwarded = req.headers.get('x-forwarded-for')
-      const ip = forwarded ? forwarded.split(',')[0] : req.ip || 'unknown'
+      const ip = forwarded ? forwarded.split(',')[0] : 'unknown'
       return `password-reset:${ip}`
     },
     message: 'Password reset rate limit exceeded. Please try again later.',

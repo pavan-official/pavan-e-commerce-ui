@@ -14,10 +14,10 @@ const updateVariantSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; variantId: string } }
+  { params }: { params: Promise<{ id: string; variantId: string }> }
 ) {
   try {
-    const { id, variantId } = params
+    const { id, variantId } = await params
 
     // Check if product exists
     const product = await prisma.product.findUnique({
@@ -79,10 +79,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; variantId: string } }
+  { params }: { params: Promise<{ id: string; variantId: string }> }
 ) {
   try {
-    const { id, variantId } = params
+    const { id, variantId } = await params
     const body = await request.json()
 
     // Validate input
@@ -94,7 +94,7 @@ export async function PUT(
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Invalid input',
-            details: validation.error.errors,
+            details: validation.error.issues,
           },
         },
         { status: 400 }
@@ -193,10 +193,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; variantId: string } }
+  { params }: { params: Promise<{ id: string; variantId: string }> }
 ) {
   try {
-    const { id, variantId } = params
+    const { id, variantId } = await params
 
     // Check if product exists
     const product = await prisma.product.findUnique({

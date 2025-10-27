@@ -119,12 +119,12 @@ export const useReviewStore = create<ReviewState & ReviewActions>((set, get) => 
     try {
       const params = new URLSearchParams()
       Object.entries(searchFilters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
+        if (value !== undefined && value !== null && String(value) !== '') {
           params.append(key, String(value))
         }
       })
       
-      const response = await fetch(`/api/products/${productId}/reviews?${params.toString()}`)
+      const response = await fetch(`/api/products/${productId}/reviews/?${params.toString()}`)
       const data = await response.json()
       
       if (data.success) {
@@ -153,7 +153,7 @@ export const useReviewStore = create<ReviewState & ReviewActions>((set, get) => 
     set({ isLoading: true, error: null })
     
     try {
-      const response = await fetch(`/api/products/${productId}/reviews/${reviewId}`)
+      const response = await fetch(`/api/products/${productId}/reviews/${reviewId}/`)
       const data = await response.json()
       
       if (data.success) {

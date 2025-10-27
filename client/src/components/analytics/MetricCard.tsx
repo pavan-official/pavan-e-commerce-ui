@@ -78,7 +78,7 @@ const MetricCard = ({
         <div className="text-2xl font-bold">{formatValue(value)}</div>
         {change !== undefined && (
           <div className="flex items-center space-x-1 mt-1">
-            <Badge variant="secondary" className={getChangeColor()}>
+            <Badge className={getChangeColor()}>
               <div className="flex items-center space-x-1">
                 {getChangeIcon()}
                 <span className="text-xs">

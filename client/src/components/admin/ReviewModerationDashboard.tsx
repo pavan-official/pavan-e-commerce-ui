@@ -1,7 +1,7 @@
 'use client'
 
+import { useCustomAuth } from '@/hooks/useCustomAuth'
 import { CheckCircle, Clock, Eye, Trash2, XCircle } from 'lucide-react'
-import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import RatingDisplay from '../RatingDisplay'
@@ -43,7 +43,7 @@ interface ReviewModerationDashboardProps {
 export default function ReviewModerationDashboard({ 
   className = '' 
 }: ReviewModerationDashboardProps) {
-  const { data: session } = useSession()
+  const { user } = useCustomAuth()
   const [reviews, setReviews] = useState<Review[]>([])
   const [stats, setStats] = useState<ReviewStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -166,7 +166,7 @@ export default function ReviewModerationDashboard({
     }
   }
 
-  if (!session) {
+  if (!user) {
     return (
       <div className={`${className}`}>
         <div className="text-center py-12">

@@ -24,12 +24,12 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     })
   } catch (error) {
-    logger.error('Readiness check endpoint failed', { error: error.message })
+    logger.error('Readiness check endpoint failed', { error: error instanceof Error ? error.message : 'Unknown error' })
     
     return NextResponse.json(
       {
         ready: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 503 }
     )

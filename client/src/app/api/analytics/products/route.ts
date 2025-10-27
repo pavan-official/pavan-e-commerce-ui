@@ -1,6 +1,5 @@
-import { authOptions } from '@/lib/auth'
+import { getServerUser } from '@/lib/auth-utils'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -14,9 +13,9 @@ const productAnalyticsSchema = z.object({
 // GET /api/analytics/products - Get product analytics data
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getServerUser(request)
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
@@ -30,12 +29,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user is admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true },
-    })
-
-    if (user?.role !== 'ADMIN') {
+    if (user.role !== 'ADMIN') {
       return NextResponse.json(
         {
           success: false,
@@ -60,7 +54,7 @@ export async function GET(request: NextRequest) {
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Invalid analytics parameters',
-            details: validation.error.errors,
+            details: validation.error.issues,
           },
         },
         { status: 400 }
@@ -97,7 +91,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build where clause for orders
-    const orderWhere: ApiResponse = {
+    const orderWhere: any = {
       createdAt: {
         gte: dateFrom,
         lte: dateTo,
@@ -180,14 +174,14 @@ export async function GET(request: NextRequest) {
           totalRevenue: 0,
           averageRating: 0,
           reviewCount: item.product._count.reviews,
-          stockLevel: item.product.stock,
+          stockLevel: item.product.quantity,
           isActive: item.product.isActive,
         })
       }
 
       const metrics = productMetrics.get(key)!
       metrics.totalSold += item.quantity
-      metrics.totalRevenue += item.price * item.quantity
+      metrics.totalRevenue += Number(item.price) * item.quantity
     })
 
     // Get average ratings
@@ -243,12 +237,12 @@ export async function GET(request: NextRequest) {
 
     // Get low stock products
     const lowStock = allProducts
-      .filter(p => p.stock <= 10 && p.isActive)
+      .filter(p => p.quantity <= 10 && p.isActive)
       .map(p => ({
         productId: p.id,
         name: p.name,
         category: p.category.name,
-        stock: p.stock,
+        stock: p.quantity,
         isActive: p.isActive,
       }))
 
@@ -284,9 +278,9 @@ export async function GET(request: NextRequest) {
 
     // Get inventory status
     const inventoryStatus = {
-      inStock: allProducts.filter(p => p.stock > 0 && p.isActive).length,
-      lowStock: allProducts.filter(p => p.stock <= 10 && p.stock > 0 && p.isActive).length,
-      outOfStock: allProducts.filter(p => p.stock === 0 && p.isActive).length,
+      inStock: allProducts.filter(p => p.quantity > 0 && p.isActive).length,
+      lowStock: allProducts.filter(p => p.quantity <= 10 && p.quantity > 0 && p.isActive).length,
+      outOfStock: allProducts.filter(p => p.quantity === 0 && p.isActive).length,
       inactive: allProducts.filter(p => !p.isActive).length,
     }
 
