@@ -216,6 +216,26 @@ if [ -d "$BASE_DIR" ]; then
 fi
 
 echo ""
+echo -e "${BLUE}8️⃣  Checking Monitoring Stack Configuration${NC}"
+echo "----------------------------------------"
+
+MONITORING_SCRIPT="../monitoring/deploy-monitoring.sh"
+if [ -f "$MONITORING_SCRIPT" ]; then
+    # Check if monitoring script correctly sets namespace to 'monitoring'
+    if grep -q "^NAMESPACE=monitoring$" "$MONITORING_SCRIPT"; then
+        report_success "Monitoring script uses correct namespace: monitoring"
+    elif grep -q "NAMESPACE=\${KUBERNETES_NAMESPACE:-monitoring}" "$MONITORING_SCRIPT"; then
+        report_error "Monitoring script inherits KUBERNETES_NAMESPACE (should be hardcoded to 'monitoring')"
+        echo "  This will cause namespace conflicts when deploying monitoring stack"
+        echo "  Fix: Change to NAMESPACE=monitoring in $MONITORING_SCRIPT"
+    else
+        report_warning "Could not verify monitoring namespace configuration"
+    fi
+else
+    report_warning "Monitoring deployment script not found"
+fi
+
+echo ""
 echo -e "${BLUE}=================================================${NC}"
 echo -e "${BLUE}📊 Validation Summary${NC}"
 echo -e "${BLUE}=================================================${NC}"

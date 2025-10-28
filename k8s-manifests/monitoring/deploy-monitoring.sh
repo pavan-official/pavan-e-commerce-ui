@@ -26,7 +26,9 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-NAMESPACE=${KUBERNETES_NAMESPACE:-monitoring}
+# IMPORTANT: Monitoring stack ALWAYS deploys to 'monitoring' namespace
+# regardless of the application namespace
+NAMESPACE=monitoring
 TIMEOUT=${DEPLOYMENT_TIMEOUT:-300}
 
 echo -e "${BLUE}🚀 Starting Monitoring Stack Deployment${NC}"
