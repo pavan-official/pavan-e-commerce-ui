@@ -118,7 +118,7 @@ deploy_monitoring() {
 # Function to wait for deployment
 wait_for_deployment() {
     echo -e "${YELLOW}⏳ Waiting for deployment to be ready...${NC}"
-    kubectl rollout status deployment/ecommerce-frontend -n $NAMESPACE --timeout=300s
+    kubectl rollout status deployment/ecommerce-frontend-deployment -n $NAMESPACE --timeout=300s
 }
 
 # Function to run health checks
