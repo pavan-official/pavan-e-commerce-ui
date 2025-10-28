@@ -62,7 +62,7 @@ spec:
             memory: 32Mi
       containers:
       - name: ecommerce-app
-        image: ecommerce-client:latest
+        image: ecommerce-frontend:latest
         imagePullPolicy: Never
         ports:
         - containerPort: 3000
