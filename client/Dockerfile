@@ -147,8 +147,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 
-# Copy startup script
-COPY --chown=nextjs:nodejs start.sh ./start.sh
+# Copy startup script from builder stage
+# Why: start.sh is in builder stage from COPY . . command
+COPY --from=builder --chown=nextjs:nodejs /app/start.sh ./start.sh
 RUN chmod +x start.sh
 
 # Switch to non-root user
