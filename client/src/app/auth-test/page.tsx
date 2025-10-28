@@ -3,6 +3,9 @@
 import { signIn, signOut, useSession } from 'next-auth/react'
 import { useState } from 'react'
 
+// Force dynamic rendering for debug pages
+export const dynamic = 'force-dynamic'
+
 export default function AuthTestPage() {
   const { data: session, status } = useSession()
   const [email, setEmail] = useState('admin@example.com')

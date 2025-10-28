@@ -3,6 +3,9 @@
 import { useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
 
+// Force dynamic rendering for debug pages
+export const dynamic = 'force-dynamic'
+
 export default function AuthDebug() {
   const { data: session, status } = useSession()
   const [apiTest, setApiTest] = useState<any>(null)
