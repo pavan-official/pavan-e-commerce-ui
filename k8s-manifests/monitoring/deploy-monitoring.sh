@@ -96,6 +96,20 @@ deploy_grafana() {
     echo -e "${GREEN}✅ Grafana deployed successfully${NC}"
 }
 
+# Function to deploy Jaeger
+deploy_jaeger() {
+    echo -e "${BLUE}🔍 Deploying Jaeger...${NC}"
+    
+    # Apply Jaeger manifests
+    kubectl apply -f jaeger.yaml -n $NAMESPACE
+    
+    # Wait for Jaeger to be ready
+    echo -e "${YELLOW}⏳ Waiting for Jaeger to be ready...${NC}"
+    kubectl wait --for=condition=available --timeout=${TIMEOUT}s deployment/jaeger -n $NAMESPACE
+    
+    echo -e "${GREEN}✅ Jaeger deployed successfully${NC}"
+}
+
 # Function to deploy DataDog
 deploy_datadog() {
     echo -e "${BLUE}🐕 Deploying DataDog Agent...${NC}"

@@ -231,6 +231,22 @@ if [ -f "$MONITORING_SCRIPT" ]; then
     else
         report_warning "Could not verify monitoring namespace configuration"
     fi
+    
+    # Check if all called functions are defined
+    MISSING_FUNCS=0
+    for func in deploy_prometheus deploy_alertmanager deploy_grafana deploy_jaeger deploy_datadog; do
+        if grep -q "^deploy_${func#deploy_}()" "$MONITORING_SCRIPT" 2>/dev/null || \
+           grep -q "^${func}()" "$MONITORING_SCRIPT" 2>/dev/null; then
+            : # Function exists, do nothing
+        else
+            report_error "Function $func is called but not defined in monitoring script"
+            MISSING_FUNCS=1
+        fi
+    done
+    
+    if [ $MISSING_FUNCS -eq 0 ]; then
+        report_success "All monitoring deployment functions are defined"
+    fi
 else
     report_warning "Monitoring deployment script not found"
 fi
