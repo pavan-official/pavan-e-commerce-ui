@@ -29,30 +29,30 @@ jobs:
             - name: Validate Docker build requirements
               run: |
                   echo "🔍 Validating Docker build requirements..."
-                  
+
                   # Check if required files exist
                   if [ ! -f "client/package.json" ]; then
                       echo "❌ ERROR: client/package.json not found"
                       exit 1
                   fi
-                  
+
                   if [ ! -f "client/pnpm-lock.yaml" ]; then
                       echo "❌ ERROR: client/pnpm-lock.yaml not found"
                       exit 1
                   fi
-                  
+
                   if [ ! -f "client/start.sh" ]; then
                       echo "❌ ERROR: client/start.sh not found"
                       exit 1
                   fi
-                  
+
                   if [ ! -f "client/Dockerfile" ]; then
                       echo "❌ ERROR: client/Dockerfile not found"
                       exit 1
                   fi
-                  
+
                   echo "✅ All Docker build requirements validated"
-                  
+
                   # Check package manager consistency
                   PACKAGE_MANAGER=$(grep -o '"packageManager": "[^"]*"' client/package.json | cut -d'"' -f4)
                   if [[ "$PACKAGE_MANAGER" == "pnpm"* ]]; then
@@ -196,7 +196,7 @@ jobs:
                   version: "v1.28.0"
 
             - name: Set up Minikube
-              uses: medyagh/setup-minikube@v1
+              uses: medyagh/setup-minikube@latest
               with:
                   minikube-version: 1.33.1
                   kubernetes-version: v1.28.0
@@ -281,7 +281,7 @@ jobs:
               uses: azure/setup-kubectl@v3
 
             - name: Set up Minikube
-              uses: medyagh/setup-minikube@v1
+              uses: medyagh/setup-minikube@latest
 
             - name: Start Minikube
               run: |
