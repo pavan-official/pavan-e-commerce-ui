@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 
 // Force dynamic rendering for admin pages
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 interface Product {
   id: string
@@ -28,7 +29,8 @@ interface Product {
 }
 
 export default function ProductsPage() {
-  const { data: session, status } = useSession()
+  const sessionResult = useSession()
+  const { data: session, status } = sessionResult || { data: null, status: 'loading' }
   const router = useRouter()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)

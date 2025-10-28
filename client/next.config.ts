@@ -41,6 +41,11 @@ const nextConfig: NextConfig = {
     return [];
   },
 
+  // Force dynamic rendering globally
+  async generateStaticParams() {
+    return [];
+  },
+
   // Ensure proper path resolution
   webpack: (config, { isServer }) => {
     if (!isServer) {
