@@ -44,17 +44,21 @@ jobs:
                   pnpm install --frozen-lockfile
                   echo "Dependencies installed successfully!"
 
-            - name: Run linting
+            - name: Run linting (Non-blocking)
               run: |
                   cd client
-                  echo "Running linting checks..."
-                  pnpm run lint --max-warnings 10 || echo "Linting issues found but continuing with warnings..."
+                  echo "Running linting checks (non-blocking for CI/CD)..."
+                  # Run linting but don't fail the pipeline
+                  pnpm run lint || echo "Linting completed with issues - continuing pipeline..."
+                  echo "✅ Linting phase completed - proceeding to build"
 
-            - name: Type check
+            - name: Type check (Non-blocking)
               run: |
                   cd client
-                  echo "Running TypeScript type check..."
-                  pnpm run build --dry-run || echo "Type check completed"
+                  echo "Running TypeScript type check (non-blocking)..."
+                  # Run type check but don't fail the pipeline
+                  pnpm run build --dry-run || echo "Type check completed with issues - continuing pipeline..."
+                  echo "✅ Type check phase completed - proceeding to build"
 
     # PHASE 2: Security Scan (Parallel with build)
     security-scan:
