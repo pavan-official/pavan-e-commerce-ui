@@ -1,257 +1,258 @@
 name: KIND CI/CD Pipeline (Ultra-Fast)
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-  workflow_dispatch:
+    # Disabled automatic triggers - use workflow_dispatch for manual testing
+    # push:
+    #     branches: [main]
+    # pull_request:
+    #     branches: [main]
+    workflow_dispatch:
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: pavan-official/pavan-e-commerce-ui
-  KUBERNETES_NAMESPACE: ecommerce-production
-  KIND_CLUSTER_NAME: ecommerce-cluster
+    REGISTRY: ghcr.io
+    IMAGE_NAME: pavan-official/pavan-e-commerce-ui
+    KUBERNETES_NAMESPACE: ecommerce-production
+    KIND_CLUSTER_NAME: ecommerce-cluster
 
 jobs:
-  # PHASE 1: Quality Gates (Fast feedback)
-  quality-checks:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    # PHASE 1: Quality Gates (Fast feedback)
+    quality-checks:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
 
-      - name: Validate Docker build requirements
-        run: |
-          echo "🔍 Validating Docker build requirements..."
-          
-          # Check if required files exist
-          if [ ! -f "client/package.json" ]; then
-            echo "❌ ERROR: client/package.json not found"
-            exit 1
-          fi
-          
-          if [ ! -f "client/pnpm-lock.yaml" ]; then
-            echo "❌ ERROR: client/pnpm-lock.yaml not found"
-            exit 1
-          fi
-          
-          if [ ! -f "client/start.sh" ]; then
-            echo "❌ ERROR: client/start.sh not found"
-            exit 1
-          fi
-          
-          if [ ! -f "client/Dockerfile" ]; then
-            echo "❌ ERROR: client/Dockerfile not found"
-            exit 1
-          fi
-          
-          echo "✅ All Docker build requirements validated"
+            - name: Validate Docker build requirements
+              run: |
+                  echo "🔍 Validating Docker build requirements..."
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 9
+                  # Check if required files exist
+                  if [ ! -f "client/package.json" ]; then
+                    echo "❌ ERROR: client/package.json not found"
+                    exit 1
+                  fi
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
+                  if [ ! -f "client/pnpm-lock.yaml" ]; then
+                    echo "❌ ERROR: client/pnpm-lock.yaml not found"
+                    exit 1
+                  fi
 
-      - name: Install dependencies
-        run: |
-          cd client
-          pnpm install --frozen-lockfile
+                  if [ ! -f "client/start.sh" ]; then
+                    echo "❌ ERROR: client/start.sh not found"
+                    exit 1
+                  fi
 
-      - name: Run linting (non-blocking)
-        run: |
-          cd client
-          pnpm run lint > /dev/null 2>&1 || echo "Linting completed with issues - continuing pipeline..."
+                  if [ ! -f "client/Dockerfile" ]; then
+                    echo "❌ ERROR: client/Dockerfile not found"
+                    exit 1
+                  fi
 
-      - name: Run TypeScript type check (non-blocking)
-        run: |
-          cd client
-          pnpm exec tsc --noEmit --skipLibCheck || echo "Type check completed with issues - continuing pipeline..."
+                  echo "✅ All Docker build requirements validated"
 
-  # PHASE 2: Security Scan
-  security-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+            - name: Install pnpm
+              uses: pnpm/action-setup@v2
+              with:
+                  version: 9
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "18"
 
-      - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'trivy-results.sarif'
+            - name: Install dependencies
+              run: |
+                  cd client
+                  pnpm install --frozen-lockfile
 
-  # PHASE 3: Build and Package (Ultra-Fast with KIND)
-  build-and-package:
-    needs: quality-checks
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+            - name: Run linting (non-blocking)
+              run: |
+                  cd client
+                  pnpm run lint > /dev/null 2>&1 || echo "Linting completed with issues - continuing pipeline..."
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+            - name: Run TypeScript type check (non-blocking)
+              run: |
+                  cd client
+                  pnpm exec tsc --noEmit --skipLibCheck || echo "Type check completed with issues - continuing pipeline..."
 
-      - name: Log in to Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+    # PHASE 2: Security Scan
+    security-scan:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=sha,prefix={{branch}}-
+            - name: Run Trivy vulnerability scanner
+              uses: aquasecurity/trivy-action@master
+              with:
+                  scan-type: "fs"
+                  scan-ref: "."
+                  format: "sarif"
+                  output: "trivy-results.sarif"
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./client
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            - name: Upload Trivy scan results
+              uses: github/codeql-action/upload-sarif@v3
+              with:
+                  sarif_file: "trivy-results.sarif"
 
-  # PHASE 4: Deploy to KIND (Ultra-Fast Kubernetes)
-  deploy-to-kind:
-    needs: [build-and-package, security-scan]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    # PHASE 3: Build and Package (Ultra-Fast with KIND)
+    build-and-package:
+        needs: quality-checks
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
 
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: "v1.28.0"
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
 
-      - name: Set up KIND
-        uses: helm/kind-action@v1.8.0
-        with:
-          cluster_name: ${{ env.KIND_CLUSTER_NAME }}
-          config: |
-            kind: Cluster
-            apiVersion: kind.x-k8s.io/v1alpha4
-            nodes:
-            - role: control-plane
-              kubeadmConfigPatches:
-              - |
-                kind: InitConfiguration
-                nodeRegistration:
-                  kubeletExtraArgs:
-                    node-labels: "ingress-ready=true"
-              extraPortMappings:
-              - containerPort: 80
-                hostPort: 80
-                protocol: TCP
-              - containerPort: 443
-                hostPort: 443
-                protocol: TCP
-              - containerPort: 3000
-                hostPort: 3000
-                protocol: TCP
+            - name: Log in to Container Registry
+              uses: docker/login-action@v3
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Load Docker image into KIND
-        run: |
-          echo "🚀 Loading Docker image into KIND cluster..."
-          kind load docker-image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main --name ${{ env.KIND_CLUSTER_NAME }}
-          echo "✅ Image loaded successfully"
+            - name: Extract metadata
+              id: meta
+              uses: docker/metadata-action@v5
+              with:
+                  images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+                  tags: |
+                      type=ref,event=branch
+                      type=sha,prefix={{branch}}-
 
-      - name: Deploy to KIND
-        run: |
-          # Create namespace
-          kubectl create namespace ${{ env.KUBERNETES_NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+            - name: Build and push Docker image
+              uses: docker/build-push-action@v5
+              with:
+                  context: ./client
+                  push: true
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
 
-          # Deploy application using our optimized script
-          cd k8s-manifests/scripts
-          chmod +x deploy.sh
-          ./deploy.sh production ${{ env.KIND_CLUSTER_NAME }}
+    # PHASE 4: Deploy to KIND (Ultra-Fast Kubernetes)
+    deploy-to-kind:
+        needs: [build-and-package, security-scan]
+        runs-on: ubuntu-latest
+        if: github.ref == 'refs/heads/main'
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
 
-      - name: Wait for deployment
-        run: |
-          echo "⏳ Waiting for deployment to be ready..."
-          kubectl wait --for=condition=available --timeout=300s deployment/ecommerce-frontend-deployment -n ${{ env.KUBERNETES_NAMESPACE }}
-          
-          echo "✅ Deployment ready!"
-          kubectl get pods -n ${{ env.KUBERNETES_NAMESPACE }}
+            - name: Set up kubectl
+              uses: azure/setup-kubectl@v3
+              with:
+                  version: "v1.28.0"
 
-      - name: Get application URLs
-        run: |
-          echo "🚀 Application deployed successfully!"
-          echo "📊 Frontend: http://localhost:3000"
-          echo "📋 Kubernetes Dashboard: kubectl proxy"
-          echo "🔍 Cluster Info:"
-          kubectl cluster-info
+            - name: Set up KIND
+              uses: helm/kind-action@v1.8.0
+              with:
+                  cluster_name: ${{ env.KIND_CLUSTER_NAME }}
+                  config: |
+                      kind: Cluster
+                      apiVersion: kind.x-k8s.io/v1alpha4
+                      nodes:
+                      - role: control-plane
+                        kubeadmConfigPatches:
+                        - |
+                          kind: InitConfiguration
+                          nodeRegistration:
+                            kubeletExtraArgs:
+                              node-labels: "ingress-ready=true"
+                        extraPortMappings:
+                        - containerPort: 80
+                          hostPort: 80
+                          protocol: TCP
+                        - containerPort: 443
+                          hostPort: 443
+                          protocol: TCP
+                        - containerPort: 3000
+                          hostPort: 3000
+                          protocol: TCP
 
-      - name: Run integration tests
-        run: |
-          # Wait for services to be ready
-          sleep 10
+            - name: Load Docker image into KIND
+              run: |
+                  echo "🚀 Loading Docker image into KIND cluster..."
+                  kind load docker-image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main --name ${{ env.KIND_CLUSTER_NAME }}
+                  echo "✅ Image loaded successfully"
 
-          # Test frontend
-          curl -f http://localhost:3000/api/health || exit 1
-          echo "✅ Integration tests passed"
+            - name: Deploy to KIND
+              run: |
+                  # Create namespace
+                  kubectl create namespace ${{ env.KUBERNETES_NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
 
-  # PHASE 5: Performance Testing (Ultra-Fast)
-  performance-test:
-    needs: deploy-to-kind
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+                  # Deploy application using our optimized script
+                  cd k8s-manifests/scripts
+                  chmod +x deploy.sh
+                  ./deploy.sh production ${{ env.KIND_CLUSTER_NAME }}
 
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v3
+            - name: Wait for deployment
+              run: |
+                  echo "⏳ Waiting for deployment to be ready..."
+                  kubectl wait --for=condition=available --timeout=300s deployment/ecommerce-frontend-deployment -n ${{ env.KUBERNETES_NAMESPACE }}
 
-      - name: Set up KIND
-        uses: helm/kind-action@v1.8.0
-        with:
-          cluster_name: ${{ env.KIND_CLUSTER_NAME }}
+                  echo "✅ Deployment ready!"
+                  kubectl get pods -n ${{ env.KUBERNETES_NAMESPACE }}
 
-      - name: Run performance tests
-        run: |
-          echo "🚀 Running performance tests..."
-          
-          # Install k6
-          sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
-          echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
-          sudo apt-get update
-          sudo apt-get install k6
+            - name: Get application URLs
+              run: |
+                  echo "🚀 Application deployed successfully!"
+                  echo "📊 Frontend: http://localhost:3000"
+                  echo "📋 Kubernetes Dashboard: kubectl proxy"
+                  echo "🔍 Cluster Info:"
+                  kubectl cluster-info
 
-          # Run basic performance test
-          echo "import http from 'k6/http';" > test.js
-          echo "export default function() {" >> test.js
-          echo "  http.get('http://localhost:3000/api/health');" >> test.js
-          echo "}" >> test.js
-          
-          k6 run --vus 10 --duration 30s test.js
+            - name: Run integration tests
+              run: |
+                  # Wait for services to be ready
+                  sleep 10
 
-  # PHASE 6: Cleanup
-  cleanup:
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Cleanup KIND cluster
-        run: |
-          echo "🧹 Cleaning up KIND cluster..."
-          kind delete cluster --name ${{ env.KIND_CLUSTER_NAME }} || echo "Cluster already deleted"
+                  # Test frontend
+                  curl -f http://localhost:3000/api/health || exit 1
+                  echo "✅ Integration tests passed"
+
+    # PHASE 5: Performance Testing (Ultra-Fast)
+    performance-test:
+        needs: deploy-to-kind
+        runs-on: ubuntu-latest
+        if: github.ref == 'refs/heads/main'
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up kubectl
+              uses: azure/setup-kubectl@v3
+
+            - name: Set up KIND
+              uses: helm/kind-action@v1.8.0
+              with:
+                  cluster_name: ${{ env.KIND_CLUSTER_NAME }}
+
+            - name: Run performance tests
+              run: |
+                  echo "🚀 Running performance tests..."
+
+                  # Install k6
+                  sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+                  echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+                  sudo apt-get update
+                  sudo apt-get install k6
+
+                  # Run basic performance test
+                  echo "import http from 'k6/http';" > test.js
+                  echo "export default function() {" >> test.js
+                  echo "  http.get('http://localhost:3000/api/health');" >> test.js
+                  echo "}" >> test.js
+
+                  k6 run --vus 10 --duration 30s test.js
+
+    # PHASE 6: Cleanup
+    cleanup:
+        if: always()
+        runs-on: ubuntu-latest
+        steps:
+            - name: Cleanup KIND cluster
+              run: |
+                  echo "🧹 Cleaning up KIND cluster..."
+                  kind delete cluster --name ${{ env.KIND_CLUSTER_NAME }} || echo "Cluster already deleted"
