@@ -184,50 +184,45 @@ jobs:
     # PHASE 4: Deploy to Kubernetes (Depends on build-and-package)
     deploy-to-kubernetes:
         needs: [build-and-package, security-scan]
-        runs-on: ubuntu-latest
+        runs-on: self-hosted  # Changed to self-hosted to access local Minikube
         if: github.ref == 'refs/heads/main'
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
 
-            - name: Set up kubectl
-              uses: azure/setup-kubectl@v3
-              with:
-                  version: "v1.28.0"
-
-            - name: Set up Minikube
-              uses: medyagh/setup-minikube@latest
-              with:
-                  minikube-version: 1.33.1
-                  kubernetes-version: v1.28.0
-                  driver: docker
-                  memory: 4096
-                  cpus: 2
-
-            - name: Start Minikube with optimizations
+            - name: Verify local Minikube is running
               run: |
-                  echo "🚀 Starting Minikube with Docker optimizations..."
-                  minikube start --driver=docker --memory=4096 --cpus=2
+                  echo "🔍 Checking local Minikube status..."
                   
-                  echo "🔧 Enabling Minikube addons..."
-                  minikube addons enable ingress
-                  minikube addons enable metrics-server
+                  if ! command -v minikube &> /dev/null; then
+                      echo "❌ ERROR: Minikube not installed on self-hosted runner"
+                      exit 1
+                  fi
                   
-                  # Enable Docker registry for better caching (optional)
-                  echo "📦 Setting up Docker registry addon..."
-                  minikube addons enable registry || echo "Registry addon not available, continuing..."
+                  # Check if Minikube is running
+                  STATUS=$(minikube status --format='{{.Host}}' 2>/dev/null || echo "NotRunning")
                   
-                  echo "✅ Minikube ready with optimizations"
+                  if [ "$STATUS" != "Running" ]; then
+                      echo "❌ ERROR: Minikube is not running"
+                      echo "Please start Minikube first: minikube start"
+                      exit 1
+                  fi
+                  
+                  echo "✅ Minikube is running!"
                   minikube status
+                  
+                  # Show cluster info
+                  kubectl cluster-info
+                  kubectl get nodes
 
-            - name: Build Docker image in Minikube with caching
+            - name: Build Docker image in existing Minikube with caching
               run: |
                   echo "🐳 Setting up Minikube Docker environment..."
                   eval $(minikube docker-env)
-                  
+
                   echo "📦 Building Docker image with layer caching..."
                   cd client
-                  
+
                   # Build with cache optimization
                   docker build \
                       --cache-from ecommerce-frontend:latest \
@@ -235,10 +230,10 @@ jobs:
                       --tag ecommerce-frontend:${{ github.sha }} \
                       --build-arg BUILDKIT_INLINE_CACHE=1 \
                       .
-                  
+
                   echo "✅ Docker image built successfully in Minikube"
                   docker images | grep ecommerce-frontend
-                  
+
                   echo "📊 Docker build performance summary:"
                   echo "✅ Built in Minikube's Docker daemon (faster)"
                   echo "✅ Used layer caching for optimization"
@@ -300,21 +295,11 @@ jobs:
     # PHASE 5: Performance Testing (Depends on deployment)
     performance-test:
         needs: deploy-to-kubernetes
-        runs-on: ubuntu-latest
+        runs-on: self-hosted  # Changed to self-hosted to access local Minikube
         if: github.ref == 'refs/heads/main'
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
-
-            - name: Set up kubectl
-              uses: azure/setup-kubectl@v3
-
-            - name: Set up Minikube
-              uses: medyagh/setup-minikube@latest
-
-            - name: Start Minikube
-              run: |
-                  minikube start --driver=docker --memory=4096 --cpus=2
 
             - name: Run performance tests
               run: |
@@ -335,9 +320,12 @@ jobs:
     # PHASE 6: Cleanup (Always runs)
     cleanup:
         if: always()
-        runs-on: ubuntu-latest
+        runs-on: self-hosted  # Changed to self-hosted
         needs: [deploy-to-kubernetes, performance-test]
         steps:
-            - name: Cleanup Minikube
+            - name: Cleanup deployment artifacts
               run: |
-                  minikube delete || true
+                  echo "🧹 Cleaning up deployment artifacts..."
+                  # DO NOT delete Minikube - we're using existing cluster
+                  # Just clean up any temporary files
+                  echo "✅ Cleanup complete (Minikube cluster preserved)"
