@@ -7,7 +7,8 @@ import { useState } from 'react'
 export const dynamic = 'force-dynamic'
 
 export default function AuthTestPage() {
-  const { data: session, status } = useSession()
+  const sessionResult = useSession()
+  const { data: session, status } = sessionResult || { data: null, status: 'loading' }
   const [email, setEmail] = useState('admin@example.com')
   const [password, setPassword] = useState('admin123')
 

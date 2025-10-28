@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   // Ultra-minimal configuration for custom authentication
   output: "standalone",
 
+  // Fix workspace root warning
+  outputFileTracingRoot: process.cwd(),
+
   // Disable all optimizations that might cause issues
   images: {
     unoptimized: true,

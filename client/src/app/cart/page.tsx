@@ -11,7 +11,8 @@ import { useEffect } from 'react'
 export const dynamic = 'force-dynamic'
 
 export default function CartPage() {
-  const { data: session, status } = useSession()
+  const sessionResult = useSession()
+  const { data: session, status } = sessionResult || { data: null, status: 'loading' }
   const router = useRouter()
   const { items, summary, isLoading, error, fetchCart, updateQuantity, removeFromCart } = useCartStore()
 

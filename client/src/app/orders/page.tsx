@@ -7,7 +7,8 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 export default function OrdersPage() {
-  const { data: session, status } = useSession()
+  const sessionResult = useSession()
+  const { data: session, status } = sessionResult || { data: null, status: 'loading' }
   const router = useRouter()
   const { orders, fetchOrders, isLoading, error } = useOrderStore()
   const [statusFilter, setStatusFilter] = useState('')

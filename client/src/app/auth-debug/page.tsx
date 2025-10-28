@@ -7,7 +7,8 @@ import { useEffect, useState } from 'react'
 export const dynamic = 'force-dynamic'
 
 export default function AuthDebug() {
-  const { data: session, status } = useSession()
+  const sessionResult = useSession()
+  const { data: session, status } = sessionResult || { data: null, status: 'loading' }
   const [apiTest, setApiTest] = useState<any>(null)
 
   useEffect(() => {

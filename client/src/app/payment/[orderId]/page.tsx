@@ -13,7 +13,8 @@ interface PaymentPageProps {
 }
 
 export default function PaymentPage({ params }: PaymentPageProps) {
-  const { data: session, status } = useSession()
+  const sessionResult = useSession()
+  const { data: session, status } = sessionResult || { data: null, status: 'loading' }
   const router = useRouter()
   const { currentOrder, fetchOrder, isLoading, error } = useOrderStore()
   const [paymentId, setPaymentId] = useState<string | null>(null)
