@@ -5,6 +5,9 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
+// Force dynamic rendering for admin pages
+export const dynamic = 'force-dynamic'
+
 interface Category {
   id: string
   name: string

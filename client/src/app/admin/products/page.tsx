@@ -5,6 +5,9 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
+// Force dynamic rendering for admin pages
+export const dynamic = 'force-dynamic'
+
 interface Product {
   id: string
   name: string

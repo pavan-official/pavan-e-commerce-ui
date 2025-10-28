@@ -7,6 +7,9 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
+// Force dynamic rendering for authenticated pages
+export const dynamic = 'force-dynamic'
+
 export default function CartPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
