@@ -57,8 +57,8 @@ jobs:
               run: |
                   cd client
                   echo "Running TypeScript type check (non-blocking)..."
-                  # Run type check but don't fail the pipeline
-                  pnpm run build --dry-run || echo "Type check completed with issues - continuing pipeline..."
+                  # Run TypeScript compiler type check
+                  npx tsc --noEmit || echo "Type check completed with issues - continuing pipeline..."
                   echo "✅ Type check phase completed - proceeding to build"
 
     # PHASE 2: Security Scan (Parallel with build)
