@@ -28,7 +28,7 @@ spec:
         app: ecommerce
         component: frontend
     spec:
-      serviceAccountName: ecommerce-frontend
+      # serviceAccountName: ecommerce-frontend  # Commented out - using default SA
       securityContext:
         runAsUser: 1001
         runAsGroup: 1001

@@ -216,7 +216,27 @@ if [ -d "$BASE_DIR" ]; then
 fi
 
 echo ""
-echo -e "${BLUE}8️⃣  Checking Monitoring Stack Configuration${NC}"
+echo -e "${BLUE}8️⃣  Checking ServiceAccount References${NC}"
+echo "-------------------------------------"
+
+# Check if deployment references a ServiceAccount that needs to be created
+DEPLOY_FILE="../base/deployment.yaml"
+if [ -f "$DEPLOY_FILE" ]; then
+    # Check for uncommented serviceAccountName
+    SA_NAME=$(grep "^[[:space:]]*serviceAccountName:" "$DEPLOY_FILE" | awk '{print $2}')
+    if [ -n "$SA_NAME" ]; then
+        report_warning "Deployment references ServiceAccount: $SA_NAME"
+        echo "  Make sure this ServiceAccount exists or comment out the reference"
+        echo "  Tip: Use default SA by commenting: # serviceAccountName: $SA_NAME"
+    else
+        report_success "Deployment uses default ServiceAccount (no custom SA referenced)"
+    fi
+else
+    report_warning "Deployment file not found"
+fi
+
+echo ""
+echo -e "${BLUE}9️⃣  Checking Monitoring Stack Configuration${NC}"
 echo "----------------------------------------"
 
 MONITORING_SCRIPT="../monitoring/deploy-monitoring.sh"
