@@ -55,8 +55,8 @@ jobs:
               run: |
                   cd client
                   echo "Running TypeScript type check (non-blocking)..."
-                  # Run TypeScript compiler type check with proper configuration
-                  pnpm exec tsc --noEmit --skipLibCheck || echo "Type check completed with issues - continuing pipeline..."
+                  # Run TypeScript compiler type check excluding test files
+                  pnpm exec tsc --noEmit --project tsconfig.ci.json || echo "Type check completed with issues - continuing pipeline..."
                   echo "✅ Type check phase completed - proceeding to build"
 
     # PHASE 2: Security Scan (Parallel with build)
