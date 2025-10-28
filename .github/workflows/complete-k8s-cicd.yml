@@ -48,7 +48,7 @@ jobs:
               run: |
                   cd client
                   echo "Running linting checks..."
-                  pnpm run lint || echo "Linting issues found but continuing..."
+                  pnpm run lint --max-warnings 10 || echo "Linting issues found but continuing with warnings..."
 
             - name: Type check
               run: |

@@ -42,7 +42,13 @@ interface SearchResult {
     name: string
     slug: string
   }
-  variants: any[]
+  variants: Array<{
+    id: string
+    name: string
+    price: number
+    sku?: string
+    attributes?: Record<string, string>
+  }>
   averageRating: number
   reviewCount: number
   quantity: number
@@ -70,7 +76,12 @@ interface SearchState {
   // UI state
   isLoading: boolean
   error: string | null
-  suggestions: any[]
+  suggestions: Array<{
+    id: string
+    name: string
+    type: 'product' | 'category' | 'term'
+    slug?: string
+  }>
   isSuggestionsLoading: boolean
   
   // Search history
@@ -102,7 +113,12 @@ interface SearchActions {
   // Local state management
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
-  setSuggestions: (suggestions: any[]) => void
+  setSuggestions: (suggestions: Array<{
+    id: string
+    name: string
+    type: 'product' | 'category' | 'term'
+    slug?: string
+  }>) => void
   setSuggestionsLoading: (loading: boolean) => void
 }
 
@@ -111,7 +127,7 @@ const initialFilters: SearchFilters = {
   sortOrder: 'desc',
 }
 
-const initialPagination: SearchPagination = {
+const _initialPagination: SearchPagination = {
   page: 1,
   limit: 20,
   total: 0,
@@ -304,7 +320,12 @@ export const useSearchStore = create<SearchState & SearchActions>()(
       // Local state setters
       setLoading: (loading: boolean) => set({ isLoading: loading }),
       setError: (error: string | null) => set({ error }),
-      setSuggestions: (suggestions: any[]) => set({ suggestions }),
+      setSuggestions: (suggestions: Array<{
+        id: string
+        name: string
+        type: 'product' | 'category' | 'term'
+        slug?: string
+      }>) => set({ suggestions }),
       setSuggestionsLoading: (loading: boolean) => set({ isSuggestionsLoading: loading }),
     }),
     {

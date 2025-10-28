@@ -11,7 +11,7 @@ const DATADOG_APPLICATION_ID =
 const DATADOG_CLIENT_TOKEN =
   process.env.NEXT_PUBLIC_DATADOG_CLIENT_TOKEN || "your-client-token";
 const DATADOG_SITE = (process.env.NEXT_PUBLIC_DATADOG_SITE ||
-  "datadoghq.com") as any;
+  "datadoghq.com") as "datadoghq.com" | "us3.datadoghq.com" | "us5.datadoghq.com" | "ap1.datadoghq.com" | "eu1.datadoghq.com";
 const DATADOG_SERVICE =
   process.env.NEXT_PUBLIC_DATADOG_SERVICE || "ecommerce-frontend";
 const DATADOG_ENV = process.env.NEXT_PUBLIC_DATADOG_ENV || "production";
@@ -57,7 +57,7 @@ export const initializeDataDog = () => {
 
 export const addDataDogAction = (
   name: string,
-  context?: Record<string, any>
+  context?: Record<string, unknown>
 ) => {
   if (typeof window !== "undefined" && datadogRum) {
     datadogRum.addAction(name, context);
@@ -84,7 +84,7 @@ export const trackCustomMetric = (
   }
 };
 
-export const trackError = (error: Error, context?: Record<string, any>) => {
+export const trackError = (error: Error, context?: Record<string, unknown>) => {
   if (typeof window !== "undefined" && datadogRum) {
     datadogRum.addError(error, context);
   }
@@ -93,7 +93,7 @@ export const trackError = (error: Error, context?: Record<string, any>) => {
 export const trackDatabaseOperation = (
   operation: string,
   duration: number,
-  context?: Record<string, any>
+  context?: Record<string, unknown>
 ) => {
   if (typeof window !== "undefined" && datadogRum) {
     datadogRum.addAction(`db.${operation}`, { duration, ...context });
