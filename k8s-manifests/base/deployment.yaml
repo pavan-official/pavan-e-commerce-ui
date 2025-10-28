@@ -78,19 +78,19 @@ spec:
           valueFrom:
             secretKeyRef:
               name: ecommerce-secrets
-              key: DATABASE_PASSWORD
+              key: postgres-password
         - name: REDIS_URL
           value: "redis://:$(REDIS_PASSWORD)@redis-service:6379"
         - name: REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
               name: ecommerce-secrets
-              key: REDIS_PASSWORD
+              key: redis-password
         - name: NEXTAUTH_SECRET
           valueFrom:
             secretKeyRef:
               name: ecommerce-secrets
-              key: NEXTAUTH_SECRET
+              key: nextauth-secret
         - name: NEXTAUTH_URL
           valueFrom:
             configMapKeyRef:
@@ -100,12 +100,12 @@ spec:
           valueFrom:
             secretKeyRef:
               name: ecommerce-secrets
-              key: STRIPE_SECRET_KEY
+              key: stripe-secret-key
         - name: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
           valueFrom:
             secretKeyRef:
               name: ecommerce-secrets
-              key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+              key: stripe-publishable-key
         resources:
           limits:
             cpu: 1000m
