@@ -10,8 +10,12 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
+// Force dynamic rendering for authenticated pages
+export const dynamic = 'force-dynamic'
+
 export default function WishlistPage() {
-  const { _data: session, status } = useSession()
+  const sessionResult = useSession()
+  const { data: session, status } = sessionResult || { data: null, status: 'loading' }
   const _router = useRouter()
   const { items, isLoading, _error, fetchWishlist, removeFromWishlist } = useWishlistStore()
   const { addToCart } = useCartStore()
