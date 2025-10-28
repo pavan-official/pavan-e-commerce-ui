@@ -1,7 +1,11 @@
 'use client'
 
-// Custom authentication doesn't need a provider
+import { AuthProvider } from '@/contexts/AuthContext'
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  return <>{children}</>
+  return (
+    <AuthProvider>
+      {children}
+    </AuthProvider>
+  )
 }

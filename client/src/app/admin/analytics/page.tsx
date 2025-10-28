@@ -1,6 +1,9 @@
 // import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard'
 import { Metadata } from 'next'
 
+// Force dynamic rendering for admin pages
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Analytics Dashboard | Admin',
   description: 'Comprehensive analytics and reporting dashboard for administrators',
