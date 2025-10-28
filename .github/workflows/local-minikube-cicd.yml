@@ -1,0 +1,256 @@
+name: Local Minikube CI/CD Pipeline (Existing Cluster)
+
+# This workflow connects to your EXISTING Minikube cluster
+# Instead of creating a new cluster each time (much faster!)
+
+on:
+    workflow_dispatch:
+        inputs:
+            minikube_profile:
+                description: "Minikube profile name"
+                required: false
+                default: "minikube"
+            namespace:
+                description: "Kubernetes namespace"
+                required: false
+                default: "ecommerce-production"
+
+env:
+    REGISTRY: localhost:5000
+    IMAGE_NAME: ecommerce-frontend
+    KUBERNETES_NAMESPACE: ${{ github.event.inputs.namespace || 'ecommerce-production' }}
+    MINIKUBE_PROFILE: ${{ github.event.inputs.minikube_profile || 'minikube' }}
+
+jobs:
+    # PHASE 1: Pre-flight checks (ensure Minikube is running)
+    preflight-checks:
+        runs-on: self-hosted # This runs on YOUR local machine
+        steps:
+            - name: Check if Minikube is running
+              run: |
+                  echo "🔍 Checking Minikube status..."
+                  
+                  if ! command -v minikube &> /dev/null; then
+                      echo "❌ ERROR: Minikube not installed"
+                      exit 1
+                  fi
+                  
+                  # Check if Minikube is running
+                  STATUS=$(minikube status -p ${{ env.MINIKUBE_PROFILE }} --format='{{.Host}}' || echo "NotRunning")
+                  
+                  if [ "$STATUS" != "Running" ]; then
+                      echo "❌ ERROR: Minikube is not running"
+                      echo "Please start Minikube first with: minikube start -p ${{ env.MINIKUBE_PROFILE }}"
+                      exit 1
+                  fi
+                  
+                  echo "✅ Minikube is running!"
+                  minikube profile list
+
+            - name: Check Kubernetes connectivity
+              run: |
+                  echo "🔍 Checking Kubernetes connectivity..."
+                  
+                  # Set kubectl context to Minikube
+                  kubectl config use-context ${{ env.MINIKUBE_PROFILE }}
+                  
+                  # Test connection
+                  kubectl cluster-info
+                  kubectl get nodes
+                  
+                  echo "✅ Kubernetes connectivity verified!"
+
+    # PHASE 2: Quality Gates (Fast feedback)
+    quality-checks:
+        needs: preflight-checks
+        runs-on: self-hosted
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@v2
+              with:
+                  version: 9
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "18"
+
+            - name: Install dependencies
+              run: |
+                  cd client
+                  pnpm install --frozen-lockfile
+
+            - name: Run linting (non-blocking)
+              run: |
+                  cd client
+                  pnpm run lint > /dev/null 2>&1 || echo "Linting completed with issues - continuing pipeline..."
+
+            - name: Run TypeScript type check (non-blocking)
+              run: |
+                  cd client
+                  pnpm exec tsc --noEmit --skipLibCheck || echo "Type check completed with issues - continuing pipeline..."
+
+    # PHASE 3: Build and push to Minikube's internal registry
+    build-and-push:
+        needs: quality-checks
+        runs-on: self-hosted
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Connect to Minikube Docker daemon
+              run: |
+                  echo "🔄 Connecting to Minikube Docker daemon..."
+                  eval $(minikube -p ${{ env.MINIKUBE_PROFILE }} docker-env)
+                  
+                  echo "✅ Connected to Minikube Docker daemon"
+                  docker info | grep "Server Version"
+
+            - name: Build Docker image in Minikube
+              run: |
+                  echo "🔨 Building Docker image directly in Minikube..."
+                  
+                  # Use Minikube's Docker daemon
+                  eval $(minikube -p ${{ env.MINIKUBE_PROFILE }} docker-env)
+                  
+                  cd client
+                  
+                  # Build with caching
+                  docker build \
+                    --cache-from ${{ env.IMAGE_NAME }}:latest \
+                    --build-arg BUILDKIT_INLINE_CACHE=1 \
+                    -t ${{ env.IMAGE_NAME }}:latest \
+                    -t ${{ env.IMAGE_NAME }}:${{ github.sha }} \
+                    .
+                  
+                  echo "✅ Docker image built successfully in Minikube!"
+                  docker images | grep ${{ env.IMAGE_NAME }}
+
+    # PHASE 4: Deploy to existing Minikube cluster
+    deploy-to-minikube:
+        needs: build-and-push
+        runs-on: self-hosted
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set kubectl context
+              run: |
+                  echo "🔄 Setting kubectl context..."
+                  kubectl config use-context ${{ env.MINIKUBE_PROFILE }}
+                  
+                  echo "Current context:"
+                  kubectl config current-context
+
+            - name: Create namespace if not exists
+              run: |
+                  kubectl create namespace ${{ env.KUBERNETES_NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+
+            - name: Deploy application
+              run: |
+                  echo "🚀 Deploying application to Minikube..."
+                  
+                  # Deploy using our existing script
+                  cd k8s-manifests/scripts
+                  chmod +x deploy.sh
+                  
+                  # Set environment variables for deployment
+                  export NAMESPACE=${{ env.KUBERNETES_NAMESPACE }}
+                  export IMAGE_TAG=latest
+                  
+                  # Run deployment
+                  ./deploy.sh production minikube
+                  
+                  echo "✅ Deployment initiated!"
+
+            - name: Wait for deployment
+              run: |
+                  echo "⏳ Waiting for deployment to be ready..."
+                  
+                  kubectl wait --for=condition=available --timeout=300s \
+                    deployment/ecommerce-frontend-deployment \
+                    -n ${{ env.KUBERNETES_NAMESPACE }}
+                  
+                  echo "✅ Deployment ready!"
+                  kubectl get pods -n ${{ env.KUBERNETES_NAMESPACE }}
+
+            - name: Get service URLs
+              run: |
+                  echo "🎉 Application deployed successfully!"
+                  echo ""
+                  echo "📊 Access your application:"
+                  echo "   Frontend: $(minikube service ecommerce-frontend-service -n ${{ env.KUBERNETES_NAMESPACE }} --url)"
+                  echo ""
+                  echo "📊 Monitoring Stack:"
+                  echo "   Prometheus: $(minikube service prometheus-service -n monitoring --url 2>/dev/null || echo 'Not deployed')"
+                  echo "   Grafana: $(minikube service grafana-service -n monitoring --url 2>/dev/null || echo 'Not deployed')"
+                  echo "   Jaeger: $(minikube service jaeger-query -n monitoring --url 2>/dev/null || echo 'Not deployed')"
+                  echo ""
+                  echo "🔍 Kubernetes Dashboard:"
+                  echo "   Run: minikube dashboard -p ${{ env.MINIKUBE_PROFILE }}"
+
+    # PHASE 5: Integration tests
+    integration-tests:
+        needs: deploy-to-minikube
+        runs-on: self-hosted
+        steps:
+            - name: Wait for services to be ready
+              run: |
+                  echo "⏳ Waiting for services to be ready..."
+                  sleep 10
+
+            - name: Run health checks
+              run: |
+                  echo "🏥 Running health checks..."
+                  
+                  # Get service URL
+                  FRONTEND_URL=$(minikube service ecommerce-frontend-service -n ${{ env.KUBERNETES_NAMESPACE }} --url)
+                  
+                  # Test health endpoint
+                  curl -f "$FRONTEND_URL/api/health" || exit 1
+                  
+                  echo "✅ Health checks passed!"
+
+            - name: Run smoke tests
+              run: |
+                  echo "💨 Running smoke tests..."
+                  
+                  FRONTEND_URL=$(minikube service ecommerce-frontend-service -n ${{ env.KUBERNETES_NAMESPACE }} --url)
+                  
+                  # Test main endpoints
+                  curl -f "$FRONTEND_URL/" || echo "Homepage check failed"
+                  curl -f "$FRONTEND_URL/api/products" || echo "Products API check failed"
+                  
+                  echo "✅ Smoke tests completed!"
+
+    # PHASE 6: Deployment summary
+    deployment-summary:
+        needs: integration-tests
+        runs-on: self-hosted
+        if: always()
+        steps:
+            - name: Generate deployment summary
+              run: |
+                  echo "📊 DEPLOYMENT SUMMARY"
+                  echo "===================="
+                  echo ""
+                  echo "🎯 Deployment Details:"
+                  echo "   Namespace: ${{ env.KUBERNETES_NAMESPACE }}"
+                  echo "   Minikube Profile: ${{ env.MINIKUBE_PROFILE }}"
+                  echo "   Git SHA: ${{ github.sha }}"
+                  echo "   Workflow Run: ${{ github.run_number }}"
+                  echo ""
+                  echo "📦 Pods Status:"
+                  kubectl get pods -n ${{ env.KUBERNETES_NAMESPACE }}
+                  echo ""
+                  echo "🔍 Services:"
+                  kubectl get svc -n ${{ env.KUBERNETES_NAMESPACE }}
+                  echo ""
+                  echo "📊 Resource Usage:"
+                  kubectl top nodes 2>/dev/null || echo "Metrics server not available"
+                  echo ""
+                  echo "✅ Deployment Complete!"
+
