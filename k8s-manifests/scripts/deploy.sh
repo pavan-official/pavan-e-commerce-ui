@@ -76,6 +76,15 @@ deploy_database() {
 deploy_application() {
     echo -e "${BLUE}🚀 Deploying application...${NC}"
     
+    # Check if deployment exists with different selector (immutable field)
+    if kubectl get deployment ecommerce-frontend-deployment -n $NAMESPACE &> /dev/null; then
+        EXISTING_SELECTOR=$(kubectl get deployment ecommerce-frontend-deployment -n $NAMESPACE -o jsonpath='{.spec.selector.matchLabels}')
+        echo -e "${YELLOW}⚠️  Existing deployment found with selector: $EXISTING_SELECTOR${NC}"
+        echo -e "${YELLOW}⚠️  Deleting old deployment to apply new selector...${NC}"
+        kubectl delete deployment ecommerce-frontend-deployment -n $NAMESPACE
+        echo -e "${GREEN}✅ Old deployment deleted${NC}"
+    fi
+    
     # Update image tag in deployment
     if [ "$IMAGE_TAG" != "latest" ]; then
         echo -e "${BLUE}📝 Updating image tag to $IMAGE_TAG${NC}"
