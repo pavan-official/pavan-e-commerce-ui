@@ -49,7 +49,8 @@ deploy_secrets() {
     # Create secrets if they don't exist
     if ! kubectl get secret ecommerce-secrets -n $NAMESPACE &> /dev/null; then
         echo -e "${YELLOW}⚠️  Creating secrets...${NC}"
-        kubectl apply -f ../base/secrets.yaml -n $NAMESPACE
+        # Replace namespace in secrets.yaml and apply
+        sed "s/namespace: ecommerce/namespace: $NAMESPACE/g" ../base/secrets.yaml | kubectl apply -f -
     else
         echo -e "${GREEN}✅ Secrets already exist${NC}"
     fi
@@ -60,10 +61,10 @@ deploy_database() {
     echo -e "${BLUE}🗄️  Deploying database...${NC}"
     
     # Create temporary files with correct namespace
-    sed "s/namespace: ecommerce/namespace: $NAMESPACE/g" ../base/postgres.yaml | kubectl apply -f - -n $NAMESPACE
+    sed "s/namespace: ecommerce/namespace: $NAMESPACE/g" ../base/postgres.yaml | kubectl apply -f -
     
     echo -e "${BLUE}🔴 Deploying Redis...${NC}"
-    sed "s/namespace: ecommerce/namespace: $NAMESPACE/g" ../base/redis.yaml | kubectl apply -f - -n $NAMESPACE
+    sed "s/namespace: ecommerce/namespace: $NAMESPACE/g" ../base/redis.yaml | kubectl apply -f -
     
     # Wait for database to be ready
     echo -e "${YELLOW}⏳ Waiting for database to be ready...${NC}"
@@ -84,9 +85,9 @@ deploy_application() {
     fi
     
     # Apply deployment
-    sed "s/namespace: ecommerce/namespace: $NAMESPACE/g" ../base/deployment.yaml | kubectl apply -f - -n $NAMESPACE
-    sed "s/namespace: ecommerce/namespace: $NAMESPACE/g" ../base/service.yaml | kubectl apply -f - -n $NAMESPACE
-    sed "s/namespace: ecommerce/namespace: $NAMESPACE/g" ../base/ingress.yaml | kubectl apply -f - -n $NAMESPACE
+    sed "s/namespace: ecommerce/namespace: $NAMESPACE/g" ../base/deployment.yaml | kubectl apply -f -
+    sed "s/namespace: ecommerce/namespace: $NAMESPACE/g" ../base/service.yaml | kubectl apply -f -
+    sed "s/namespace: ecommerce/namespace: $NAMESPACE/g" ../base/ingress.yaml | kubectl apply -f -
 }
 
 # Function to deploy monitoring stack
