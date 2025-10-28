@@ -204,17 +204,46 @@ jobs:
                   memory: 4096
                   cpus: 2
 
-            - name: Start Minikube
+            - name: Start Minikube with optimizations
               run: |
+                  echo "🚀 Starting Minikube with Docker optimizations..."
                   minikube start --driver=docker --memory=4096 --cpus=2
+                  
+                  echo "🔧 Enabling Minikube addons..."
                   minikube addons enable ingress
                   minikube addons enable metrics-server
+                  
+                  # Enable Docker registry for better caching (optional)
+                  echo "📦 Setting up Docker registry addon..."
+                  minikube addons enable registry || echo "Registry addon not available, continuing..."
+                  
+                  echo "✅ Minikube ready with optimizations"
+                  minikube status
 
-            - name: Build Docker image in Minikube
+            - name: Build Docker image in Minikube with caching
               run: |
+                  echo "🐳 Setting up Minikube Docker environment..."
                   eval $(minikube docker-env)
+                  
+                  echo "📦 Building Docker image with layer caching..."
                   cd client
-                  docker build -t ecommerce-frontend:latest .
+                  
+                  # Build with cache optimization
+                  docker build \
+                      --cache-from ecommerce-frontend:latest \
+                      --tag ecommerce-frontend:latest \
+                      --tag ecommerce-frontend:${{ github.sha }} \
+                      --build-arg BUILDKIT_INLINE_CACHE=1 \
+                      .
+                  
+                  echo "✅ Docker image built successfully in Minikube"
+                  docker images | grep ecommerce-frontend
+                  
+                  echo "📊 Docker build performance summary:"
+                  echo "✅ Built in Minikube's Docker daemon (faster)"
+                  echo "✅ Used layer caching for optimization"
+                  echo "✅ No registry push/pull overhead"
+                  echo "✅ Image ready for immediate deployment"
 
             - name: Deploy to Kubernetes
               run: |
