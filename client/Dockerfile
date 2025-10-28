@@ -146,10 +146,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 # Why: Next.js needs React and other runtime dependencies
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
-# Copy Prisma schema and generated client
+# Copy Prisma schema
 # Why: Needed for database operations at runtime
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+
+# Note: Prisma client will be generated at runtime if needed
 
 # Copy startup script from builder stage
 # Why: start.sh is in builder stage from COPY . . command
