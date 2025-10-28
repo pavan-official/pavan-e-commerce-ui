@@ -26,6 +26,41 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
 
+            - name: Validate Docker build requirements
+              run: |
+                  echo "🔍 Validating Docker build requirements..."
+                  
+                  # Check if required files exist
+                  if [ ! -f "client/package.json" ]; then
+                      echo "❌ ERROR: client/package.json not found"
+                      exit 1
+                  fi
+                  
+                  if [ ! -f "client/pnpm-lock.yaml" ]; then
+                      echo "❌ ERROR: client/pnpm-lock.yaml not found"
+                      exit 1
+                  fi
+                  
+                  if [ ! -f "client/start.sh" ]; then
+                      echo "❌ ERROR: client/start.sh not found"
+                      exit 1
+                  fi
+                  
+                  if [ ! -f "client/Dockerfile" ]; then
+                      echo "❌ ERROR: client/Dockerfile not found"
+                      exit 1
+                  fi
+                  
+                  echo "✅ All Docker build requirements validated"
+                  
+                  # Check package manager consistency
+                  PACKAGE_MANAGER=$(grep -o '"packageManager": "[^"]*"' client/package.json | cut -d'"' -f4)
+                  if [[ "$PACKAGE_MANAGER" == "pnpm"* ]]; then
+                      echo "✅ Package manager: $PACKAGE_MANAGER (consistent with pnpm-lock.yaml)"
+                  else
+                      echo "⚠️  WARNING: Package manager $PACKAGE_MANAGER may not match lockfile"
+                  fi
+
             - name: Install pnpm
               uses: pnpm/action-setup@v2
               with:

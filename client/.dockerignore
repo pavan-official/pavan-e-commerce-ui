@@ -20,6 +20,7 @@
 !start.sh
 !package.json
 !package-lock.json
+!pnpm-lock.yaml
 
 # ==================================================================================================
 # NODE.JS & NPM
@@ -149,12 +150,11 @@ Jenkinsfile
 .semaphore/
 
 # ==================================================================================================
-# PACKAGE MANAGER LOCKS (Keep package-lock.json!)
+# PACKAGE MANAGER LOCKS (Keep package-lock.json and pnpm-lock.yaml!)
 # ==================================================================================================
-# Why: We WANT package-lock.json for reproducible builds
-# But we don't want other lock files if using npm
+# Why: We WANT lock files for reproducible builds
+# But we don't want other lock files if using different package managers
 yarn.lock
-pnpm-lock.yaml
 
 # ==================================================================================================
 # MISC
