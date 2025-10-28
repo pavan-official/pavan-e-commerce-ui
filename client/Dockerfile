@@ -41,15 +41,19 @@ RUN apk add --no-cache libc6-compat
 # Why: Organize application files in a predictable location
 WORKDIR /app
 
+# Install pnpm globally
+# Why: Project uses pnpm as package manager (see packageManager in package.json)
+RUN npm install -g pnpm@9.0.0
+
 # Copy package files
 # Why: Leverage Docker layer caching - only reinstall if package.json changes
 # Interview Note: This is key for fast builds in CI/CD pipelines
-COPY package.json package-lock.json* ./
+COPY package.json pnpm-lock.yaml ./
 
 # Install ALL dependencies (including dev dependencies for build)
 # Why: We need dev dependencies to build the application
 # Interview Note: This stage will be discarded, only runtime dependencies matter
-RUN npm install
+RUN pnpm install --frozen-lockfile
 
 # ==================================================================================================
 # STAGE 2: BUILDER
