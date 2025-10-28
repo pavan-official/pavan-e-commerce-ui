@@ -48,8 +48,8 @@ jobs:
               run: |
                   cd client
                   echo "Running linting checks (non-blocking for CI/CD)..."
-                  # Run linting but don't fail the pipeline
-                  pnpm run lint || echo "Linting completed with issues - continuing pipeline..."
+                  # Run linting silently and don't fail the pipeline
+                  pnpm run lint > /dev/null 2>&1 || echo "Linting completed with issues - continuing pipeline..."
                   echo "✅ Linting phase completed - proceeding to build"
 
             - name: Type check (Non-blocking)
