@@ -6,7 +6,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ecommerce-frontend
-  namespace: ecommerce-production
+  namespace: ecommerce
   labels:
     app: ecommerce
     component: frontend

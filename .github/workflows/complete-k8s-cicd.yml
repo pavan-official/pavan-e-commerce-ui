@@ -184,12 +184,19 @@ jobs:
     # PHASE 4: Deploy to Kubernetes (Depends on build-and-package)
     deploy-to-kubernetes:
         needs: [build-and-package, security-scan]
-        runs-on: self-hosted  # Changed to self-hosted to access local Minikube
+        runs-on: self-hosted # Changed to self-hosted to access local Minikube
         if: github.ref == 'refs/heads/main'
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
 
+            - name: Run pre-deployment validation
+              run: |
+                  echo "🔍 Running comprehensive pre-deployment checks..."
+                  cd k8s-manifests/scripts
+                  chmod +x pre-deploy-check.sh
+                  ./pre-deploy-check.sh
+          
             - name: Verify local Minikube is running
               run: |
                   echo "🔍 Checking local Minikube status..."
@@ -295,7 +302,7 @@ jobs:
     # PHASE 5: Performance Testing (Depends on deployment)
     performance-test:
         needs: deploy-to-kubernetes
-        runs-on: self-hosted  # Changed to self-hosted to access local Minikube
+        runs-on: self-hosted # Changed to self-hosted to access local Minikube
         if: github.ref == 'refs/heads/main'
         steps:
             - name: Checkout code
@@ -320,7 +327,7 @@ jobs:
     # PHASE 6: Cleanup (Always runs)
     cleanup:
         if: always()
-        runs-on: self-hosted  # Changed to self-hosted
+        runs-on: self-hosted # Changed to self-hosted
         needs: [deploy-to-kubernetes, performance-test]
         steps:
             - name: Cleanup deployment artifacts

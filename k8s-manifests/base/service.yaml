@@ -6,7 +6,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ecommerce-frontend-service
-  namespace: ecommerce-production
+  namespace: ecommerce
   labels:
     app: ecommerce
     component: frontend
