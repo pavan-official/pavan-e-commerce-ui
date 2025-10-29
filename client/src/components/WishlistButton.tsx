@@ -25,7 +25,7 @@ export default function WishlistButton({
 
   const handleToggleWishlist = async () => {
     if (!user) {
-      router.push('/auth/custom-signin')
+      router.push('/auth/signin')
       return
     }
 

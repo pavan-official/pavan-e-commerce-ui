@@ -29,35 +29,35 @@ jobs:
             - name: Check if Minikube is running
               run: |
                   echo "🔍 Checking Minikube status..."
-                  
+
                   if ! command -v minikube &> /dev/null; then
                       echo "❌ ERROR: Minikube not installed"
                       exit 1
                   fi
-                  
+
                   # Check if Minikube is running
                   STATUS=$(minikube status -p ${{ env.MINIKUBE_PROFILE }} --format='{{.Host}}' || echo "NotRunning")
-                  
+
                   if [ "$STATUS" != "Running" ]; then
                       echo "❌ ERROR: Minikube is not running"
                       echo "Please start Minikube first with: minikube start -p ${{ env.MINIKUBE_PROFILE }}"
                       exit 1
                   fi
-                  
+
                   echo "✅ Minikube is running!"
                   minikube profile list
 
             - name: Check Kubernetes connectivity
               run: |
                   echo "🔍 Checking Kubernetes connectivity..."
-                  
+
                   # Set kubectl context to Minikube
                   kubectl config use-context ${{ env.MINIKUBE_PROFILE }}
-                  
+
                   # Test connection
                   kubectl cluster-info
                   kubectl get nodes
-                  
+
                   echo "✅ Kubernetes connectivity verified!"
 
     # PHASE 2: Quality Gates (Fast feedback)
@@ -105,19 +105,19 @@ jobs:
               run: |
                   echo "🔄 Connecting to Minikube Docker daemon..."
                   eval $(minikube -p ${{ env.MINIKUBE_PROFILE }} docker-env)
-                  
+
                   echo "✅ Connected to Minikube Docker daemon"
                   docker info | grep "Server Version"
 
             - name: Build Docker image in Minikube
               run: |
                   echo "🔨 Building Docker image directly in Minikube..."
-                  
+
                   # Use Minikube's Docker daemon
                   eval $(minikube -p ${{ env.MINIKUBE_PROFILE }} docker-env)
-                  
+
                   cd client
-                  
+
                   # Build with caching
                   docker build \
                     --cache-from ${{ env.IMAGE_NAME }}:latest \
@@ -125,7 +125,7 @@ jobs:
                     -t ${{ env.IMAGE_NAME }}:latest \
                     -t ${{ env.IMAGE_NAME }}:${{ github.sha }} \
                     .
-                  
+
                   echo "✅ Docker image built successfully in Minikube!"
                   docker images | grep ${{ env.IMAGE_NAME }}
 
@@ -141,7 +141,7 @@ jobs:
               run: |
                   echo "🔄 Setting kubectl context..."
                   kubectl config use-context ${{ env.MINIKUBE_PROFILE }}
-                  
+
                   echo "Current context:"
                   kubectl config current-context
 
@@ -152,28 +152,28 @@ jobs:
             - name: Deploy application
               run: |
                   echo "🚀 Deploying application to Minikube..."
-                  
+
                   # Deploy using our existing script
                   cd k8s-manifests/scripts
                   chmod +x deploy.sh
-                  
+
                   # Set environment variables for deployment
                   export NAMESPACE=${{ env.KUBERNETES_NAMESPACE }}
                   export IMAGE_TAG=latest
-                  
+
                   # Run deployment
                   ./deploy.sh production minikube
-                  
+
                   echo "✅ Deployment initiated!"
 
             - name: Wait for deployment
               run: |
                   echo "⏳ Waiting for deployment to be ready..."
-                  
+
                   kubectl wait --for=condition=available --timeout=300s \
                     deployment/ecommerce-frontend-deployment \
                     -n ${{ env.KUBERNETES_NAMESPACE }}
-                  
+
                   echo "✅ Deployment ready!"
                   kubectl get pods -n ${{ env.KUBERNETES_NAMESPACE }}
 
@@ -205,25 +205,25 @@ jobs:
             - name: Run health checks
               run: |
                   echo "🏥 Running health checks..."
-                  
+
                   # Get service URL
                   FRONTEND_URL=$(minikube service ecommerce-frontend-service -n ${{ env.KUBERNETES_NAMESPACE }} --url)
-                  
+
                   # Test health endpoint
                   curl -f "$FRONTEND_URL/api/health" || exit 1
-                  
+
                   echo "✅ Health checks passed!"
 
             - name: Run smoke tests
               run: |
                   echo "💨 Running smoke tests..."
-                  
+
                   FRONTEND_URL=$(minikube service ecommerce-frontend-service -n ${{ env.KUBERNETES_NAMESPACE }} --url)
-                  
+
                   # Test main endpoints
                   curl -f "$FRONTEND_URL/" || echo "Homepage check failed"
                   curl -f "$FRONTEND_URL/api/products" || echo "Products API check failed"
-                  
+
                   echo "✅ Smoke tests completed!"
 
     # PHASE 6: Deployment summary
@@ -253,4 +253,3 @@ jobs:
                   kubectl top nodes 2>/dev/null || echo "Metrics server not available"
                   echo ""
                   echo "✅ Deployment Complete!"
-

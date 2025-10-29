@@ -90,7 +90,7 @@ export class AuthErrorBoundary extends Component<Props, State> {
                   })
                   localStorage.clear()
                   sessionStorage.clear()
-                  window.location.href = '/auth/custom-signin/'
+                  window.location.href = '/auth/signin/'
                 }}
                 className="flex-1 bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
               >

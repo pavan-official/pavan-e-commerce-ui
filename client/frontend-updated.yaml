@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ecommerce-frontend
+  namespace: ecommerce-production
+  labels:
+    app: ecommerce
+    component: frontend
+    environment: production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ecommerce
+      component: frontend
+  template:
+    metadata:
+      labels:
+        app: ecommerce
+        component: frontend
+        environment: production
+    spec:
+      containers:
+      - name: app
+        image: ecommerce-client:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 3000
+        - containerPort: 9090
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: ecommerce-frontend-config
+              key: NODE_ENV
+        - name: NEXTAUTH_SECRET
+          valueFrom:
+            configMapKeyRef:
+              name: ecommerce-frontend-config
+              key: NEXTAUTH_SECRET
+        - name: NEXTAUTH_URL
+          valueFrom:
+            configMapKeyRef:
+              name: ecommerce-frontend-config
+              key: NEXTAUTH_URL
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: ecommerce-frontend-secrets
+              key: DATABASE_URL
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: ecommerce-frontend-secrets
+              key: REDIS_URL
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30

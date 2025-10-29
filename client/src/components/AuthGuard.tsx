@@ -14,7 +14,7 @@ interface AuthGuardProps {
 export function AuthGuard({ 
   children, 
   requireAuth = false, 
-  redirectTo = '/auth/custom-signin/',
+  redirectTo = '/auth/signin/',
   fallback 
 }: AuthGuardProps) {
   const { user, loading, error, isInitialized } = useAuth()
@@ -64,7 +64,7 @@ export function AuthGuard({
                   const name = eqPos > -1 ? c.substr(0, eqPos) : c
                   document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/"
                 })
-                router.push('/auth/custom-signin/')
+                router.push('/auth/signin/')
               }}
               className="w-full px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
             >
@@ -90,7 +90,7 @@ export function AuthGuard({
             You need to sign in to access this page.
           </p>
           <button
-            onClick={() => router.push('/auth/custom-signin/')}
+            onClick={() => router.push('/auth/signin/')}
             className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             Sign In

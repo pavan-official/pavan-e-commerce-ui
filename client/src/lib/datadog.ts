@@ -11,7 +11,12 @@ const DATADOG_APPLICATION_ID =
 const DATADOG_CLIENT_TOKEN =
   process.env.NEXT_PUBLIC_DATADOG_CLIENT_TOKEN || "your-client-token";
 const DATADOG_SITE = (process.env.NEXT_PUBLIC_DATADOG_SITE ||
-  "datadoghq.com") as "datadoghq.com" | "us3.datadoghq.com" | "us5.datadoghq.com" | "ap1.datadoghq.com" | "eu1.datadoghq.com";
+  "datadoghq.com") as
+  | "datadoghq.com"
+  | "us3.datadoghq.com"
+  | "us5.datadoghq.com"
+  | "ap1.datadoghq.com"
+  | "eu1.datadoghq.com";
 const DATADOG_SERVICE =
   process.env.NEXT_PUBLIC_DATADOG_SERVICE || "ecommerce-frontend";
 const DATADOG_ENV = process.env.NEXT_PUBLIC_DATADOG_ENV || "production";

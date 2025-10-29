@@ -312,7 +312,7 @@ jobs:
         run: |
           echo "⏭️  Skipping performance tests (requires NodePort/LoadBalancer setup)"
           echo "✅ Performance testing can be done manually or with exposed service"
-          
+
           # Alternative: Run basic kubectl-based test
           echo "Running basic pod health check instead..."
           kubectl get pods -n ${{ env.KUBERNETES_NAMESPACE }} -l component=frontend -o jsonpath='{.items[*].status.phase}' | grep -q "Running"

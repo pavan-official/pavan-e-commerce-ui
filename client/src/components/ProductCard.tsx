@@ -42,7 +42,7 @@ const ProductCard = ({ product }: { product: ProductType }) => {
 
     if (!user) {
       toast.info("Please sign in to add items to your cart");
-      _router.push('/auth/custom-signin/');
+      _router.push('/auth/signin/');
       return;
     }
 

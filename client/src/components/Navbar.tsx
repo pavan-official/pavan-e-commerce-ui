@@ -95,7 +95,7 @@ const Navbar = () => {
               </button>
             </div>
           ) : (
-            <Link href="/auth/custom-signin" className="text-sm text-gray-600 hover:text-gray-900">
+            <Link href="/auth/signin" className="text-sm text-gray-600 hover:text-gray-900">
               Sign in
             </Link>
           )}

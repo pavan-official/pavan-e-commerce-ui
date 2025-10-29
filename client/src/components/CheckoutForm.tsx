@@ -86,7 +86,7 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
     }
 
     if (!user) {
-      router.push('/auth/custom-signin')
+      router.push('/auth/signin')
       return
     }
 
