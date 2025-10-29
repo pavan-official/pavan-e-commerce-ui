@@ -5,13 +5,15 @@ import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { use, useEffect } from 'react'
 
 interface OrderDetailsPageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
+  const resolvedParams = use(params)
+  const orderId = resolvedParams.id
   const sessionResult = useSession()
   const { data: session, status } = sessionResult || { data: null, status: 'loading' }
   const router = useRouter()
@@ -25,8 +27,8 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
       return
     }
 
-    fetchOrder(params.id)
-  }, [session, status, router, fetchOrder, params.id])
+    fetchOrder(orderId)
+  }, [session, status, router, fetchOrder, orderId])
 
   const getStatusColor = (status: string) => {
     switch (status) {
