@@ -6,13 +6,15 @@ import { useOrderStore } from '@/stores/orderStore'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 
 interface PaymentPageProps {
-  params: { orderId: string }
+  params: Promise<{ orderId: string }>
 }
 
 export default function PaymentPage({ params }: PaymentPageProps) {
+  const resolvedParams = use(params)
+  const orderId = resolvedParams.orderId
   const sessionResult = useSession()
   const { data: session, status } = sessionResult || { data: null, status: 'loading' }
   const router = useRouter()
@@ -28,8 +30,8 @@ export default function PaymentPage({ params }: PaymentPageProps) {
       return
     }
 
-    fetchOrder(params.orderId)
-  }, [session, status, router, fetchOrder, params.orderId])
+    fetchOrder(orderId)
+  }, [session, status, router, fetchOrder, orderId])
 
   const handlePaymentSuccess = (stripePaymentId: string) => {
     setPaymentId(stripePaymentId)
@@ -37,7 +39,7 @@ export default function PaymentPage({ params }: PaymentPageProps) {
     
     // Redirect to order confirmation after a short delay
     setTimeout(() => {
-      router.push(`/orders/${params.orderId}`)
+      router.push(`/orders/${orderId}`)
     }, 2000)
   }
 
@@ -52,7 +54,7 @@ export default function PaymentPage({ params }: PaymentPageProps) {
     if (status === 'COMPLETED') {
       // Redirect to order confirmation
       setTimeout(() => {
-        router.push(`/orders/${params.orderId}`)
+        router.push(`/orders/${orderId}`)
       }, 2000)
     }
   }
