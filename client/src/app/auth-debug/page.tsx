@@ -18,7 +18,7 @@ export default function AuthDebug() {
         const data = await response.json()
         setApiTest(data)
       } catch (error) {
-        setApiTest({ error: error.message })
+        setApiTest({ error: error instanceof Error ? error.message : String(error) })
       }
     }
     testAPI()
