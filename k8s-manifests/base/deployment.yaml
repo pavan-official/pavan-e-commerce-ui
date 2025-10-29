@@ -95,7 +95,7 @@ spec:
           valueFrom:
             configMapKeyRef:
               name: ecommerce-config
-              key: NEXT_PUBLIC_APP_URL
+              key: NEXTAUTH_URL
         - name: STRIPE_SECRET_KEY
           valueFrom:
             secretKeyRef:
