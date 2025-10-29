@@ -196,28 +196,28 @@ jobs:
                   cd k8s-manifests/scripts
                   chmod +x pre-deploy-check.sh
                   ./pre-deploy-check.sh
-          
+
             - name: Verify local Minikube is running
               run: |
                   echo "🔍 Checking local Minikube status..."
-                  
+
                   if ! command -v minikube &> /dev/null; then
                       echo "❌ ERROR: Minikube not installed on self-hosted runner"
                       exit 1
                   fi
-                  
+
                   # Check if Minikube is running
                   STATUS=$(minikube status --format='{{.Host}}' 2>/dev/null || echo "NotRunning")
-                  
+
                   if [ "$STATUS" != "Running" ]; then
                       echo "❌ ERROR: Minikube is not running"
                       echo "Please start Minikube first: minikube start"
                       exit 1
                   fi
-                  
+
                   echo "✅ Minikube is running!"
                   minikube status
-                  
+
                   # Show cluster info
                   kubectl cluster-info
                   kubectl get nodes
@@ -259,16 +259,15 @@ jobs:
 
             - name: Deploy Monitoring Stack
               run: |
-                  # Deploy DataDog
+                  # Deploy monitoring stack (includes DataDog, Prometheus, Grafana, Jaeger, AlertManager)
                   cd k8s-manifests/monitoring
-                  chmod +x deploy-datadog-operator.sh
-                  DATADOG_API_KEY=${{ env.DATADOG_API_KEY }} ./deploy-datadog-operator.sh
-
-                  # Deploy Prometheus, Grafana, Jaeger
-                  kubectl apply -f prometheus.yaml
-                  kubectl apply -f grafana.yaml
-                  kubectl apply -f jaeger.yaml
-                  kubectl apply -f alertmanager.yaml
+                  chmod +x deploy-monitoring.sh
+                  
+                  # Export DATADOG_API_KEY if available (optional)
+                  export DATADOG_API_KEY="${{ env.DATADOG_API_KEY }}"
+                  
+                  # Run deployment script (handles missing DATADOG_API_KEY gracefully)
+                  ./deploy-monitoring.sh
 
             - name: Wait for deployments
               run: |
