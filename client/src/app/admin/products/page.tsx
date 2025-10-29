@@ -16,6 +16,7 @@ interface Product {
   comparePrice?: number
   sku: string
   quantity: number
+  lowStockThreshold?: number
   isActive: boolean
   isFeatured: boolean
   category: {
