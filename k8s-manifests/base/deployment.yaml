@@ -73,7 +73,10 @@ spec:
               name: ecommerce-config
               key: NODE_ENV
         - name: DATABASE_URL
-          value: "postgresql://ecommerce:password@postgres-service:5432/ecommerce_db"
+          valueFrom:
+            secretKeyRef:
+              name: ecommerce-secrets
+              key: database-url
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
