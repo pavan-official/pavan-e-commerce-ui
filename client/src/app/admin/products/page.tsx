@@ -221,7 +221,7 @@ export default function ProductsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          product.quantity <= product.lowStockThreshold
+                          product.quantity <= (product.lowStockThreshold ?? 10)
                             ? 'bg-red-100 text-red-800'
                             : 'bg-green-100 text-green-800'
                         }`}>
